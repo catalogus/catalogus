@@ -11,6 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AuthorSignUpRouteImport } from './routes/author/sign-up'
+import { Route as AuthorSignInRouteImport } from './routes/author/sign-in'
+import { Route as AuthorProfileRouteImport } from './routes/author/profile'
 import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
 import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
@@ -38,6 +41,21 @@ const IndexRoute = IndexRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthorSignUpRoute = AuthorSignUpRouteImport.update({
+  id: '/author/sign-up',
+  path: '/author/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthorSignInRoute = AuthorSignInRouteImport.update({
+  id: '/author/sign-in',
+  path: '/author/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthorProfileRoute = AuthorProfileRouteImport.update({
+  id: '/author/profile',
+  path: '/author/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthSignUpRoute = AuthSignUpRouteImport.update({
@@ -140,6 +158,9 @@ export interface FileRoutesByFullPath {
   '/admin/orders': typeof AdminOrdersRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
+  '/author/profile': typeof AuthorProfileRoute
+  '/author/sign-in': typeof AuthorSignInRoute
+  '/author/sign-up': typeof AuthorSignUpRoute
   '/admin': typeof AdminIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/posts': typeof AdminContentPostsRoute
@@ -162,6 +183,9 @@ export interface FileRoutesByTo {
   '/admin/orders': typeof AdminOrdersRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
+  '/author/profile': typeof AuthorProfileRoute
+  '/author/sign-in': typeof AuthorSignInRoute
+  '/author/sign-up': typeof AuthorSignUpRoute
   '/admin': typeof AdminIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/posts': typeof AdminContentPostsRoute
@@ -185,6 +209,9 @@ export interface FileRoutesById {
   '/admin/orders': typeof AdminOrdersRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
+  '/author/profile': typeof AuthorProfileRoute
+  '/author/sign-in': typeof AuthorSignInRoute
+  '/author/sign-up': typeof AuthorSignUpRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/posts': typeof AdminContentPostsRoute
@@ -209,6 +236,9 @@ export interface FileRouteTypes {
     | '/admin/orders'
     | '/auth/sign-in'
     | '/auth/sign-up'
+    | '/author/profile'
+    | '/author/sign-in'
+    | '/author/sign-up'
     | '/admin'
     | '/admin/content/partners'
     | '/admin/content/posts'
@@ -231,6 +261,9 @@ export interface FileRouteTypes {
     | '/admin/orders'
     | '/auth/sign-in'
     | '/auth/sign-up'
+    | '/author/profile'
+    | '/author/sign-in'
+    | '/author/sign-up'
     | '/admin'
     | '/admin/content/partners'
     | '/admin/content/posts'
@@ -253,6 +286,9 @@ export interface FileRouteTypes {
     | '/admin/orders'
     | '/auth/sign-in'
     | '/auth/sign-up'
+    | '/author/profile'
+    | '/author/sign-in'
+    | '/author/sign-up'
     | '/admin/'
     | '/admin/content/partners'
     | '/admin/content/posts'
@@ -276,6 +312,9 @@ export interface RootRouteChildren {
   AdminOrdersRoute: typeof AdminOrdersRoute
   AuthSignInRoute: typeof AuthSignInRoute
   AuthSignUpRoute: typeof AuthSignUpRoute
+  AuthorProfileRoute: typeof AuthorProfileRoute
+  AuthorSignInRoute: typeof AuthorSignInRoute
+  AuthorSignUpRoute: typeof AuthorSignUpRoute
   AdminIndexRoute: typeof AdminIndexRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
@@ -300,6 +339,27 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/author/sign-up': {
+      id: '/author/sign-up'
+      path: '/author/sign-up'
+      fullPath: '/author/sign-up'
+      preLoaderRoute: typeof AuthorSignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/author/sign-in': {
+      id: '/author/sign-in'
+      path: '/author/sign-in'
+      fullPath: '/author/sign-in'
+      preLoaderRoute: typeof AuthorSignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/author/profile': {
+      id: '/author/profile'
+      path: '/author/profile'
+      fullPath: '/author/profile'
+      preLoaderRoute: typeof AuthorProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/sign-up': {
@@ -458,6 +518,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminOrdersRoute: AdminOrdersRoute,
   AuthSignInRoute: AuthSignInRoute,
   AuthSignUpRoute: AuthSignUpRoute,
+  AuthorProfileRoute: AuthorProfileRoute,
+  AuthorSignInRoute: AuthorSignInRoute,
+  AuthorSignUpRoute: AuthorSignUpRoute,
   AdminIndexRoute: AdminIndexRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,

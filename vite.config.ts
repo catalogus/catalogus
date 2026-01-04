@@ -18,6 +18,14 @@ const config = defineConfig({
     tanstackStart(),
     viteReact(),
   ],
+  server: {
+    hmr: {
+      overlay: true,
+    },
+  },
+  optimizeDeps: {
+    exclude: ['@supabase/supabase-js'],
+  },
 })
 
 export default config

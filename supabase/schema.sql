@@ -14,8 +14,10 @@ create table public.profiles (
   role user_role not null default 'customer',
   status author_status,
   name text not null,
+  email text,
   bio text,
   photo_url text,
+  photo_path text,
   social_links jsonb default '{}'::jsonb,
   phone text,
   created_at timestamptz not null default now(),
@@ -184,6 +186,10 @@ alter table public.books
   add column if not exists seo_title text,
   add column if not exists seo_description text;
 
+alter table public.profiles
+  add column if not exists photo_path text,
+  add column if not exists email text;
+
 -- Profiles policies
 create policy "Profiles: user can view own profile" on public.profiles
   for select using (auth.uid() = id);
@@ -288,24 +294,46 @@ create policy "Projects: public can read active" on public.projects
 create policy "Projects: admins full access" on public.projects
   for all using (public.is_admin()) with check (public.is_admin());
 
--- Storage buckets (covers, authors, partners)
+-- Storage buckets (covers, authors, partners, author-photos)
 insert into storage.buckets (id, name, public) values
   ('covers', 'covers', true),
   ('authors', 'authors', true),
-  ('partners', 'partners', true)
+  ('partners', 'partners', true),
+  ('author-photos', 'author-photos', true)
 on conflict (id) do nothing;
 
 -- Storage policies for public assets and admin uploads
 alter table storage.objects enable row level security;
 
-create policy "Storage: public can read covers/authors/partners"
+create policy "Storage: public can read covers/authors/partners/author-photos"
   on storage.objects for select
-  using (bucket_id in ('covers','authors','partners'));
+  using (bucket_id in ('covers','authors','partners','author-photos'));
 
 create policy "Storage: admin can manage covers/authors/partners"
   on storage.objects for all
   using (public.is_admin())
   with check (public.is_admin());
+
+-- Author-photos storage policies (users can upload to their own folder)
+create policy "Storage: users can upload own author photos"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'author-photos'
+    and (
+      (storage.foldername(name))[1] = auth.uid()::text
+      or public.is_admin()
+    )
+  );
+
+create policy "Storage: users can delete own author photos"
+  on storage.objects for delete
+  using (
+    bucket_id = 'author-photos'
+    and (
+      (storage.foldername(name))[1] = auth.uid()::text
+      or public.is_admin()
+    )
+  );
 
 -- Simple published/active defaults
 update public.posts set status = 'published' where status is null;

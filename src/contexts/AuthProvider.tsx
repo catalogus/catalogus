@@ -1,15 +1,21 @@
-import { createContext, useContext, useEffect, useMemo } from 'react'
+import { createContext, useContext, useEffect, useMemo, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
 import type { UserRole } from '../types/admin'
+import type { SocialLinks } from '../types/author'
 
 type Profile = {
   id: string
   role: UserRole
   status?: string | null
   name?: string | null
+  email?: string | null
   phone?: string | null
+  bio?: string | null
+  photo_url?: string | null
+  photo_path?: string | null
+  social_links?: SocialLinks | null
 }
 
 type AuthContextValue = {
@@ -22,6 +28,14 @@ type AuthContextValue = {
     email: string,
     password: string,
     name?: string,
+  ) => Promise<{ error?: Error | null }>
+  signUpAuthor: (
+    email: string,
+    password: string,
+    name: string,
+    phone: string,
+    bio?: string,
+    photoFile?: File | null,
   ) => Promise<{ error?: Error | null }>
   signOut: () => Promise<void>
 }
@@ -52,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, role, status, name, phone')
+      .select('id, role, status, name, email, phone, bio, photo_url, photo_path, social_links')
       .eq('id', userId)
       .maybeSingle()
 
@@ -63,29 +77,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const sessionQuery = useQuery({
     queryKey: ['auth', 'session'],
     queryFn: async () => {
-      const { data, error } = await supabase.auth.getSession()
-      if (error) throw error
-      return data.session ?? null
+      try {
+        const { data, error } = await supabase.auth.getSession()
+        if (error) {
+          console.error('Session fetch error:', error)
+          return null
+        }
+        return data.session ?? null
+      } catch (err) {
+        console.error('Session query failed:', err)
+        return null
+      }
     },
     staleTime: Infinity,
-    retry: false,
+    retry: 1,
     refetchOnWindowFocus: false,
-    networkMode: 'always',
+    networkMode: 'online',
   })
 
   const profileQuery = useQuery({
     queryKey: ['profile', sessionQuery.data?.user?.id],
-    queryFn: () => fetchProfile(sessionQuery.data!.user!.id),
+    queryFn: async () => {
+      try {
+        return await fetchProfile(sessionQuery.data!.user!.id)
+      } catch (err) {
+        console.error('Profile fetch error:', err)
+        return null
+      }
+    },
     enabled: !!sessionQuery.data?.user?.id,
     staleTime: 5 * 60 * 1000,
-    retry: false,
+    retry: 1,
     refetchOnWindowFocus: false,
-    networkMode: 'always',
+    networkMode: 'online',
   })
 
   const loading =
     sessionQuery.status === 'pending' ||
-    (!!sessionQuery.data && profileQuery.isFetching)
+    (!!sessionQuery.data?.user?.id && profileQuery.status === 'pending')
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(
@@ -106,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queryClient])
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -124,9 +153,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
     }
     return { error }
-  }
+  }, [queryClient])
 
-  const signUp = async (email: string, password: string, name?: string) => {
+  const signUp = useCallback(async (email: string, password: string, name?: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -149,13 +178,112 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     return { error }
-  }
+  }, [queryClient])
 
-  const signOut = async () => {
+  const signUpAuthor = useCallback(async (
+    email: string,
+    password: string,
+    name: string,
+    phone: string,
+    bio?: string,
+    photoFile?: File | null,
+  ) => {
+    try {
+      // Create auth user
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name, phone, bio },
+        },
+      })
+
+      if (error) return { error }
+
+      if (data.user) {
+        // Upload photo if provided
+        let photo_path = null
+        let photo_url = null
+        if (photoFile) {
+          const path = `author-photos/${data.user.id}/${Date.now()}-${photoFile.name}`
+          const { error: uploadError } = await supabase.storage
+            .from('author-photos')
+            .upload(path, photoFile, { upsert: true })
+
+          if (!uploadError) {
+            photo_path = path
+            const { data: urlData } = supabase.storage
+              .from('author-photos')
+              .getPublicUrl(path)
+            photo_url = urlData.publicUrl
+          }
+        }
+
+        // Create/update profile with role='author', status='pending'
+        // Check if profile was auto-created
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id, role')
+          .eq('id', data.user.id)
+          .single()
+
+        let profileError
+        if (existingProfile) {
+          // Profile exists, update with author role
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              name,
+              email: email.toLowerCase().trim(),
+              phone,
+              bio: bio || null,
+              photo_url,
+              photo_path,
+              role: 'author',
+              status: 'pending',
+              social_links: {},
+            })
+            .eq('id', data.user.id)
+          profileError = error
+        } else {
+          // Profile doesn't exist, create it
+          const { error } = await supabase.from('profiles').insert({
+            id: data.user.id,
+            name,
+            email: email.toLowerCase().trim(),
+            phone,
+            bio: bio || null,
+            photo_url,
+            photo_path,
+            role: 'author',
+            status: 'pending',
+            social_links: {},
+          })
+          profileError = error
+        }
+
+        if (profileError) return { error: new Error(profileError.message) }
+
+        // Update query cache if session exists
+        if (data.session) {
+          queryClient.setQueryData(['auth', 'session'], data.session)
+          await queryClient.invalidateQueries({
+            queryKey: ['profile', data.user.id],
+          })
+        }
+      }
+
+      return { error: null }
+    } catch (err) {
+      return { error: err as Error }
+    }
+  }, [queryClient])
+
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut()
     queryClient.setQueryData(['auth', 'session'], null)
     queryClient.removeQueries({ queryKey: ['profile'] })
-  }
+  }, [queryClient])
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -165,9 +293,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       signIn,
       signUp,
+      signUpAuthor,
       signOut,
     }),
-    [sessionQuery.data, profileQuery.data, loading],
+    [sessionQuery.data, profileQuery.data, loading, signIn, signUp, signUpAuthor, signOut],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
