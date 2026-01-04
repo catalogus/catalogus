@@ -21,15 +21,9 @@ export function AdminGuard({ children }: AdminGuardProps) {
     }
   }, [session, profile?.role, loading, navigate])
 
-  if (loading) {
-    return (
-      <div className="p-8 text-center text-gray-500">Checking your session…</div>
-    )
-  }
+  if (loading) return null
 
-  if (!session || profile?.role !== 'admin') {
-    return null
-  }
+  if (!session || profile?.role !== 'admin') return null
 
   return <>{children}</>
 }

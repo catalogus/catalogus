@@ -23,6 +23,23 @@ import {
   TableRow,
 } from '../../components/ui/table'
 import { BookForm, type BookFormValues } from '../../components/admin/books/BookForm'
+import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '../../components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../components/ui/dropdown-menu'
+import { MoreHorizontal } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/books')({
   component: AdminBooksPage,
@@ -31,13 +48,25 @@ export const Route = createFileRoute('/admin/books')({
 type BookRow = {
   id: string
   title: string
+  slug: string
   price_mzn: number
   stock: number
   category: string | null
   language: string
   is_active: boolean
+  featured: boolean
   cover_url: string | null
+  cover_path: string | null
   description: string | null
+  description_json: any
+  isbn: string | null
+  publisher: string | null
+  seo_title: string | null
+  seo_description: string | null
+  authors?: {
+    author_id: string
+    authors: { id: string; name: string | null; photo_path: string | null } | null
+  }[]
 }
 
 function AdminBooksPage() {
@@ -47,6 +76,19 @@ function AdminBooksPage() {
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
   const [editingBook, setEditingBook] = useState<BookRow | null>(null)
+  const [detailBook, setDetailBook] = useState<BookRow | null>(null)
+  const authorsQuery = useQuery({
+    queryKey: ['admin', 'authors', 'list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('authors')
+        .select('id, name, photo_path')
+        .order('name', { ascending: true })
+      if (error) throw error
+      return data as Array<{ id: string; name: string; photo_path: string | null }>
+    },
+    staleTime: 60_000,
+  })
 
   const booksQuery = useQuery({
     queryKey: ['admin', 'books'],
@@ -54,7 +96,7 @@ function AdminBooksPage() {
       const { data, error } = await supabase
         .from('books')
         .select(
-          'id, title, price_mzn, stock, category, language, is_active, cover_url, description',
+          'id, title, slug, price_mzn, stock, category, language, is_active, featured, cover_url, cover_path, description, description_json, isbn, publisher, seo_title, seo_description, authors:authors_books(author_id, authors(id, name, photo_path))',
         )
         .order('created_at', { ascending: false })
       if (error) throw error
@@ -73,7 +115,24 @@ function AdminBooksPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'books'] })
+      toast.success('Status updated')
     },
+    onError: (err) => toast.error(err.message ?? 'Failed to update status'),
+  })
+
+  const toggleFeatured = useMutation({
+    mutationFn: async (payload: { id: string; featured: boolean }) => {
+      const { error } = await supabase
+        .from('books')
+        .update({ featured: payload.featured })
+        .eq('id', payload.id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'books'] })
+      toast.success('Featured updated')
+    },
+    onError: (err) => toast.error(err.message ?? 'Failed to update featured'),
   })
 
   const updateStock = useMutation({
@@ -96,16 +155,95 @@ function AdminBooksPage() {
       maximumFractionDigits: 0,
     }).format(value)
 
+  const coverUrlFor = (book: BookRow) => {
+    if (book.cover_url) return book.cover_url
+    if (book.cover_path) {
+      return supabase.storage.from('covers').getPublicUrl(book.cover_path).data
+        .publicUrl
+    }
+    return null
+  }
+
+  const addAuthor = useMutation({
+    mutationFn: async (name: string) => {
+      const { data, error } = await supabase
+        .from('authors')
+        .insert({ name })
+        .select('id, name, photo_path')
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'authors', 'list'] })
+      toast.success('Author added')
+    },
+    onError: (err) => toast.error(err.message ?? 'Failed to add author'),
+  })
+
+  const uploadCover = async (file: File, bookId: string) => {
+    const path = `covers/${bookId}/${Date.now()}-${file.name}`
+    const { error: uploadError } = await supabase.storage
+      .from('covers')
+      .upload(path, file, { upsert: true })
+    if (uploadError) throw uploadError
+    const { data } = supabase.storage.from('covers').getPublicUrl(path)
+    return { path, publicUrl: data.publicUrl }
+  }
+
   const upsertBook = useMutation({
-    mutationFn: async (payload: BookFormValues & { id?: string }) => {
+    mutationFn: async (
+      payload: BookFormValues & { id?: string; file?: File | null },
+    ) => {
+      const author_ids = payload.author_ids
+      const bookId = payload.id ?? crypto.randomUUID?.() ?? Date.now().toString()
+
+      let cover_url = payload.cover_url
+      let cover_path = payload.cover_path
+      if (payload.file) {
+        const uploaded = await uploadCover(payload.file, bookId)
+        cover_url = uploaded.publicUrl
+        cover_path = uploaded.path
+      }
+
+      const description_json = payload.description
+        ? {
+            type: 'doc',
+            content: [
+              {
+                type: 'paragraph',
+                content: [{ type: 'text', text: payload.description }],
+              },
+            ],
+          }
+        : null
+
+      const base: any = {
+        ...payload,
+        id: payload.id ?? bookId,
+        cover_url,
+        cover_path,
+        description_json,
+      }
+      delete base.file
+      delete base.author_ids
+
       if (payload.id) {
-        const { error } = await supabase
-          .from('books')
-          .update(payload)
-          .eq('id', payload.id)
+        const { error } = await supabase.from('books').update(base).eq('id', payload.id)
         if (error) throw error
       } else {
-        const { error } = await supabase.from('books').insert(payload)
+        const { error } = await supabase.from('books').insert(base)
+        if (error) throw error
+      }
+
+      await supabase.from('authors_books').delete().eq('book_id', bookId)
+      if (author_ids && author_ids.length > 0) {
+        const { error } = await supabase.from('authors_books').insert(
+          author_ids.map((author_id) => ({
+            author_id,
+            book_id: bookId,
+          })),
+        )
         if (error) throw error
       }
     },
@@ -113,7 +251,9 @@ function AdminBooksPage() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'books'] })
       setShowForm(false)
       setEditingBook(null)
+      toast.success('Book saved')
     },
+    onError: (err) => toast.error(err.message ?? 'Failed to save book'),
   })
 
   const deleteBook = useMutation({
@@ -123,7 +263,9 @@ function AdminBooksPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'books'] })
+      toast.success('Book deleted')
     },
+    onError: (err) => toast.error(err.message ?? 'Failed to delete book'),
   })
 
   return (
@@ -162,19 +304,29 @@ function AdminBooksPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Title</TableHead>
+                      <TableHead>Authors</TableHead>
                       <TableHead>Category</TableHead>
                       <TableHead>Language</TableHead>
                       <TableHead>Price</TableHead>
                       <TableHead>Stock</TableHead>
-                      <TableHead>Active</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {booksQuery.data?.map((book) => (
-                      <TableRow key={book.id} className="align-middle">
+                      <TableRow
+                        key={book.id}
+                        className="align-middle cursor-pointer hover:bg-gray-50"
+                        onClick={() => setDetailBook(book)}
+                      >
                         <TableCell className="font-medium text-gray-900">
                           {book.title}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {book.authors
+                            ?.map((a) => a.authors?.name)
+                            .filter(Boolean)
+                            .join(', ') || '—'}
                         </TableCell>
                         <TableCell className="text-gray-600">
                           {book.category ?? '—'}
@@ -185,64 +337,68 @@ function AdminBooksPage() {
                         <TableCell className="text-gray-900">
                           {formatPrice(book.price_mzn)}
                         </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              min={0}
-                              defaultValue={book.stock}
-                              onBlur={(e) =>
-                                updateStock.mutate({
-                                  id: book.id,
-                                  stock: Number(e.target.value || 0),
-                                })
-                              }
-                              className="w-20 rounded-lg border border-input px-2 py-1 text-sm"
-                            />
-                            {updateStock.isPending && (
-                              <span className="text-xs text-gray-500">
-                                Saving…
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <label className="inline-flex items-center gap-2 text-sm">
-                            <input
-                              type="checkbox"
-                              checked={book.is_active}
-                              onChange={(e) =>
-                                toggleActive.mutate({
-                                  id: book.id,
-                                  is_active: e.target.checked,
-                                })
-                              }
-                              className="h-4 w-4 rounded border-gray-300"
-                            />
-                            <span className="text-gray-700">
-                              {book.is_active ? 'Active' : 'Inactive'}
-                            </span>
-                          </label>
-                        </TableCell>
-                        <TableCell className="space-x-2 text-sm">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingBook(book)
-                              setShowForm(true)
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteBook.mutate(book.id)}
-                            className="text-destructive hover:bg-destructive/10"
-                          >
-                            Delete
-                          </Button>
+                        <TableCell className="text-gray-900">{book.stock}</TableCell>
+                        <TableCell className="text-sm">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onClickCapture={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => setDetailBook(book)}
+                              >
+                                View details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingBook(book)
+                                  setShowForm(true)
+                                }}
+                              >
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  toggleFeatured.mutate({
+                                    id: book.id,
+                                    featured: !book.featured,
+                                  })
+                                }
+                              >
+                                {book.featured ? 'Unfeature' : 'Mark featured'}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  toggleActive.mutate({
+                                    id: book.id,
+                                    is_active: !book.is_active,
+                                  })
+                                }
+                              >
+                                {book.is_active ? 'Deactivate' : 'Activate'}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => deleteBook.mutate(book.id)}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -255,7 +411,7 @@ function AdminBooksPage() {
             )}
           </div>
           <Sheet open={showForm} onOpenChange={setShowForm}>
-            <SheetContent className="w-full sm:max-w-xl px-4">
+            <SheetContent className="w-full sm:max-w-xl px-4 overflow-hidden">
               <SheetHeader>
                 <SheetTitle>
                   {editingBook ? 'Edit book' : 'Add book'}
@@ -264,16 +420,46 @@ function AdminBooksPage() {
                   Manage title, slug, pricing, stock, and visibility.
                 </SheetDescription>
               </SheetHeader>
-              <div className="pt-4">
+              <div className="pt-4 max-h-[80vh] overflow-y-auto pr-2 space-y-4">
                 <BookForm
-                  initial={editingBook ?? undefined}
+                  initial={
+                    editingBook
+                      ? {
+                          title: editingBook.title,
+                          slug: editingBook.slug,
+                          price_mzn: editingBook.price_mzn,
+                          stock: editingBook.stock,
+                          category: editingBook.category ?? '',
+                          language: editingBook.language,
+                          is_active: editingBook.is_active,
+                          featured: editingBook.featured ?? false,
+                          cover_url: editingBook.cover_url ?? '',
+                          cover_path: editingBook.cover_path ?? '',
+                          description: editingBook.description ?? '',
+                          isbn: editingBook.isbn ?? '',
+                          publisher: editingBook.publisher ?? '',
+                          seo_title: editingBook.seo_title ?? '',
+                          seo_description: editingBook.seo_description ?? '',
+                          author_ids:
+                            editingBook.authors?.map((a) => a.author_id) ?? [],
+                        }
+                      : undefined
+                  }
                   submitting={upsertBook.isPending}
-                  onSubmit={async (vals) => {
+                  onSubmit={async (vals, file) => {
                     await upsertBook.mutateAsync({
                       ...vals,
                       id: editingBook?.id,
+                      file,
                     })
                   }}
+                  authors={
+                    authorsQuery.data?.map((a) => ({
+                      id: a.id,
+                      name: a.name ?? 'Autor',
+                    })) ?? []
+                  }
+                  onCreateAuthor={(name) => addAuthor.mutateAsync(name)}
                   onCancel={() => {
                     setShowForm(false)
                     setEditingBook(null)
@@ -282,6 +468,109 @@ function AdminBooksPage() {
               </div>
             </SheetContent>
           </Sheet>
+          <Dialog open={!!detailBook} onOpenChange={() => setDetailBook(null)}>
+            <DialogContent className="sm:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>{detailBook?.title ?? 'Book detail'}</DialogTitle>
+                <DialogDescription>
+                  {detailBook?.seo_description ??
+                    detailBook?.description ??
+                    'Book details'}
+                </DialogDescription>
+              </DialogHeader>
+              {detailBook && (
+                <div className="space-y-4">
+                  {coverUrlFor(detailBook) && (
+                    <img
+                      src={coverUrlFor(detailBook) ?? ''}
+                      alt={detailBook.title}
+                      className="w-full max-h-64 rounded-xl object-cover border border-gray-200"
+                    />
+                  )}
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-500">Price</p>
+                      <p className="font-semibold text-gray-900">
+                        {formatPrice(detailBook.price_mzn)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Stock</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.stock}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Category</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.category ?? '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Language</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.language?.toUpperCase()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">ISBN</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.isbn ?? '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Publisher</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.publisher ?? '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Featured</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.featured ? 'Yes' : 'No'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Active</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.is_active ? 'Yes' : 'No'}
+                      </p>
+                    </div>
+                  </div>
+                  {detailBook.authors && detailBook.authors.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-gray-500 text-sm">Authors</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.authors
+                          .map((a) => a.authors?.name)
+                          .filter(Boolean)
+                          .join(', ')}
+                      </p>
+                    </div>
+                  )}
+                  {detailBook.description && (
+                    <div className="space-y-1">
+                      <p className="text-gray-500 text-sm">Description</p>
+                      <p className="text-gray-900 whitespace-pre-line">
+                        {detailBook.description}
+                      </p>
+                    </div>
+                  )}
+                  {(detailBook.seo_title || detailBook.seo_description) && (
+                    <div className="space-y-1">
+                      <p className="text-gray-500 text-sm">SEO</p>
+                      <p className="text-gray-900 font-semibold">
+                        {detailBook.seo_title}
+                      </p>
+                      <p className="text-gray-700 text-sm">
+                        {detailBook.seo_description}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
       </DashboardLayout>
     </AdminGuard>

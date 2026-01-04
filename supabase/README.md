@@ -17,6 +17,15 @@ supabase db push
 
 Tip: if you run pieces in the Supabase SQL editor, run the tables block first, then the helper functions, then the RLS policies to avoid “relation does not exist” errors from `is_admin()` referencing `profiles`.
 
+## Sync after book form changes
+- The current app expects `books` to have `cover_url` and `description` (already in the schema above) and uses the `authors_books` join.
+- Cover uploads go to the `covers` bucket. Policies added allow public read and admin manage; re-run the script to apply:
+  - `storage.objects` RLS enabled
+  - Public select for `covers`, `authors`, `partners`
+  - Admin full access via `is_admin()`
+
+If your database already exists, re-run `supabase/schema.sql` or apply just the storage policy section to enable uploads + public reads.
+
 ## Buckets
 The script creates three buckets: `covers`, `authors`, `partners` (public). Add more if needed (e.g., `posts`, `projects`).
 

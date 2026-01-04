@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
 import { Button } from '../../ui/button'
+
+type AuthorOption = { id: string; name: string }
 
 export type BookFormValues = {
   title: string
@@ -11,15 +13,24 @@ export type BookFormValues = {
   category: string
   language: string
   is_active: boolean
+  featured: boolean
   cover_url: string
+  cover_path: string
   description: string
+  isbn: string
+  publisher: string
+  seo_title: string
+  seo_description: string
+  author_ids: string[]
 }
 
 type BookFormProps = {
   initial?: Partial<BookFormValues>
-  onSubmit: (values: BookFormValues) => Promise<void> | void
+  onSubmit: (values: BookFormValues, file?: File | null) => Promise<void> | void
   onCancel: () => void
   submitting?: boolean
+  authors: AuthorOption[]
+  onCreateAuthor?: (name: string) => Promise<AuthorOption>
 }
 
 const defaultValues: BookFormValues = {
@@ -30,8 +41,15 @@ const defaultValues: BookFormValues = {
   category: '',
   language: 'pt',
   is_active: true,
+  featured: false,
   cover_url: '',
+  cover_path: '',
   description: '',
+  isbn: '',
+  publisher: '',
+  seo_title: '',
+  seo_description: '',
+  author_ids: [],
 }
 
 export function BookForm({
@@ -39,11 +57,25 @@ export function BookForm({
   onSubmit,
   onCancel,
   submitting = false,
+  authors,
+  onCreateAuthor,
 }: BookFormProps) {
   const [values, setValues] = useState<BookFormValues>({
     ...defaultValues,
     ...initial,
+    author_ids: initial?.author_ids ?? defaultValues.author_ids,
   })
+  const [coverPreview, setCoverPreview] = useState<string | null>(
+    initial?.cover_url ?? null,
+  )
+  const [file, setFile] = useState<File | null>(null)
+  const [localAuthors, setLocalAuthors] = useState<AuthorOption[]>(authors)
+  const [newAuthorName, setNewAuthorName] = useState('')
+  const [addingAuthor, setAddingAuthor] = useState(false)
+
+  useEffect(() => {
+    setLocalAuthors(authors)
+  }, [authors])
 
   const handleChange = (
     key: keyof BookFormValues,
@@ -57,7 +89,29 @@ export function BookForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(values)
+    const slug =
+      values.slug ||
+      values.title
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+    onSubmit({ ...values, slug }, file)
+  }
+
+  const addAuthor = async () => {
+    if (!onCreateAuthor) return
+    const name = newAuthorName.trim()
+    if (!name) return
+    setAddingAuthor(true)
+    try {
+      const created = await onCreateAuthor(name)
+      setLocalAuthors((prev) => [...prev, created])
+      handleChange('author_ids', [...values.author_ids, created.id])
+      setNewAuthorName('')
+    } finally {
+      setAddingAuthor(false)
+    }
   }
 
   return (
@@ -71,24 +125,99 @@ export function BookForm({
           onChange={(e) => handleChange('title', e.target.value)}
         />
       </div>
+
       <div className="space-y-2">
-        <Label htmlFor="slug">Slug</Label>
-        <Input
-          id="slug"
-          required
-          value={values.slug}
-          onChange={(e) => handleChange('slug', e.target.value)}
-        />
+        <Label>Authors</Label>
+        <p className="text-xs text-gray-500">
+          Select from the catalog or add a new author.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {localAuthors.map((author) => {
+            const checked = values.author_ids.includes(author.id)
+            return (
+              <label
+                key={author.id}
+                className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(e) => {
+                    const next = e.target.checked
+                      ? [...values.author_ids, author.id]
+                      : values.author_ids.filter((id) => id !== author.id)
+                    handleChange('author_ids', next)
+                  }}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <span className="text-gray-900">{author.name}</span>
+              </label>
+            )
+          })}
+          {localAuthors.length === 0 && (
+            <p className="text-xs text-gray-500">No authors yet.</p>
+          )}
+        </div>
+        {onCreateAuthor && (
+          <div className="flex items-center gap-2 pt-2">
+            <Input
+              placeholder="New author name"
+              value={newAuthorName}
+              onChange={(e) => setNewAuthorName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addAuthor()
+                }
+              }}
+            />
+            <Button type="button" onClick={addAuthor} disabled={addingAuthor}>
+              {addingAuthor ? 'Adding…' : 'Add'}
+            </Button>
+          </div>
+        )}
       </div>
+
       <div className="space-y-2">
-        <Label htmlFor="cover_url">Cover URL</Label>
-        <Input
-          id="cover_url"
-          value={values.cover_url}
-          onChange={(e) => handleChange('cover_url', e.target.value)}
-          placeholder="https://..."
-        />
+        <Label>Cover image</Label>
+        <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4">
+          <div className="flex items-center gap-4">
+            <label
+              htmlFor="cover"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100"
+            >
+              Choose file
+            </label>
+            <input
+              id="cover"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const selected = e.target.files?.[0] ?? null
+                setFile(selected)
+                if (selected) {
+                  setCoverPreview(URL.createObjectURL(selected))
+                }
+              }}
+              className="hidden"
+            />
+            <div className="flex flex-col text-sm text-gray-600">
+              <span className="font-medium">
+                {file?.name ?? coverPreview ? 'Preview loaded' : 'No file chosen'}
+              </span>
+              <span className="text-xs text-gray-500">JPG/PNG, up to 5MB</span>
+            </div>
+            {coverPreview && (
+              <img
+                src={coverPreview}
+                alt="Cover preview"
+                className="h-16 w-12 rounded-md border border-gray-200 object-cover ml-auto"
+              />
+            )}
+          </div>
+        </div>
       </div>
+
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
         <textarea
@@ -99,6 +228,7 @@ export function BookForm({
           rows={4}
         />
       </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="price">Price (MZN)</Label>
@@ -121,6 +251,26 @@ export function BookForm({
           />
         </div>
       </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="isbn">ISBN</Label>
+          <Input
+            id="isbn"
+            value={values.isbn}
+            onChange={(e) => handleChange('isbn', e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="publisher">Publisher</Label>
+          <Input
+            id="publisher"
+            value={values.publisher}
+            onChange={(e) => handleChange('publisher', e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
@@ -143,18 +293,47 @@ export function BookForm({
           </select>
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        <input
-          id="is_active"
-          type="checkbox"
-          checked={values.is_active}
-          onChange={(e) => handleChange('is_active', e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300"
+
+      <div className="space-y-2">
+        <Label htmlFor="seo_title">SEO title</Label>
+        <Input
+          id="seo_title"
+          value={values.seo_title}
+          onChange={(e) => handleChange('seo_title', e.target.value)}
         />
-        <Label htmlFor="is_active" className="text-sm font-normal">
-          Active
+        <Label htmlFor="seo_description" className="pt-1">
+          SEO description
         </Label>
+        <textarea
+          id="seo_description"
+          value={values.seo_description}
+          onChange={(e) => handleChange('seo_description', e.target.value)}
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          rows={2}
+        />
       </div>
+
+      <div className="flex flex-wrap gap-4">
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={values.featured}
+            onChange={(e) => handleChange('featured', e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          <span className="text-gray-900">Featured</span>
+        </label>
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={values.is_active}
+            onChange={(e) => handleChange('is_active', e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          <span className="text-gray-900">Active</span>
+        </label>
+      </div>
+
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel

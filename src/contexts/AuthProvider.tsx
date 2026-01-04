@@ -68,6 +68,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return data.session ?? null
     },
     staleTime: Infinity,
+    retry: false,
+    refetchOnWindowFocus: false,
+    networkMode: 'always',
   })
 
   const profileQuery = useQuery({
@@ -75,7 +78,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     queryFn: () => fetchProfile(sessionQuery.data!.user!.id),
     enabled: !!sessionQuery.data?.user?.id,
     staleTime: 5 * 60 * 1000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    networkMode: 'always',
   })
+
+  const loading =
+    sessionQuery.status === 'pending' ||
+    (!!sessionQuery.data && profileQuery.isFetching)
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(
@@ -152,12 +162,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       supabase,
       session: sessionQuery.data ?? null,
       profile: profileQuery.data ?? null,
-      loading: sessionQuery.isLoading || profileQuery.isFetching,
+      loading,
       signIn,
       signUp,
       signOut,
     }),
-    [sessionQuery.data, sessionQuery.isLoading, profileQuery.data, profileQuery.isFetching],
+    [sessionQuery.data, profileQuery.data, loading],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

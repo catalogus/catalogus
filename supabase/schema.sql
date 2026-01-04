@@ -27,9 +27,16 @@ create table public.books (
   title text not null,
   slug text not null unique,
   description text,
+  description_json jsonb,
   price_mzn numeric(12, 2) not null,
   stock integer not null default 0,
   cover_url text,
+  cover_path text,
+  featured boolean not null default false,
+  isbn text,
+  publisher text,
+  seo_title text,
+  seo_description text,
   category text,
   language language_code not null default 'pt',
   is_active boolean not null default true,
@@ -40,8 +47,18 @@ create index books_is_active_idx on public.books (is_active);
 create index books_category_idx on public.books (category);
 create index books_language_idx on public.books (language);
 
+create table if not exists public.authors (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  bio text,
+  photo_path text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+drop table if exists public.authors_books;
 create table public.authors_books (
-  author_id uuid not null references public.profiles (id) on delete cascade,
+  author_id uuid not null references public.authors (id) on delete cascade,
   book_id uuid not null references public.books (id) on delete cascade,
   primary key (author_id, book_id)
 );
@@ -148,6 +165,7 @@ $$;
 -- RLS
 alter table public.profiles enable row level security;
 alter table public.books enable row level security;
+alter table public.authors enable row level security;
 alter table public.authors_books enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
@@ -155,6 +173,16 @@ alter table public.posts enable row level security;
 alter table public.partners enable row level security;
 alter table public.services enable row level security;
 alter table public.projects enable row level security;
+
+-- Ensure new columns exist on existing deployments
+alter table public.books
+  add column if not exists description_json jsonb,
+  add column if not exists cover_path text,
+  add column if not exists featured boolean default false,
+  add column if not exists isbn text,
+  add column if not exists publisher text,
+  add column if not exists seo_title text,
+  add column if not exists seo_description text;
 
 -- Profiles policies
 create policy "Profiles: user can view own profile" on public.profiles
@@ -179,15 +207,20 @@ create policy "Books: public can read active" on public.books
 create policy "Books: admins full access" on public.books
   for all using (public.is_admin()) with check (public.is_admin());
 
+-- Authors policies
+create policy "Authors: public can read" on public.authors
+  for select using (true);
+
+create policy "Authors: admins full access" on public.authors
+  for all using (public.is_admin()) with check (public.is_admin());
+
 -- Authors_books policies
-create policy "AuthorsBooks: public can read active/approved combos" on public.authors_books
+create policy "AuthorsBooks: public can read active books" on public.authors_books
   for select using (
     exists (
       select 1
-      from public.profiles p
-      join public.books b on b.id = authors_books.book_id
-      where p.id = authors_books.author_id
-        and p.status = 'approved'
+      from public.books b
+      where b.id = authors_books.book_id
         and b.is_active = true
     )
   );
@@ -261,6 +294,18 @@ insert into storage.buckets (id, name, public) values
   ('authors', 'authors', true),
   ('partners', 'partners', true)
 on conflict (id) do nothing;
+
+-- Storage policies for public assets and admin uploads
+alter table storage.objects enable row level security;
+
+create policy "Storage: public can read covers/authors/partners"
+  on storage.objects for select
+  using (bucket_id in ('covers','authors','partners'));
+
+create policy "Storage: admin can manage covers/authors/partners"
+  on storage.objects for all
+  using (public.is_admin())
+  with check (public.is_admin());
 
 -- Simple published/active defaults
 update public.posts set status = 'published' where status is null;
