@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Search, LogOut, User } from 'lucide-react'
 import type { AdminLevel, UserRole } from '../../../types/admin'
+import { Input } from '../../ui/input'
+import { Button } from '../../ui/button'
 
 type TopBarProps = {
   userRole?: UserRole
@@ -68,12 +70,12 @@ export function TopBar({
         <div className="flex-1 max-w-xs">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
+            <Input
               type="text"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm"
+              className="pl-10"
             />
           </div>
         </div>
@@ -126,13 +128,14 @@ export function TopBar({
                   <User className="w-4 h-4 mr-3" />
                   Profile Settings
                 </button>
-                <button
+                <Button
                   onClick={handleSignOut}
-                  className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  variant="ghost"
+                  className="flex items-center w-full justify-start px-4 py-2 text-sm text-rose-600 hover:bg-rose-50"
                 >
                   <LogOut className="w-4 h-4 mr-3" />
                   Sign Out
-                </button>
+                </Button>
               </div>
             </div>
           )}

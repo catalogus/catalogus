@@ -1,16 +1,80 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { DashboardLayout } from '../../components/admin/layout'
 import { AdminGuard } from '../../components/admin/AdminGuard'
+import { StatusBadge } from '../../components/admin/ui/StatusBadge'
+import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthProvider'
 
 export const Route = createFileRoute('/admin/orders')({
   component: AdminOrdersPage,
 })
 
+type OrderRow = {
+  id: string
+  order_number: string
+  customer_name: string
+  customer_email: string
+  total: number
+  status: string
+  created_at: string
+}
+
 function AdminOrdersPage() {
   const { profile, session, signOut } = useAuth()
   const userName = profile?.name ?? session?.user.email ?? 'Admin'
   const userEmail = session?.user.email ?? ''
+  const queryClient = useQueryClient()
+
+  const ordersQuery = useQuery({
+    queryKey: ['admin', 'orders'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(
+          'id, order_number, customer_name, customer_email, total, status, created_at',
+        )
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (error) throw error
+      return data as OrderRow[]
+    },
+    staleTime: 10_000,
+  })
+
+  const updateStatus = useMutation({
+    mutationFn: async (payload: { id: string; status: string }) => {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: payload.status })
+        .eq('id', payload.id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] })
+    },
+  })
+
+  const formatPrice = (value: number) =>
+    new Intl.NumberFormat('pt-MZ', {
+      style: 'currency',
+      currency: 'MZN',
+      maximumFractionDigits: 0,
+    }).format(value)
+
+  const statusVariant = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'success'
+      case 'processing':
+        return 'info'
+      case 'failed':
+      case 'cancelled':
+        return 'danger'
+      default:
+        return 'muted'
+    }
+  }
 
   return (
     <AdminGuard>
@@ -18,7 +82,7 @@ function AdminOrdersPage() {
         userRole={profile?.role ?? 'admin'}
         userName={userName}
         userEmail={userEmail}
-        onSignOut={signOut}
+            onSignOut={signOut}
       >
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -31,8 +95,74 @@ function AdminOrdersPage() {
               M-Pesa status feed will surface here.
             </div>
           </div>
-          <div className="rounded-2xl border border-dashed border-gray-300 p-6 text-gray-500 text-sm">
-            Order table, status updates, and payment verification UI will go here.
+          <div className="rounded-2xl border border-gray-200 p-4 bg-white">
+            {ordersQuery.isLoading ? (
+              <p className="text-sm text-gray-500">Loading orders…</p>
+            ) : ordersQuery.isError ? (
+              <p className="text-sm text-rose-600">
+                Failed to load orders. Check connection or permissions.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500 border-b">
+                      <th className="py-2 pr-3">Order</th>
+                      <th className="py-2 pr-3">Customer</th>
+                      <th className="py-2 pr-3">Total</th>
+                      <th className="py-2 pr-3">Status</th>
+                      <th className="py-2 pr-3">Created</th>
+                      <th className="py-2 pr-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {ordersQuery.data?.map((order) => (
+                      <tr key={order.id}>
+                        <td className="py-3 pr-3 font-medium text-gray-900">
+                          {order.order_number}
+                        </td>
+                        <td className="py-3 pr-3 text-gray-700">
+                          <div>{order.customer_name}</div>
+                          <div className="text-xs text-gray-500">
+                            {order.customer_email}
+                          </div>
+                        </td>
+                        <td className="py-3 pr-3 text-gray-900">
+                          {formatPrice(order.total)}
+                        </td>
+                        <td className="py-3 pr-3">
+                          <StatusBadge
+                            label={order.status}
+                            variant={statusVariant(order.status)}
+                          />
+                        </td>
+                        <td className="py-3 pr-3 text-gray-600">
+                          {new Date(order.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="py-3 pr-3 text-sm">
+                          <select
+                            defaultValue={order.status}
+                            onChange={(e) =>
+                              updateStatus.mutate({
+                                id: order.id,
+                                status: e.target.value,
+                              })
+                            }
+                            className="rounded-lg border border-gray-300 px-2 py-1"
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="processing">Processing</option>
+                            <option value="paid">Paid</option>
+                            <option value="failed">Failed</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </DashboardLayout>
