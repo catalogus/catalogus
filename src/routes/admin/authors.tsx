@@ -56,7 +56,7 @@ function AdminAuthorsPage() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, name, email, status, phone, bio, photo_url, photo_path, social_links, created_at, updated_at')
+          .select('id, name, email, status, phone, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type, created_at, updated_at')
           .eq('role', 'author')
           .order('created_at', { ascending: false })
         if (error) {
@@ -149,6 +149,13 @@ function AdminAuthorsPage() {
             role: 'author',
             status: values.status,
             social_links: values.social_links,
+            birth_date: values.birth_date || null,
+            residence_city: values.residence_city || null,
+            province: values.province || null,
+            published_works: values.published_works,
+            author_gallery: values.author_gallery,
+            featured_video: values.featured_video || null,
+            author_type: values.author_type || null,
           })
           .eq('id', userId)
           .select()
@@ -170,6 +177,13 @@ function AdminAuthorsPage() {
             role: 'author',
             status: values.status,
             social_links: values.social_links,
+            birth_date: values.birth_date || null,
+            residence_city: values.residence_city || null,
+            province: values.province || null,
+            published_works: values.published_works,
+            author_gallery: values.author_gallery,
+            featured_video: values.featured_video || null,
+            author_type: values.author_type || null,
           })
           .select()
 
@@ -221,6 +235,13 @@ function AdminAuthorsPage() {
           photo_path,
           status: values.status,
           social_links: values.social_links,
+          birth_date: values.birth_date || null,
+          residence_city: values.residence_city || null,
+          province: values.province || null,
+          published_works: values.published_works,
+          author_gallery: values.author_gallery,
+          featured_video: values.featured_video || null,
+          author_type: values.author_type || null,
         })
         .eq('id', id)
 
@@ -346,6 +367,7 @@ function AdminAuthorsPage() {
                       <th className="py-2 pr-3">Author</th>
                       <th className="py-2 pr-3">Email</th>
                       <th className="py-2 pr-3">Phone</th>
+                      <th className="py-2 pr-3">Tipo de Autor</th>
                       <th className="py-2 pr-3">Status</th>
                       <th className="py-2 pr-3">Actions</th>
                     </tr>
@@ -382,6 +404,9 @@ function AdminAuthorsPage() {
                         </td>
                         <td className="py-3 pr-3 text-gray-600">
                           {author.phone ?? '—'}
+                        </td>
+                        <td className="py-3 pr-3 text-gray-600">
+                          {author.author_type ?? '—'}
                         </td>
                         <td className="py-3 pr-3">
                           <StatusBadge

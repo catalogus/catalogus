@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
 import type { UserRole } from '../types/admin'
-import type { SocialLinks } from '../types/author'
+import type { SocialLinks, PublishedWork, GalleryImage } from '../types/author'
 
 type Profile = {
   id: string
@@ -16,6 +16,13 @@ type Profile = {
   photo_url?: string | null
   photo_path?: string | null
   social_links?: SocialLinks | null
+  birth_date?: string | null
+  residence_city?: string | null
+  province?: string | null
+  published_works?: PublishedWork[] | null
+  author_gallery?: GalleryImage[] | null
+  featured_video?: string | null
+  author_type?: string | null
 }
 
 type AuthContextValue = {
@@ -66,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, role, status, name, email, phone, bio, photo_url, photo_path, social_links')
+      .select('id, role, status, name, email, phone, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type')
       .eq('id', userId)
       .maybeSingle()
 

@@ -24,6 +24,7 @@ type NavigationItem = {
 
 const adminNavigation: NavigationItem[] = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { name: 'Posts', href: '/admin/content/posts', icon: FileText },
   { name: 'Books', href: '/admin/books', icon: BookOpen },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Authors', href: '/admin/authors', icon: Users },
@@ -32,7 +33,6 @@ const adminNavigation: NavigationItem[] = [
     href: '/admin/content',
     icon: FileText,
     subItems: [
-      { name: 'Posts', href: '/admin/content/posts', icon: FileText },
       { name: 'Partners', href: '/admin/content/partners', icon: Users },
       { name: 'Services', href: '/admin/content/services', icon: LibraryBig },
       { name: 'Projects', href: '/admin/content/projects', icon: LayoutDashboard },

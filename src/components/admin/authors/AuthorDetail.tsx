@@ -1,6 +1,6 @@
 import { StatusBadge } from '../ui/StatusBadge'
 import type { AuthorRow } from '../../../types/author'
-import { Twitter, Linkedin, Globe, Instagram } from 'lucide-react'
+import { Twitter, Linkedin, Globe, Instagram, Youtube, MapPin, Calendar, Video } from 'lucide-react'
 
 type AuthorDetailProps = {
   author: AuthorRow
@@ -43,6 +43,11 @@ export function AuthorDetail({ author }: AuthorDetailProps) {
             <h2 className="text-2xl font-semibold text-gray-900">
               {author.name}
             </h2>
+            {author.author_type && (
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                {author.author_type}
+              </p>
+            )}
             {author.email && (
               <p className="text-sm text-gray-600">{author.email}</p>
             )}
@@ -85,6 +90,49 @@ export function AuthorDetail({ author }: AuthorDetailProps) {
           </div>
         </div>
       </div>
+
+      {/* Personal Information */}
+      {(author.birth_date || author.residence_city || author.province) && (
+        <div className="border-t pt-4 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-900">
+            Personal Information
+          </h3>
+
+          <div className="grid grid-cols-2 gap-4">
+            {author.birth_date && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-gray-500" />
+                <div>
+                  <p className="text-xs text-gray-500">Birth Date</p>
+                  <p className="text-sm text-gray-900">
+                    {formatDate(author.birth_date)}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {author.residence_city && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-gray-500" />
+                <div>
+                  <p className="text-xs text-gray-500">City</p>
+                  <p className="text-sm text-gray-900">{author.residence_city}</p>
+                </div>
+              </div>
+            )}
+
+            {author.province && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-gray-500" />
+                <div>
+                  <p className="text-xs text-gray-500">Province</p>
+                  <p className="text-sm text-gray-900">{author.province}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Bio */}
       {author.bio && (
@@ -149,6 +197,101 @@ export function AuthorDetail({ author }: AuthorDetailProps) {
                 <span>{author.social_links.instagram}</span>
               </a>
             )}
+
+            {author.social_links?.youtube && (
+              <a
+                href={author.social_links.youtube}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 text-sm text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                <Youtube className="h-4 w-4" />
+                <span>{author.social_links.youtube}</span>
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Featured Video */}
+      {author.featured_video && (
+        <div className="border-t pt-4 space-y-2">
+          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+            <Video className="h-4 w-4" />
+            Featured Video
+          </h3>
+          <a
+            href={author.featured_video}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-600 hover:text-blue-700 hover:underline break-all"
+          >
+            {author.featured_video}
+          </a>
+        </div>
+      )}
+
+      {/* Published Works */}
+      {author.published_works && author.published_works.length > 0 && (
+        <div className="border-t pt-4 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-900">
+            Obras Publicadas (Published Works)
+          </h3>
+          <div className="grid grid-cols-1 gap-4">
+            {author.published_works.map((work, index) => (
+              <div
+                key={index}
+                className="border border-gray-200 rounded-lg p-3 flex gap-3"
+              >
+                {work.cover_url && (
+                  <img
+                    src={work.cover_url}
+                    alt={work.title}
+                    className="h-32 w-24 object-cover rounded border border-gray-200 shrink-0"
+                  />
+                )}
+                <div className="flex-1 space-y-2">
+                  <h4 className="font-semibold text-gray-900">{work.title}</h4>
+                  <p className="text-xs text-gray-600">
+                    <span className="font-medium">Gênero:</span> {work.genre}
+                  </p>
+                  <p className="text-sm text-gray-700">{work.synopsis}</p>
+                  {work.link && (
+                    <a
+                      href={work.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:text-blue-700 hover:underline inline-block"
+                    >
+                      Ver obra
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Author Gallery */}
+      {author.author_gallery && author.author_gallery.length > 0 && (
+        <div className="border-t pt-4 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-900">
+            Galeria do Autor (Author Gallery)
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            {author.author_gallery.map((image, index) => (
+              <div key={index} className="space-y-1">
+                <img
+                  src={image.url}
+                  alt={image.caption || `Gallery image ${index + 1}`}
+                  className="w-full h-32 object-cover rounded border border-gray-200"
+                />
+                {image.caption && (
+                  <p className="text-xs text-gray-600">{image.caption}</p>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
