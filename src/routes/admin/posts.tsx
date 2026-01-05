@@ -69,6 +69,7 @@ function AdminPostsPage() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
   const queryClient = useQueryClient()
+  const statusCountsKey = ['admin', 'posts', 'status-counts'] as const
 
   const withTimeout = async <T,>(promise: Promise<T>, ms: number, label: string) => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null
@@ -210,7 +211,7 @@ function AdminPostsPage() {
     }))
 
     return { posts: posts as PostRow[], total: count ?? 0 }
-  }, [])
+  }, [withTimeout])
 
   const postsQueryKey = buildPostsQueryKey(filters)
   const postsQuery = useQuery({
@@ -253,9 +254,62 @@ function AdminPostsPage() {
     })
   }
 
+  const updateStatusCounts = (from: PostStatus, to: PostStatus, count: number) => {
+    if (from === to || count <= 0) return
+    queryClient.setQueryData(statusCountsKey, (old) => {
+      if (!old) return old
+      const data = old as Record<PostStatus, number>
+      return {
+        ...data,
+        [from]: Math.max(0, (data[from] ?? 0) - count),
+        [to]: (data[to] ?? 0) + count,
+      }
+    })
+  }
+
+  const decrementStatusCount = (status: PostStatus, count: number) => {
+    if (count <= 0) return
+    queryClient.setQueryData(statusCountsKey, (old) => {
+      if (!old) return old
+      const data = old as Record<PostStatus, number>
+      return {
+        ...data,
+        [status]: Math.max(0, (data[status] ?? 0) - count),
+      }
+    })
+  }
+
+  const statusCountsQuery = useQuery({
+    queryKey: statusCountsKey,
+    queryFn: async () => {
+      const statuses: PostStatus[] = ['published', 'draft', 'trash']
+      const entries = await Promise.all(
+        statuses.map(async (status) => {
+          const { count, error } = await withTimeout(
+            supabase
+              .from('posts')
+              .select('id', { count: 'exact', head: true })
+              .eq('status', status),
+            15_000,
+            'Posts count',
+          )
+          if (error) throw error
+          return [status, count ?? 0] as const
+        }),
+      )
+      return Object.fromEntries(entries) as Record<PostStatus, number>
+    },
+    staleTime: 30_000,
+  })
+
   const totalPages = Math.ceil(
     (postsQuery.data?.total ?? 0) / (filters.per_page ?? 20),
   )
+  const statusCounts = statusCountsQuery.data ?? {
+    published: 0,
+    draft: 0,
+    trash: 0,
+  }
 
   const createTag = useMutation({
     mutationFn: async (name: string) => {
@@ -387,6 +441,41 @@ function AdminPostsPage() {
       if (!response.ok) {
         const text = await response.text()
         throw new Error(text || `Post update failed (${response.status}).`)
+      }
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  }
+
+  const deletePostsViaRest = async (ids: string[]) => {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Missing Supabase configuration.')
+    }
+    const accessToken = session?.access_token
+    if (!accessToken) {
+      throw new Error('Missing auth session. Please sign in again.')
+    }
+    if (ids.length === 0) return
+
+    const idFilter = `id=in.(${ids.join(',')})`
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15_000)
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/posts?${encodeURI(idFilter)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${accessToken}`,
+            Prefer: 'return=minimal',
+          },
+          signal: controller.signal,
+        },
+      )
+      if (!response.ok) {
+        const text = await response.text()
+        throw new Error(text || `Post delete failed (${response.status}).`)
       }
     } finally {
       clearTimeout(timeoutId)
@@ -527,6 +616,7 @@ function AdminPostsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] })
+      queryClient.invalidateQueries({ queryKey: statusCountsKey })
       setShowForm(false)
       setEditingPost(null)
       toast.success('Post saved')
@@ -542,6 +632,8 @@ function AdminPostsPage() {
       await updatePostsStatusViaRest(ids, 'trash')
     },
     onSuccess: (_data, ids) => {
+      const fromStatus = (filters.status ?? 'published') as PostStatus
+      updateStatusCounts(fromStatus, 'trash', ids.length)
       updateCurrentPosts((data) => {
         const next = data.posts
           .map((post) =>
@@ -554,26 +646,64 @@ function AdminPostsPage() {
       })
       queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] })
       queryClient.refetchQueries({ queryKey: ['admin', 'posts'] })
+      queryClient.invalidateQueries({ queryKey: statusCountsKey })
       setSelectedIds(new Set())
       toast.success('Moved to trash')
     },
     onError: (err: any) => toast.error(err.message ?? 'Failed to move to trash'),
   })
 
+  const restoreFromTrash = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await updatePostsStatusViaRest(ids, 'draft')
+    },
+    onSuccess: (_data, ids) => {
+      updateStatusCounts('trash', 'draft', ids.length)
+      updateCurrentPosts((data) => {
+        const next = data.posts.filter((post) => !ids.includes(post.id))
+        return { ...data, posts: next, total: next.length }
+      })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] })
+      queryClient.invalidateQueries({ queryKey: statusCountsKey })
+      setSelectedIds(new Set())
+      toast.success('Posts restored to drafts')
+    },
+    onError: (err: any) => toast.error(err.message ?? 'Failed to restore posts'),
+  })
+
   const deletePost = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('posts').delete().eq('id', id)
-      if (error) throw error
+      await deletePostsViaRest([id])
     },
     onSuccess: (_data, id) => {
+      decrementStatusCount('trash', 1)
       updateCurrentPosts((data) => {
         const next = data.posts.filter((post) => post.id !== id)
         return { ...data, posts: next, total: next.length }
       })
       queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] })
+      queryClient.invalidateQueries({ queryKey: statusCountsKey })
       toast.success('Post deleted')
     },
     onError: (err: any) => toast.error(err.message ?? 'Failed to delete post'),
+  })
+
+  const deletePosts = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await deletePostsViaRest(ids)
+    },
+    onSuccess: (_data, ids) => {
+      decrementStatusCount('trash', ids.length)
+      updateCurrentPosts((data) => {
+        const next = data.posts.filter((post) => !ids.includes(post.id))
+        return { ...data, posts: next, total: next.length }
+      })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] })
+      queryClient.invalidateQueries({ queryKey: statusCountsKey })
+      setSelectedIds(new Set())
+      toast.success('Posts deleted')
+    },
+    onError: (err: any) => toast.error(err.message ?? 'Failed to delete posts'),
   })
 
   const toggleFeatured = useMutation({
@@ -607,6 +737,8 @@ function AdminPostsPage() {
       if (error) throw error
     },
     onSuccess: (_data, ids) => {
+      const fromStatus = (filters.status ?? 'draft') as PostStatus
+      updateStatusCounts(fromStatus, 'published', ids.length)
       updateCurrentPosts((data) => {
         const now = new Date().toISOString()
         const next = data.posts
@@ -623,6 +755,7 @@ function AdminPostsPage() {
         return { ...data, posts: next, total: next.length }
       })
       queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] })
+      queryClient.invalidateQueries({ queryKey: statusCountsKey })
       setSelectedIds(new Set())
       toast.success('Posts published')
     },
@@ -717,9 +850,9 @@ function AdminPostsPage() {
           <div className="rounded-2xl border border-gray-200 p-4 bg-white space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               {[
-                { label: 'Published', value: 'published' },
-                { label: 'Drafts', value: 'draft' },
-                { label: 'Trash', value: 'trash' },
+                { label: 'Published', value: 'published', count: statusCounts.published },
+                { label: 'Drafts', value: 'draft', count: statusCounts.draft },
+                { label: 'Trash', value: 'trash', count: statusCounts.trash },
               ].map((tab) => (
                 <button
                   key={tab.value}
@@ -731,13 +864,22 @@ function AdminPostsPage() {
                       page: 1,
                     }))
                   }
-                  className={`rounded-full px-4 py-1.5 text-sm border ${
+                  className={`rounded-full px-4 py-1.5 text-sm border flex items-center gap-2 ${
                     filters.status === tab.value
                       ? 'bg-gray-900 text-white border-gray-900'
                       : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                   }`}
                 >
-                  {tab.label}
+                  <span>{tab.label}</span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs ${
+                      filters.status === tab.value
+                        ? 'bg-white/20 text-white'
+                        : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {statusCountsQuery.isLoading ? '…' : tab.count}
+                  </span>
                 </button>
               ))}
             </div>
@@ -831,28 +973,52 @@ function AdminPostsPage() {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => bulkPublish.mutate(Array.from(selectedIds))}
-                >
-                  Publish
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => bulkSetFeatured.mutate(Array.from(selectedIds))}
-                >
-                  Set Featured
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => moveToTrash.mutate(Array.from(selectedIds))}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Move to Trash
-                </Button>
+                {filters.status === 'draft' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => bulkPublish.mutate(Array.from(selectedIds))}
+                  >
+                    Publish
+                  </Button>
+                )}
+                {filters.status !== 'trash' && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => bulkSetFeatured.mutate(Array.from(selectedIds))}
+                    >
+                      Set Featured
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => moveToTrash.mutate(Array.from(selectedIds))}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Move to Trash
+                    </Button>
+                  </>
+                )}
+                {filters.status === 'trash' && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => restoreFromTrash.mutate(Array.from(selectedIds))}
+                    >
+                      Restore
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => deletePosts.mutate(Array.from(selectedIds))}
+                    >
+                      Delete Permanently
+                    </Button>
+                  </>
+                )}
                 <Button
                   size="sm"
                   variant="ghost"
@@ -887,7 +1053,6 @@ function AdminPostsPage() {
                           className="h-4 w-4 rounded border-gray-300"
                         />
                       </TableHead>
-                      <TableHead className="w-20">Image</TableHead>
                       <TableHead>Title</TableHead>
                       <TableHead>Author</TableHead>
                       <TableHead>Categories</TableHead>
@@ -910,17 +1075,6 @@ function AdminPostsPage() {
                             onChange={() => handleSelectOne(post.id)}
                             className="h-4 w-4 rounded border-gray-300"
                           />
-                        </TableCell>
-                        <TableCell>
-                          {post.featured_image_url ? (
-                            <img
-                              src={post.featured_image_url}
-                              alt={post.title}
-                              className="h-12 w-16 object-cover rounded border border-gray-200"
-                            />
-                          ) : (
-                            <div className="h-12 w-16 bg-gray-100 rounded border border-gray-200" />
-                          )}
                         </TableCell>
                         <TableCell className="font-medium text-gray-900">
                           <div className="flex items-center gap-2">
@@ -978,6 +1132,13 @@ function AdminPostsPage() {
                                 {post.featured ? 'Unfeature' : 'Mark Featured'}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
+                              {post.status === 'draft' && (
+                                <DropdownMenuItem
+                                  onClick={() => bulkPublish.mutate([post.id])}
+                                >
+                                  Publish
+                                </DropdownMenuItem>
+                              )}
                               {post.status !== 'trash' ? (
                                 <DropdownMenuItem
                                   onClick={() => moveToTrash.mutate([post.id])}
@@ -985,12 +1146,19 @@ function AdminPostsPage() {
                                   Move to Trash
                                 </DropdownMenuItem>
                               ) : (
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={() => deletePost.mutate(post.id)}
-                                >
-                                  Delete Permanently
-                                </DropdownMenuItem>
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={() => restoreFromTrash.mutate([post.id])}
+                                  >
+                                    Restore to Draft
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onClick={() => deletePost.mutate(post.id)}
+                                  >
+                                    Delete Permanently
+                                  </DropdownMenuItem>
+                                </>
                               )}
                             </DropdownMenuContent>
                           </DropdownMenu>
