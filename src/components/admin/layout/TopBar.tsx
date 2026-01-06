@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Search, LogOut, User } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import { Home, Search, LogOut, User } from 'lucide-react'
 import type { AdminLevel, UserRole } from '../../../types/admin'
 import { Input } from '../../ui/input'
 import { Button } from '../../ui/button'
@@ -118,6 +119,14 @@ export function TopBar({
               </div>
 
               <div className="py-1">
+                <Link
+                  to="/"
+                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <Home className="w-4 h-4 mr-3" />
+                  Homepage
+                </Link>
                 <button
                   onClick={() => {
                     setShowUserMenu(false)

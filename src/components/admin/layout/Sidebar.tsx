@@ -8,6 +8,7 @@ import {
   FileText,
   LibraryBig,
   ChevronDown,
+  Image,
 } from 'lucide-react'
 import type { UserRole } from '../../../types/admin'
 
@@ -24,6 +25,7 @@ type NavigationItem = {
 
 const adminNavigation: NavigationItem[] = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { name: 'Hero Slides', href: '/admin/hero-slides', icon: Image },
   { name: 'Posts', href: '/admin/posts', icon: FileText },
   { name: 'Books', href: '/admin/books', icon: BookOpen },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },

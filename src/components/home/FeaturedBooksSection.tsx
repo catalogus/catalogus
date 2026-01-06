@@ -1,0 +1,237 @@
+import { useQuery } from '@tanstack/react-query'
+import { Link2, ShoppingCart } from 'lucide-react'
+import { toast } from 'sonner'
+import { supabase } from '../../lib/supabaseClient'
+
+type FeaturedBook = {
+  id: string
+  title: string
+  slug: string | null
+  price_mzn: number | null
+  description: string | null
+  seo_description: string | null
+  cover_url: string | null
+  cover_path: string | null
+}
+
+const MAX_DESCRIPTION_LENGTH = 350
+
+const formatPrice = (value: number | null) => {
+  if (value === null || Number.isNaN(value)) return ''
+  return new Intl.NumberFormat('pt-MZ', {
+    style: 'currency',
+    currency: 'MZN',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+const truncateText = (value: string, maxLength: number) => {
+  if (value.length <= maxLength) return value
+  return `${value.slice(0, maxLength).trimEnd()}...`
+}
+
+const coverUrlFor = (book: FeaturedBook) => {
+  if (book.cover_url) return book.cover_url
+  if (book.cover_path) {
+    return supabase.storage.from('covers').getPublicUrl(book.cover_path).data
+      .publicUrl
+  }
+  return null
+}
+
+const bookLinkFor = (book: FeaturedBook) => `/livro/${book.id}`
+
+const addToCart = (book: FeaturedBook) => {
+  if (typeof window === 'undefined') return
+  try {
+    const key = 'catalogus-cart'
+    const raw = window.localStorage.getItem(key)
+    const items = raw ? (JSON.parse(raw) as Array<{ id: string; quantity: number }>) : []
+    const existing = items.find((item) => item.id === book.id)
+    if (existing) {
+      existing.quantity += 1
+    } else {
+      items.push({ id: book.id, quantity: 1 })
+    }
+    window.localStorage.setItem(key, JSON.stringify(items))
+  } catch {
+    // Ignore storage failures and still show feedback.
+  }
+  toast.success('Adicionado ao carrinho')
+}
+
+const copyText = async (value: string) => {
+  if (
+    typeof window !== 'undefined' &&
+    window.isSecureContext &&
+    navigator.clipboard?.writeText
+  ) {
+    try {
+      await navigator.clipboard.writeText(value)
+      return true
+    } catch {
+      // Fall back to legacy copy path.
+    }
+  }
+
+  const textarea = document.createElement('textarea')
+  textarea.value = value
+  textarea.setAttribute('readonly', '')
+  textarea.style.position = 'fixed'
+  textarea.style.top = '-1000px'
+  textarea.style.left = '-1000px'
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+  textarea.focus()
+  textarea.select()
+  textarea.setSelectionRange(0, textarea.value.length)
+  const success = document.execCommand('copy')
+  document.body.removeChild(textarea)
+  return success
+}
+
+const copyBookLink = async (book: FeaturedBook) => {
+  if (typeof window === 'undefined') return
+  const href = new URL(bookLinkFor(book), window.location.origin).toString()
+  try {
+    const copied = await copyText(href)
+    if (!copied) {
+      toast.error('Nao foi possivel copiar o link')
+      return
+    }
+    toast.success('Link copiado')
+  } catch {
+    toast.error('Nao foi possivel copiar o link')
+  }
+}
+
+export default function FeaturedBooksSection() {
+  const booksQuery = useQuery({
+    queryKey: ['home', 'featured-books'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('books')
+        .select(
+          'id, title, slug, price_mzn, description, seo_description, cover_url, cover_path, featured, is_active',
+        )
+        .eq('featured', true)
+        .eq('is_active', true)
+        .limit(4)
+      if (error) throw error
+      return (data ?? []) as FeaturedBook[]
+    },
+    staleTime: 60_000,
+  })
+
+  return (
+    <section className="bg-[#f7f4ef] text-gray-900">
+      <div className="container mx-auto px-4 py-24 lg:px-15">
+        <div className="space-y-4">
+          <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
+            Loja
+          </p>
+          <div>
+            <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
+              Livros em destaque
+            </h2>
+            <div className="mt-3 h-1 w-12 bg-[#f97316]" />
+          </div>
+        </div>
+
+        <div className="mt-12 grid gap-8 md:grid-cols-2 xl:grid-cols-4">
+          {booksQuery.isLoading &&
+            Array.from({ length: 4 }).map((_, index) => (
+              <div key={`featured-book-skeleton-${index}`} className="space-y-5">
+                <div className="bg-[#e6e0db] p-10 rounded-none">
+                  <div className="aspect-[3/4] w-full bg-white/60 animate-pulse" />
+                </div>
+                <div className="h-5 w-3/4 bg-gray-200 animate-pulse" />
+                <div className="h-12 w-full bg-gray-100 animate-pulse" />
+                <div className="h-5 w-1/3 bg-gray-200 animate-pulse" />
+              </div>
+            ))}
+
+          {booksQuery.isError && (
+            <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
+              Falha ao carregar os livros em destaque.
+            </div>
+          )}
+
+          {!booksQuery.isLoading &&
+            !booksQuery.isError &&
+            (booksQuery.data ?? []).map((book) => {
+              const coverUrl = coverUrlFor(book)
+              const description = book.description || book.seo_description || ''
+              const summary = description
+                ? truncateText(description, MAX_DESCRIPTION_LENGTH)
+                : 'Descricao indisponivel.'
+              const priceLabel = formatPrice(book.price_mzn)
+              return (
+                <div key={book.id} className="group space-y-4">
+                  <div className="relative bg-[#e6e0db] p-10 rounded-none">
+                    <div className="aspect-[3/4] w-full overflow-hidden bg-white/60 rounded-none">
+                      {coverUrl ? (
+                        <img
+                          src={coverUrl}
+                          alt={book.title}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-[0.3em] text-gray-400">
+                          Sem capa
+                        </div>
+                      )}
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => addToCart(book)}
+                        className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f97316] text-white transition-transform hover:scale-105"
+                        aria-label="Adicionar ao carrinho"
+                      >
+                        <ShoppingCart className="h-5 w-5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => copyBookLink(book)}
+                        className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f97316] text-white transition-transform hover:scale-105"
+                        aria-label="Copiar link do livro"
+                      >
+                        <Link2 className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <a
+                      href={bookLinkFor(book)}
+                      className="block text-xl font-semibold text-gray-900 transition-colors hover:text-gray-700"
+                    >
+                      {book.title}
+                    </a>
+                    <p className="text-sm leading-relaxed text-gray-600">
+                      {summary}
+                    </p>
+                    {priceLabel && (
+                      <p className="text-lg font-semibold text-[#f97316]">
+                        {priceLabel}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+
+          {!booksQuery.isLoading &&
+            !booksQuery.isError &&
+            (booksQuery.data?.length ?? 0) === 0 && (
+              <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
+                Sem livros em destaque.
+              </div>
+            )}
+        </div>
+      </div>
+    </section>
+  )
+}
