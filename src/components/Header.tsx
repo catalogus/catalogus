@@ -85,14 +85,11 @@ export default function Header() {
     >
       <div className="flex items-center justify-between px-4 py-3 md:px-15 lg:py-6">
         <Link to="/" className="group flex items-center gap-3">
-          <div className="leading-tight">
-            <p className="text-base font-semibold text-(--header-ink) sm:text-lg">
-              Catalogus
-            </p>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-(--header-muted)">
-              Livraria & cultura
-            </p>
-          </div>
+          <img
+            src="/logo.svg"
+            alt="Catalogus"
+            className="h-10 w-auto sm:h-4"
+          />
         </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">
@@ -126,7 +123,7 @@ export default function Header() {
                   <img
                     src={profile.photo_url}
                     alt={profile.name ?? 'User'}
-                    className="h-6 w-6 rounded-full object-cover"
+                    className="h-6 w-6 object-cover"
                   />
                 ) : (
                   <User className="h-4 w-4" />
@@ -270,10 +267,10 @@ export default function Header() {
                     <img
                       src={profile.photo_url}
                       alt={profile.name ?? 'User'}
-                      className="h-10 w-10 rounded-full object-cover border-2 border-white/20"
+                      className="h-10 w-10 object-cover border-2 border-white/20"
                     />
                   ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 border-2 border-white/20">
+                    <div className="flex h-10 w-10 items-center justify-center bg-white/10 border-2 border-white/20">
                       <User className="h-5 w-5" />
                     </div>
                   )}

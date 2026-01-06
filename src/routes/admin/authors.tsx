@@ -55,7 +55,7 @@ function AdminAuthorsPage() {
       try {
         const { data, error } = await supabase
           .from('authors')
-          .select('id, name, wp_id, wp_slug, bio, photo_url, photo_path, phone, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type, created_at, updated_at')
+          .select('id, name, wp_id, wp_slug, bio, photo_url, photo_path, phone, social_links, featured, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type, created_at, updated_at')
           .order('created_at', { ascending: false })
         if (error) {
           console.error('Authors query error:', error)
@@ -265,6 +265,22 @@ function AdminAuthorsPage() {
     },
   })
 
+  const toggleFeatured = useMutation({
+    mutationFn: async (payload: { id: string; featured: boolean }) => {
+      const { error } = await supabase
+        .from('authors')
+        .update({ featured: payload.featured })
+        .eq('id', payload.id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'authors'] })
+      toast.success('Featured status updated')
+    },
+    onError: (err: any) =>
+      toast.error(err.message ?? 'Failed to update featured status'),
+  })
+
   const handleFormSubmit = async (values: AuthorFormValues, file?: File | null) => {
     if (editingAuthor) {
       await updateAuthor.mutateAsync({ values, file, id: editingAuthor.id })
@@ -327,6 +343,7 @@ function AdminAuthorsPage() {
                       <th className="py-2 pr-3">Phone</th>
                       <th className="py-2 pr-3">Tipo de Autor</th>
                       <th className="py-2 pr-3">WordPress</th>
+                      <th className="py-2 pr-3">Featured</th>
                       <th className="py-2 pr-3">Actions</th>
                     </tr>
                   </thead>
@@ -368,6 +385,9 @@ function AdminAuthorsPage() {
                             {author.wp_slug ?? '—'}
                           </div>
                         </td>
+                        <td className="py-3 pr-3 text-gray-600">
+                          {author.featured ? 'Yes' : 'No'}
+                        </td>
                         <td className="py-3 pr-3">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -397,6 +417,18 @@ function AdminAuthorsPage() {
                                 }}
                               >
                                 Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  toggleFeatured.mutate({
+                                    id: author.id,
+                                    featured: !(author.featured ?? false),
+                                  })
+                                }}
+                              >
+                                {author.featured ? 'Unfeature' : 'Mark featured'}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem

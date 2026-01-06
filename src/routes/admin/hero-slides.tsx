@@ -105,6 +105,7 @@ function AdminHeroSlidesPage() {
       const { data, error } = await supabase
         .from('authors')
         .select('id, name, photo_url')
+        .eq('featured', true)
         .order('name', { ascending: true })
       if (error) throw error
       return data as { id: string; name: string; photo_url: string | null }[]
@@ -295,6 +296,7 @@ function AdminHeroSlidesPage() {
         cta_url: payload.cta_url || null,
         background_image_url,
         background_image_path,
+        accent_color: payload.accent_color || null,
         content_type: payload.content_type,
         content_id: payload.content_id,
         order_weight: payload.order_weight,
@@ -565,6 +567,7 @@ function AdminHeroSlidesPage() {
                           cta_url: editingSlide.cta_url ?? '',
                           background_image_url: editingSlide.background_image_url ?? '',
                           background_image_path: editingSlide.background_image_path ?? '',
+                          accent_color: editingSlide.accent_color ?? '',
                           content_type: editingSlide.content_type,
                           content_id: editingSlide.content_id,
                           order_weight: editingSlide.order_weight,

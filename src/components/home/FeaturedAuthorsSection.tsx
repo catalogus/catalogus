@@ -5,6 +5,7 @@ import type { SocialLinks } from '../../types/author'
 
 type FeaturedAuthor = {
   id: string
+  wp_slug: string | null
   name: string
   author_type: string | null
   photo_url: string | null
@@ -23,8 +24,8 @@ const photoUrlFor = (author: FeaturedAuthor) => {
 
 const fetchAuthors = async (useFeatured: boolean) => {
   const selectFields = useFeatured
-    ? 'id, name, author_type, photo_url, photo_path, social_links, featured'
-    : 'id, name, author_type, photo_url, photo_path, social_links'
+    ? 'id, wp_slug, name, author_type, photo_url, photo_path, social_links, featured'
+    : 'id, wp_slug, name, author_type, photo_url, photo_path, social_links'
   let query = supabase
     .from('authors')
     .select(selectFields)
@@ -80,7 +81,7 @@ export default function FeaturedAuthorsSection() {
               <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
                 Autores em destaque
               </h2>
-              <div className="mt-3 h-1 w-12 bg-[#f97316]" />
+              <div className="mt-3 h-1 w-12 bg-[color:var(--brand)]" />
             </div>
           </div>
           <a
@@ -113,6 +114,7 @@ export default function FeaturedAuthorsSection() {
               const photoUrl = photoUrlFor(author)
               const typeLabel = author.author_type || 'Autor'
               const socialLinks = getSocialLinks(author)
+              const authorHref = `/autor/${author.wp_slug || author.id}`
               return (
                 <div key={author.id} className="space-y-3">
                   <div className="group relative aspect-[4/5] w-full overflow-hidden bg-[#f4f1ec] rounded-none">
@@ -150,7 +152,13 @@ export default function FeaturedAuthorsSection() {
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900">
-                      {author.name}
+                      <a
+                        href={authorHref}
+                        className="hover:underline"
+                        aria-label={`Ver autor ${author.name}`}
+                      >
+                        {author.name}
+                      </a>
                     </h3>
                     <p className="text-sm text-gray-600">{typeLabel}</p>
                   </div>

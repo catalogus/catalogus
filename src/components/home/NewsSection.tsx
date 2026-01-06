@@ -128,7 +128,7 @@ export default function NewsSection() {
                 <a
                   key={post.id}
                   href={href}
-                  className="group relative flex min-h-[420px] flex-col justify-end overflow-hidden border border-white/10 bg-white/5 text-left transition-transform hover:-translate-y-1 rounded-none"
+                  className="group relative flex min-h-105 flex-col justify-end overflow-hidden border border-white/10 bg-white/5 text-left transition-transform hover:-translate-y-1 rounded-none"
                 >
                   {post.featured_image_url ? (
                     <img

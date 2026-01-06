@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AutorAuthorIdRouteImport } from './routes/autor/$authorId'
 import { Route as AuthorSignUpRouteImport } from './routes/author/sign-up'
 import { Route as AuthorSignInRouteImport } from './routes/author/sign-in'
 import { Route as AuthorProfileRouteImport } from './routes/author/profile'
@@ -19,6 +20,7 @@ import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminPostsRouteImport } from './routes/admin/posts'
 import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
+import { Route as AdminHeroSlidesRouteImport } from './routes/admin/hero-slides'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminContentRouteImport } from './routes/admin/content'
 import { Route as AdminBooksRouteImport } from './routes/admin/books'
@@ -42,6 +44,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AutorAuthorIdRoute = AutorAuthorIdRouteImport.update({
+  id: '/autor/$authorId',
+  path: '/autor/$authorId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthorSignUpRoute = AuthorSignUpRouteImport.update({
@@ -82,6 +89,11 @@ const AdminPostsRoute = AdminPostsRouteImport.update({
 const AdminOrdersRoute = AdminOrdersRouteImport.update({
   id: '/admin/orders',
   path: '/admin/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminHeroSlidesRoute = AdminHeroSlidesRouteImport.update({
+  id: '/admin/hero-slides',
+  path: '/admin/hero-slides',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
@@ -161,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/admin/books': typeof AdminBooksRoute
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/hero-slides': typeof AdminHeroSlidesRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -169,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/author/profile': typeof AuthorProfileRoute
   '/author/sign-in': typeof AuthorSignInRoute
   '/author/sign-up': typeof AuthorSignUpRoute
+  '/autor/$authorId': typeof AutorAuthorIdRoute
   '/admin': typeof AdminIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
@@ -187,6 +201,7 @@ export interface FileRoutesByTo {
   '/admin/books': typeof AdminBooksRoute
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/hero-slides': typeof AdminHeroSlidesRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -195,6 +210,7 @@ export interface FileRoutesByTo {
   '/author/profile': typeof AuthorProfileRoute
   '/author/sign-in': typeof AuthorSignInRoute
   '/author/sign-up': typeof AuthorSignUpRoute
+  '/autor/$authorId': typeof AutorAuthorIdRoute
   '/admin': typeof AdminIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
@@ -214,6 +230,7 @@ export interface FileRoutesById {
   '/admin/books': typeof AdminBooksRoute
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/hero-slides': typeof AdminHeroSlidesRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -222,6 +239,7 @@ export interface FileRoutesById {
   '/author/profile': typeof AuthorProfileRoute
   '/author/sign-in': typeof AuthorSignInRoute
   '/author/sign-up': typeof AuthorSignUpRoute
+  '/autor/$authorId': typeof AutorAuthorIdRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
@@ -242,6 +260,7 @@ export interface FileRouteTypes {
     | '/admin/books'
     | '/admin/content'
     | '/admin/dashboard'
+    | '/admin/hero-slides'
     | '/admin/orders'
     | '/admin/posts'
     | '/admin/users'
@@ -250,6 +269,7 @@ export interface FileRouteTypes {
     | '/author/profile'
     | '/author/sign-in'
     | '/author/sign-up'
+    | '/autor/$authorId'
     | '/admin'
     | '/admin/content/partners'
     | '/admin/content/projects'
@@ -268,6 +288,7 @@ export interface FileRouteTypes {
     | '/admin/books'
     | '/admin/content'
     | '/admin/dashboard'
+    | '/admin/hero-slides'
     | '/admin/orders'
     | '/admin/posts'
     | '/admin/users'
@@ -276,6 +297,7 @@ export interface FileRouteTypes {
     | '/author/profile'
     | '/author/sign-in'
     | '/author/sign-up'
+    | '/autor/$authorId'
     | '/admin'
     | '/admin/content/partners'
     | '/admin/content/projects'
@@ -294,6 +316,7 @@ export interface FileRouteTypes {
     | '/admin/books'
     | '/admin/content'
     | '/admin/dashboard'
+    | '/admin/hero-slides'
     | '/admin/orders'
     | '/admin/posts'
     | '/admin/users'
@@ -302,6 +325,7 @@ export interface FileRouteTypes {
     | '/author/profile'
     | '/author/sign-in'
     | '/author/sign-up'
+    | '/autor/$authorId'
     | '/admin/'
     | '/admin/content/partners'
     | '/admin/content/projects'
@@ -321,6 +345,7 @@ export interface RootRouteChildren {
   AdminBooksRoute: typeof AdminBooksRoute
   AdminContentRoute: typeof AdminContentRouteWithChildren
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminHeroSlidesRoute: typeof AdminHeroSlidesRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
   AdminPostsRoute: typeof AdminPostsRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -329,6 +354,7 @@ export interface RootRouteChildren {
   AuthorProfileRoute: typeof AuthorProfileRoute
   AuthorSignInRoute: typeof AuthorSignInRoute
   AuthorSignUpRoute: typeof AuthorSignUpRoute
+  AutorAuthorIdRoute: typeof AutorAuthorIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
@@ -353,6 +379,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/autor/$authorId': {
+      id: '/autor/$authorId'
+      path: '/autor/$authorId'
+      fullPath: '/autor/$authorId'
+      preLoaderRoute: typeof AutorAuthorIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/author/sign-up': {
@@ -409,6 +442,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/orders'
       fullPath: '/admin/orders'
       preLoaderRoute: typeof AdminOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/hero-slides': {
+      id: '/admin/hero-slides'
+      path: '/admin/hero-slides'
+      fullPath: '/admin/hero-slides'
+      preLoaderRoute: typeof AdminHeroSlidesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/dashboard': {
@@ -534,6 +574,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminBooksRoute: AdminBooksRoute,
   AdminContentRoute: AdminContentRouteWithChildren,
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminHeroSlidesRoute: AdminHeroSlidesRoute,
   AdminOrdersRoute: AdminOrdersRoute,
   AdminPostsRoute: AdminPostsRoute,
   AdminUsersRoute: AdminUsersRoute,
@@ -542,6 +583,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthorProfileRoute: AuthorProfileRoute,
   AuthorSignInRoute: AuthorSignInRoute,
   AuthorSignUpRoute: AuthorSignUpRoute,
+  AutorAuthorIdRoute: AutorAuthorIdRoute,
   AdminIndexRoute: AdminIndexRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,

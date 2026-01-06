@@ -124,7 +124,7 @@ export default function FeaturedBooksSection() {
   })
 
   return (
-    <section className="bg-[#f7f4ef] text-gray-900">
+    <section className="bg-white text-gray-900">
       <div className="container mx-auto px-4 py-24 lg:px-15">
         <div className="space-y-4">
           <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
@@ -134,7 +134,7 @@ export default function FeaturedBooksSection() {
             <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
               Livros em destaque
             </h2>
-            <div className="mt-3 h-1 w-12 bg-[#f97316]" />
+            <div className="mt-3 h-1 w-12 bg-[color:var(--brand)]" />
           </div>
         </div>
 
@@ -187,7 +187,7 @@ export default function FeaturedBooksSection() {
                       <button
                         type="button"
                         onClick={() => addToCart(book)}
-                        className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f97316] text-white transition-transform hover:scale-105"
+                        className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-white transition-transform hover:scale-105"
                         aria-label="Adicionar ao carrinho"
                       >
                         <ShoppingCart className="h-5 w-5" />
@@ -195,7 +195,7 @@ export default function FeaturedBooksSection() {
                       <button
                         type="button"
                         onClick={() => copyBookLink(book)}
-                        className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f97316] text-white transition-transform hover:scale-105"
+                        className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-white transition-transform hover:scale-105"
                         aria-label="Copiar link do livro"
                       >
                         <Link2 className="h-5 w-5" />
@@ -214,7 +214,7 @@ export default function FeaturedBooksSection() {
                       {summary}
                     </p>
                     {priceLabel && (
-                      <p className="text-lg font-semibold text-[#f97316]">
+                      <p className="text-lg font-semibold text-[color:var(--brand)]">
                         {priceLabel}
                       </p>
                     )}

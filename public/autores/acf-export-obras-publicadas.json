@@ -1,0 +1,245 @@
+[
+    {
+        "key": "group_61014b317bdcc",
+        "title": "Obras Publicadas",
+        "fields": [
+            {
+                "key": "field_61014c53909ef",
+                "label": "Obras Publicadas pelo Autor",
+                "name": "obras_publicadas",
+                "type": "repeater",
+                "instructions": "Catalogação de Obras Publicadas pelo Autor",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "100",
+                    "class": "",
+                    "id": ""
+                },
+                "frontend_admin_display_mode": "edit",
+                "only_front": 0,
+                "acfe_repeater_stylised_button": 0,
+                "collapsed": "",
+                "min": 0,
+                "max": 0,
+                "layout": "block",
+                "button_label": "Adicionar Obra",
+                "acfe_field_group_condition": 0,
+                "sub_fields": [
+                    {
+                        "key": "field_62fe2829b9e5d",
+                        "label": "(Column 4\/12)",
+                        "name": "",
+                        "type": "acfe_column",
+                        "instructions": "",
+                        "required": 0,
+                        "conditional_logic": 0,
+                        "wrapper": {
+                            "width": "",
+                            "class": "",
+                            "id": ""
+                        },
+                        "frontend_admin_display_mode": "edit",
+                        "only_front": 0,
+                        "columns": "4\/12",
+                        "endpoint": 0,
+                        "border": "",
+                        "acfe_field_group_condition": 0,
+                        "border_endpoint": [
+                            "endpoint"
+                        ]
+                    },
+                    {
+                        "key": "field_61014cba909f1",
+                        "label": "Capa da Obra",
+                        "name": "cover",
+                        "type": "image",
+                        "instructions": "Adicione a capa da obra",
+                        "required": 1,
+                        "conditional_logic": 0,
+                        "wrapper": {
+                            "width": "100",
+                            "class": "",
+                            "id": ""
+                        },
+                        "required_message": "",
+                        "frontend_admin_display_mode": "edit",
+                        "only_front": 0,
+                        "uploader": "",
+                        "acfe_thumbnail": 0,
+                        "return_format": "array",
+                        "preview_size": "medium_large",
+                        "min_width": "",
+                        "min_height": "",
+                        "min_size": "",
+                        "max_width": "",
+                        "max_height": "",
+                        "max_size": 5,
+                        "mime_types": "jpeg,jpg,png,webp",
+                        "no_file_text": "",
+                        "button_text": "Adicionar",
+                        "acfe_field_group_condition": 0,
+                        "library": "all"
+                    },
+                    {
+                        "key": "field_62fe27ecb9e5c",
+                        "label": "(Column 8\/12)",
+                        "name": "",
+                        "type": "acfe_column",
+                        "instructions": "",
+                        "required": 0,
+                        "conditional_logic": 0,
+                        "wrapper": {
+                            "width": "",
+                            "class": "",
+                            "id": ""
+                        },
+                        "frontend_admin_display_mode": "edit",
+                        "only_front": 0,
+                        "columns": "8\/12",
+                        "endpoint": 0,
+                        "border": "",
+                        "acfe_field_group_condition": 0,
+                        "border_endpoint": [
+                            "endpoint"
+                        ]
+                    },
+                    {
+                        "key": "field_61014c6b909f0",
+                        "label": "Título da Obra",
+                        "name": "titulo_da_obra",
+                        "type": "text",
+                        "instructions": "Título que conta na Capa da Obra",
+                        "required": 1,
+                        "conditional_logic": 0,
+                        "wrapper": {
+                            "width": "50",
+                            "class": "",
+                            "id": ""
+                        },
+                        "required_message": "",
+                        "frontend_admin_display_mode": "edit",
+                        "only_front": 0,
+                        "readonly": 0,
+                        "default_value": "",
+                        "placeholder": "",
+                        "prepend": "",
+                        "append": "",
+                        "maxlength": "",
+                        "acfe_field_group_condition": 0
+                    },
+                    {
+                        "key": "field_61014d766be8f",
+                        "label": "Gênero literário",
+                        "name": "genero_literario",
+                        "type": "select",
+                        "instructions": "Selecionar o tipo de Obra",
+                        "required": 1,
+                        "conditional_logic": 0,
+                        "wrapper": {
+                            "width": "50",
+                            "class": "",
+                            "id": ""
+                        },
+                        "required_message": "",
+                        "frontend_admin_display_mode": "edit",
+                        "only_front": 0,
+                        "choices": {
+                            "Épico": "Épico",
+                            "Fábula": "Fábula",
+                            "Epopeia": "Epopeia",
+                            "Poesia": "Poesia",
+                            "Teatro": "Teatro",
+                            "Novela": "Novela",
+                            "Conto": "Conto",
+                            "Crônica": "Crônica",
+                            "Ensaio": "Ensaio",
+                            "Romance": "Romance",
+                            "Outros": "Outros"
+                        },
+                        "default_value": "Outros",
+                        "allow_null": 0,
+                        "multiple": 0,
+                        "max": "",
+                        "ui": 0,
+                        "return_format": "value",
+                        "prepend": "",
+                        "append": "",
+                        "acfe_field_group_condition": 0,
+                        "ajax": 0,
+                        "placeholder": ""
+                    },
+                    {
+                        "key": "field_62f7df67e7f08",
+                        "label": "Sinopse da Obra",
+                        "name": "sinopse_da_obra",
+                        "type": "text",
+                        "instructions": "Breve descrição\/resumo",
+                        "required": 1,
+                        "conditional_logic": 0,
+                        "wrapper": {
+                            "width": "50",
+                            "class": "",
+                            "id": ""
+                        },
+                        "required_message": "",
+                        "frontend_admin_display_mode": "edit",
+                        "only_front": 0,
+                        "readonly": 0,
+                        "default_value": "",
+                        "placeholder": "",
+                        "prepend": "",
+                        "append": "",
+                        "maxlength": 100,
+                        "acfe_field_group_condition": 0
+                    },
+                    {
+                        "key": "field_6160610d98edc",
+                        "label": "Link da Obra",
+                        "name": "link_da_obra",
+                        "type": "url",
+                        "instructions": "Endereço na web",
+                        "required": 0,
+                        "conditional_logic": 0,
+                        "wrapper": {
+                            "width": "50",
+                            "class": "",
+                            "id": ""
+                        },
+                        "frontend_admin_display_mode": "edit",
+                        "only_front": 0,
+                        "default_value": "",
+                        "placeholder": "",
+                        "acfe_field_group_condition": 0
+                    }
+                ]
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "autores"
+                }
+            ]
+        ],
+        "menu_order": 5,
+        "position": "normal",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": true,
+        "description": "",
+        "show_in_rest": 0,
+        "acfe_autosync": [
+            "php",
+            "json"
+        ],
+        "acfe_form": 0,
+        "acfe_display_title": "",
+        "acfe_meta": "",
+        "acfe_note": ""
+    }
+]

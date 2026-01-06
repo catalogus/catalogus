@@ -65,6 +65,7 @@ create table if not exists public.authors (
   photo_url text,
   author_type text,
   social_links jsonb default '{}'::jsonb,
+  featured boolean not null default false,
   wp_id bigint,
   wp_slug text,
   phone text,
@@ -79,6 +80,7 @@ create table if not exists public.authors (
 );
 create unique index if not exists authors_wp_id_key on public.authors (wp_id);
 create index if not exists authors_wp_slug_idx on public.authors (wp_slug);
+create index if not exists authors_featured_idx on public.authors (featured);
 
 drop table if exists public.authors_books;
 create table public.authors_books (
@@ -228,6 +230,7 @@ alter table public.authors
   add column if not exists photo_path text,
   add column if not exists photo_url text,
   add column if not exists social_links jsonb default '{}'::jsonb,
+  add column if not exists featured boolean default false,
   add column if not exists phone text,
   add column if not exists birth_date date,
   add column if not exists residence_city text,
