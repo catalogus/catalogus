@@ -1,6 +1,5 @@
-import { StatusBadge } from '../ui/StatusBadge'
 import type { AuthorRow } from '../../../types/author'
-import { Twitter, Linkedin, Globe, Instagram, Youtube, MapPin, Calendar, Video } from 'lucide-react'
+import { Twitter, Linkedin, Globe, Instagram, Youtube, Facebook, MapPin, Calendar, Video } from 'lucide-react'
 
 type AuthorDetailProps = {
   author: AuthorRow
@@ -48,22 +47,6 @@ export function AuthorDetail({ author }: AuthorDetailProps) {
                 {author.author_type}
               </p>
             )}
-            {author.email && (
-              <p className="text-sm text-gray-600">{author.email}</p>
-            )}
-          </div>
-
-          <div>
-            <StatusBadge
-              label={author.status ?? 'pending'}
-              variant={
-                author.status === 'approved'
-                  ? 'success'
-                  : author.status === 'rejected'
-                    ? 'danger'
-                    : 'warning'
-              }
-            />
           </div>
         </div>
       </div>
@@ -81,13 +64,12 @@ export function AuthorDetail({ author }: AuthorDetailProps) {
               {author.phone || 'Not provided'}
             </p>
           </div>
-
-          <div>
-            <p className="text-xs text-gray-500">Email</p>
-            <p className="text-sm text-gray-900">
-              {author.email || 'Not provided'}
-            </p>
-          </div>
+          {author.wp_slug && (
+            <div>
+              <p className="text-xs text-gray-500">WordPress Slug</p>
+              <p className="text-sm text-gray-900">{author.wp_slug}</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -150,15 +132,15 @@ export function AuthorDetail({ author }: AuthorDetailProps) {
           <h3 className="text-sm font-semibold text-gray-900">Social Links</h3>
 
           <div className="space-y-2">
-            {author.social_links?.twitter && (
+            {author.social_links?.website && (
               <a
-                href={author.social_links.twitter}
+                href={author.social_links.website}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 text-sm text-blue-600 hover:text-blue-700 hover:underline"
               >
-                <Twitter className="h-4 w-4" />
-                <span>{author.social_links.twitter}</span>
+                <Globe className="h-4 w-4" />
+                <span>{author.social_links.website}</span>
               </a>
             )}
 
@@ -174,15 +156,15 @@ export function AuthorDetail({ author }: AuthorDetailProps) {
               </a>
             )}
 
-            {author.social_links?.website && (
+            {author.social_links?.facebook && (
               <a
-                href={author.social_links.website}
+                href={author.social_links.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 text-sm text-blue-600 hover:text-blue-700 hover:underline"
               >
-                <Globe className="h-4 w-4" />
-                <span>{author.social_links.website}</span>
+                <Facebook className="h-4 w-4" />
+                <span>{author.social_links.facebook}</span>
               </a>
             )}
 
@@ -195,6 +177,18 @@ export function AuthorDetail({ author }: AuthorDetailProps) {
               >
                 <Instagram className="h-4 w-4" />
                 <span>{author.social_links.instagram}</span>
+              </a>
+            )}
+
+            {author.social_links?.twitter && (
+              <a
+                href={author.social_links.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 text-sm text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                <Twitter className="h-4 w-4" />
+                <span>{author.social_links.twitter}</span>
               </a>
             )}
 

@@ -62,10 +62,23 @@ create table if not exists public.authors (
   name text not null,
   bio text,
   photo_path text,
+  photo_url text,
   author_type text,
+  social_links jsonb default '{}'::jsonb,
+  wp_id bigint,
+  wp_slug text,
+  phone text,
+  birth_date date,
+  residence_city text,
+  province text,
+  published_works jsonb default '[]'::jsonb,
+  author_gallery jsonb default '[]'::jsonb,
+  featured_video text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+create unique index if not exists authors_wp_id_key on public.authors (wp_id);
+create index if not exists authors_wp_slug_idx on public.authors (wp_slug);
 
 drop table if exists public.authors_books;
 create table public.authors_books (
@@ -208,7 +221,20 @@ alter table public.profiles
   add column if not exists featured boolean default false;
 
 alter table public.authors
-  add column if not exists author_type text;
+  add column if not exists author_type text,
+  add column if not exists wp_id bigint,
+  add column if not exists wp_slug text,
+  add column if not exists bio text,
+  add column if not exists photo_path text,
+  add column if not exists photo_url text,
+  add column if not exists social_links jsonb default '{}'::jsonb,
+  add column if not exists phone text,
+  add column if not exists birth_date date,
+  add column if not exists residence_city text,
+  add column if not exists province text,
+  add column if not exists published_works jsonb default '[]'::jsonb,
+  add column if not exists author_gallery jsonb default '[]'::jsonb,
+  add column if not exists featured_video text;
 
 -- Profiles policies
 create policy "Profiles: user can view own profile" on public.profiles

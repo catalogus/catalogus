@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
 import { Button } from '../../ui/button'
-import { Select } from '../../ui/select'
-import type { AuthorFormValues, AuthorStatus, SocialLinks } from '../../../types/author'
+import type { AuthorFormValues, SocialLinks } from '../../../types/author'
 
 type AuthorFormProps = {
   initial?: Partial<AuthorFormValues>
@@ -15,15 +14,11 @@ type AuthorFormProps = {
 
 const defaultValues: AuthorFormValues = {
   name: '',
-  email: '',
-  password: '',
   phone: '',
   bio: '',
   photo_url: '',
   photo_path: '',
   social_links: {},
-  status: 'pending',
-  role: 'author',
   birth_date: '',
   residence_city: '',
   province: '',
@@ -52,10 +47,7 @@ export function AuthorForm({
   )
   const [file, setFile] = useState<File | null>(null)
 
-  const handleChange = (
-    key: keyof AuthorFormValues,
-    value: string | AuthorStatus,
-  ) => {
+  const handleChange = (key: keyof AuthorFormValues, value: string) => {
     setValues((prev) => ({
       ...prev,
       [key]: value,
@@ -205,44 +197,6 @@ export function AuthorForm({
           </select>
         </div>
 
-        {/* Email */}
-        <div className="space-y-2">
-          <Label htmlFor="email">
-            Email <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            value={values.email}
-            onChange={(e) => handleChange('email', e.target.value)}
-            required
-            disabled={mode === 'edit'}
-            placeholder="author@example.com"
-            className={mode === 'edit' ? 'bg-gray-100' : ''}
-          />
-          {mode === 'edit' && (
-            <p className="text-xs text-gray-500">Email cannot be changed</p>
-          )}
-        </div>
-
-        {/* Password (create mode only) */}
-        {mode === 'create' && (
-          <div className="space-y-2">
-            <Label htmlFor="password">
-              Password <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              value={values.password}
-              onChange={(e) => handleChange('password', e.target.value)}
-              required
-              minLength={8}
-              placeholder="Minimum 8 characters"
-            />
-          </div>
-        )}
-
         {/* Phone */}
         <div className="space-y-2">
           <Label htmlFor="phone">Phone</Label>
@@ -350,13 +304,13 @@ export function AuthorForm({
           <h3 className="text-sm font-semibold text-gray-900">Social Links</h3>
 
           <div className="space-y-2">
-            <Label htmlFor="twitter">Twitter</Label>
+            <Label htmlFor="website">Website</Label>
             <Input
-              id="twitter"
+              id="website"
               type="url"
-              value={values.social_links.twitter ?? ''}
-              onChange={(e) => handleSocialLinkChange('twitter', e.target.value)}
-              placeholder="https://twitter.com/username"
+              value={values.social_links.website ?? ''}
+              onChange={(e) => handleSocialLinkChange('website', e.target.value)}
+              placeholder="https://example.com"
             />
           </div>
 
@@ -374,13 +328,15 @@ export function AuthorForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="website">Website</Label>
+            <Label htmlFor="facebook">Facebook</Label>
             <Input
-              id="website"
+              id="facebook"
               type="url"
-              value={values.social_links.website ?? ''}
-              onChange={(e) => handleSocialLinkChange('website', e.target.value)}
-              placeholder="https://example.com"
+              value={values.social_links.facebook ?? ''}
+              onChange={(e) =>
+                handleSocialLinkChange('facebook', e.target.value)
+              }
+              placeholder="https://facebook.com/username"
             />
           </div>
 
@@ -394,6 +350,17 @@ export function AuthorForm({
                 handleSocialLinkChange('instagram', e.target.value)
               }
               placeholder="https://instagram.com/username"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="twitter">Twitter</Label>
+            <Input
+              id="twitter"
+              type="url"
+              value={values.social_links.twitter ?? ''}
+              onChange={(e) => handleSocialLinkChange('twitter', e.target.value)}
+              placeholder="https://twitter.com/username"
             />
           </div>
 
@@ -616,23 +583,6 @@ export function AuthorForm({
           )}
         </div>
 
-        {/* Status */}
-        <div className="space-y-2 border-t pt-4">
-          <Label htmlFor="status">
-            Status <span className="text-red-500">*</span>
-          </Label>
-          <select
-            id="status"
-            value={values.status}
-            onChange={(e) => handleChange('status', e.target.value as AuthorStatus)}
-            required
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-          >
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
-        </div>
       </div>
 
       {/* Form Actions */}

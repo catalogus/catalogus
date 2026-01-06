@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Globe, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react'
+import { Facebook, Globe, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 import type { SocialLinks } from '../../types/author'
 
@@ -26,12 +26,10 @@ const fetchAuthors = async (useFeatured: boolean) => {
     ? 'id, name, author_type, photo_url, photo_path, social_links, featured'
     : 'id, name, author_type, photo_url, photo_path, social_links'
   let query = supabase
-    .from('profiles')
+    .from('authors')
     .select(selectFields)
-    .eq('role', 'author')
-    .eq('status', 'approved')
     .order('created_at', { ascending: false })
-    .limit(4)
+    .limit(10)
 
   if (useFeatured) {
     query = query.eq('featured', true)
@@ -46,9 +44,10 @@ const getSocialLinks = (author: FeaturedAuthor) => {
   const links = author.social_links ?? {}
   return [
     { key: 'website', href: links.website, icon: Globe, label: 'Website' },
-    { key: 'twitter', href: links.twitter, icon: Twitter, label: 'Twitter' },
     { key: 'linkedin', href: links.linkedin, icon: Linkedin, label: 'LinkedIn' },
+    { key: 'facebook', href: links.facebook, icon: Facebook, label: 'Facebook' },
     { key: 'instagram', href: links.instagram, icon: Instagram, label: 'Instagram' },
+    { key: 'twitter', href: links.twitter, icon: Twitter, label: 'Twitter' },
     { key: 'youtube', href: links.youtube, icon: Youtube, label: 'YouTube' },
   ].filter((item) => item.href)
 }
@@ -72,21 +71,29 @@ export default function FeaturedAuthorsSection() {
   return (
     <section className="bg-[#f4efe9] text-gray-900">
       <div className="container mx-auto px-4 py-24 lg:px-15">
-        <div className="space-y-4">
-          <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-            Autores
-          </p>
-          <div>
-            <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-              Autores em destaque
-            </h2>
-            <div className="mt-3 h-1 w-12 bg-[#f97316]" />
+        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div className="space-y-4">
+            <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
+              Autores
+            </p>
+            <div>
+              <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
+                Autores em destaque
+              </h2>
+              <div className="mt-3 h-1 w-12 bg-[#f97316]" />
+            </div>
           </div>
+          <a
+            href="/autores"
+            className="inline-flex items-center gap-3 border border-gray-900/60 px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-gray-900 transition-colors hover:border-gray-900 hover:text-gray-900 rounded-none"
+          >
+            Ver mais autores
+          </a>
         </div>
 
         <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {authorsQuery.isLoading &&
-            Array.from({ length: 4 }).map((_, index) => (
+            Array.from({ length: 10 }).map((_, index) => (
               <div key={`featured-author-skeleton-${index}`} className="space-y-4">
                 <div className="aspect-[4/5] w-full bg-gray-100 animate-pulse" />
                 <div className="h-5 w-2/3 bg-gray-200 animate-pulse" />

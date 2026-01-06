@@ -20,7 +20,7 @@ function AdminDashboardPage() {
       const startOfDay = new Date()
       startOfDay.setHours(0, 0, 0, 0)
 
-      const [ordersToday, activeBooks, pendingAuthors] = await Promise.all([
+      const [ordersToday, activeBooks, authorsCount] = await Promise.all([
         supabase
           .from('orders')
           .select('id', { count: 'exact', head: true })
@@ -30,20 +30,18 @@ function AdminDashboardPage() {
           .select('id', { count: 'exact', head: true })
           .eq('is_active', true),
         supabase
-          .from('profiles')
-          .select('id', { count: 'exact', head: true })
-          .eq('role', 'author')
-          .eq('status', 'pending'),
+          .from('authors')
+          .select('id', { count: 'exact', head: true }),
       ])
 
       if (ordersToday.error) throw ordersToday.error
       if (activeBooks.error) throw activeBooks.error
-      if (pendingAuthors.error) throw pendingAuthors.error
+      if (authorsCount.error) throw authorsCount.error
 
       return {
         ordersToday: ordersToday.count ?? 0,
         activeBooks: activeBooks.count ?? 0,
-        pendingAuthors: pendingAuthors.count ?? 0,
+        authorsCount: authorsCount.count ?? 0,
       }
     },
     staleTime: 30_000,
@@ -87,9 +85,9 @@ function AdminDashboardPage() {
                   (metricsQuery.isLoading ? '…' : '0'),
               },
               {
-                label: 'Pending authors',
+                label: 'Authors',
                 value:
-                  metricsQuery.data?.pendingAuthors?.toString() ??
+                  metricsQuery.data?.authorsCount?.toString() ??
                   (metricsQuery.isLoading ? '…' : '0'),
               },
             ].map((item) => (

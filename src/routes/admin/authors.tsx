@@ -3,7 +3,6 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { DashboardLayout } from '../../components/admin/layout'
 import { AdminGuard } from '../../components/admin/AdminGuard'
-import { StatusBadge } from '../../components/admin/ui/StatusBadge'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthProvider'
 import { Button } from '../../components/ui/button'
@@ -55,9 +54,8 @@ function AdminAuthorsPage() {
     queryFn: async () => {
       try {
         const { data, error } = await supabase
-          .from('profiles')
-          .select('id, name, email, status, phone, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type, featured, created_at, updated_at')
-          .eq('role', 'author')
+          .from('authors')
+          .select('id, name, wp_id, wp_slug, bio, photo_url, photo_path, phone, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type, created_at, updated_at')
           .order('created_at', { ascending: false })
         if (error) {
           console.error('Authors query error:', error)
@@ -136,108 +134,37 @@ function AdminAuthorsPage() {
   const createAuthor = useMutation({
     mutationFn: async (payload: { values: AuthorFormValues; file?: File | null }) => {
       const { values, file } = payload
-
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(values.email)) {
-        throw new Error('Please enter a valid email address')
+      const payloadRow = {
+        name: values.name,
+        phone: values.phone || null,
+        bio: values.bio || null,
+        photo_url: values.photo_url || null,
+        photo_path: values.photo_path || null,
+        social_links: values.social_links ?? {},
+        birth_date: values.birth_date || null,
+        residence_city: values.residence_city || null,
+        province: values.province || null,
+        published_works: values.published_works ?? [],
+        author_gallery: values.author_gallery ?? [],
+        featured_video: values.featured_video || null,
+        author_type: values.author_type || null,
       }
 
-      // Create auth user with email auto-confirm
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: values.email.toLowerCase().trim(),
-        password: values.password!,
-        options: {
-          data: { name: values.name },
-          emailRedirectTo: undefined,
-        },
-      })
-
-      if (authError) {
-        // Better error messages
-        if (authError.message.includes('email_address_invalid')) {
-          throw new Error('Email address format is invalid. Please check Supabase Auth settings or use a different email domain.')
-        }
-        if (authError.message.includes('User already registered')) {
-          throw new Error('An account with this email already exists.')
-        }
-        throw authError
-      }
-      if (!authData.user) throw new Error('Failed to create user')
-
-      const userId = authData.user.id
-
-      // Upload photo if provided
-      let photo_path = null
-      let photo_url = null
-      if (file) {
-        const uploaded = await uploadPhoto(file, userId)
-        photo_url = uploaded.publicUrl
-        photo_path = uploaded.path
-      }
-
-      // Create or update profile with author role
-      // First, check if profile was auto-created
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id, role')
-        .eq('id', userId)
+      const { data: created, error: insertError } = await supabase
+        .from('authors')
+        .insert(payloadRow)
+        .select()
         .single()
 
-      if (existingProfile) {
-        // Profile was auto-created, update it with correct role
-        const { error: updateError, data: profileData } = await supabase
-          .from('profiles')
-          .update({
-            name: values.name,
-            email: values.email.toLowerCase().trim(),
-            phone: values.phone,
-            bio: values.bio,
-            photo_url,
-            photo_path,
-            role: 'author',
-            status: values.status,
-            social_links: values.social_links,
-            birth_date: values.birth_date || null,
-            residence_city: values.residence_city || null,
-            province: values.province || null,
-            published_works: values.published_works,
-            author_gallery: values.author_gallery,
-            featured_video: values.featured_video || null,
-            author_type: values.author_type || null,
-          })
-          .eq('id', userId)
-          .select()
+      if (insertError) throw insertError
 
+      if (file && created?.id) {
+        const uploaded = await uploadPhoto(file, created.id)
+        const { error: updateError } = await supabase
+          .from('authors')
+          .update({ photo_url: uploaded.publicUrl, photo_path: uploaded.path })
+          .eq('id', created.id)
         if (updateError) throw updateError
-        console.log('Updated profile to author role:', profileData)
-      } else {
-        // Profile doesn't exist, create it
-        const { error: insertError, data: profileData } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            name: values.name,
-            email: values.email.toLowerCase().trim(),
-            phone: values.phone,
-            bio: values.bio,
-            photo_url,
-            photo_path,
-            role: 'author',
-            status: values.status,
-            social_links: values.social_links,
-            birth_date: values.birth_date || null,
-            residence_city: values.residence_city || null,
-            province: values.province || null,
-            published_works: values.published_works,
-            author_gallery: values.author_gallery,
-            featured_video: values.featured_video || null,
-            author_type: values.author_type || null,
-          })
-          .select()
-
-        if (insertError) throw insertError
-        console.log('Created author profile:', profileData)
       }
     },
     onSuccess: async () => {
@@ -261,8 +188,8 @@ function AdminAuthorsPage() {
       const { values, file, id } = payload
 
       // Upload new photo if provided
-      let photo_path = values.photo_path
-      let photo_url = values.photo_url
+      let photo_path = values.photo_path || null
+      let photo_url = values.photo_url || null
       if (file) {
         // Delete old photo if exists
         if (values.photo_path) {
@@ -273,17 +200,16 @@ function AdminAuthorsPage() {
         photo_path = uploaded.path
       }
 
-      // Update profile
+      // Update author
       const { error } = await supabase
-        .from('profiles')
+        .from('authors')
         .update({
           name: values.name,
-          phone: values.phone,
-          bio: values.bio,
+          phone: values.phone || null,
+          bio: values.bio || null,
           photo_url,
           photo_path,
-          status: values.status,
-          social_links: values.social_links,
+          social_links: values.social_links ?? {},
           birth_date: values.birth_date || null,
           residence_city: values.residence_city || null,
           province: values.province || null,
@@ -309,27 +235,11 @@ function AdminAuthorsPage() {
     },
   })
 
-  const toggleFeatured = useMutation({
-    mutationFn: async (payload: { id: string; featured: boolean }) => {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ featured: payload.featured })
-        .eq('id', payload.id)
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'authors'] })
-      toast.success('Featured status updated')
-    },
-    onError: (err: any) =>
-      toast.error(err.message ?? 'Failed to update featured status'),
-  })
-
   const deleteAuthor = useMutation({
     mutationFn: async (id: string) => {
       // Get author to find photo path
       const { data: author } = await supabase
-        .from('profiles')
+        .from('authors')
         .select('photo_path')
         .eq('id', id)
         .single()
@@ -339,8 +249,8 @@ function AdminAuthorsPage() {
         await supabase.storage.from('author-photos').remove([author.photo_path])
       }
 
-      // Delete profile (this will also delete the auth user via cascade)
-      const { error } = await supabase.from('profiles').delete().eq('id', id)
+      // Delete author row
+      const { error } = await supabase.from('authors').delete().eq('id', id)
       if (error) throw error
     },
     onSuccess: async () => {
@@ -353,22 +263,6 @@ function AdminAuthorsPage() {
       console.error('Delete author error:', err)
       toast.error(err.message ?? 'Failed to delete author')
     },
-  })
-
-  const updateStatus = useMutation({
-    mutationFn: async (payload: { id: string; status: string }) => {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ status: payload.status })
-        .eq('id', payload.id)
-      if (error) throw error
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['admin', 'authors'] })
-      await queryClient.refetchQueries({ queryKey: ['admin', 'authors'] })
-      toast.success('Status updated')
-    },
-    onError: (err: any) => toast.error(err.message ?? 'Failed to update status'),
   })
 
   const handleFormSubmit = async (values: AuthorFormValues, file?: File | null) => {
@@ -430,10 +324,9 @@ function AdminAuthorsPage() {
                   <thead>
                     <tr className="text-left text-gray-500 border-b">
                       <th className="py-2 pr-3">Author</th>
-                      <th className="py-2 pr-3">Email</th>
                       <th className="py-2 pr-3">Phone</th>
                       <th className="py-2 pr-3">Tipo de Autor</th>
-                      <th className="py-2 pr-3">Status</th>
+                      <th className="py-2 pr-3">WordPress</th>
                       <th className="py-2 pr-3">Actions</th>
                     </tr>
                   </thead>
@@ -465,25 +358,15 @@ function AdminAuthorsPage() {
                           </div>
                         </td>
                         <td className="py-3 pr-3 text-gray-600">
-                          {author.email ?? '—'}
-                        </td>
-                        <td className="py-3 pr-3 text-gray-600">
                           {author.phone ?? '—'}
                         </td>
                         <td className="py-3 pr-3 text-gray-600">
                           {author.author_type ?? '—'}
                         </td>
                         <td className="py-3 pr-3">
-                          <StatusBadge
-                            label={author.status ?? 'pending'}
-                            variant={
-                              author.status === 'approved'
-                                ? 'success'
-                                : author.status === 'rejected'
-                                  ? 'danger'
-                                  : 'warning'
-                            }
-                          />
+                          <div className="text-sm text-gray-600">
+                            {author.wp_slug ?? '—'}
+                          </div>
                         </td>
                         <td className="py-3 pr-3">
                           <DropdownMenu>
@@ -514,60 +397,6 @@ function AdminAuthorsPage() {
                                 }}
                               >
                                 Edit
-                              </DropdownMenuItem>
-                              {(author.status !== 'approved' || author.status !== 'rejected' || author.status !== 'pending') && (
-                                <DropdownMenuSeparator />
-                              )}
-                              {author.status !== 'approved' && (
-                                <DropdownMenuItem
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    updateStatus.mutate({
-                                      id: author.id,
-                                      status: 'approved',
-                                    })
-                                  }}
-                                >
-                                  Approve
-                                </DropdownMenuItem>
-                              )}
-                              {author.status !== 'rejected' && (
-                                <DropdownMenuItem
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    updateStatus.mutate({
-                                      id: author.id,
-                                      status: 'rejected',
-                                    })
-                                  }}
-                                >
-                                  Reject
-                                </DropdownMenuItem>
-                              )}
-                              {(author.status === 'approved' || author.status === 'rejected') && (
-                                <DropdownMenuItem
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    updateStatus.mutate({
-                                      id: author.id,
-                                      status: 'pending',
-                                    })
-                                  }}
-                                >
-                                  Set to Pending
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  toggleFeatured.mutate({
-                                    id: author.id,
-                                    featured: !(author.featured ?? false),
-                                  })
-                                }}
-                              >
-                                {author.featured ? 'Unfeature' : 'Mark featured'}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
@@ -601,7 +430,7 @@ function AdminAuthorsPage() {
               <SheetDescription>
                 {editingAuthor
                   ? 'Update author profile information'
-                  : 'Create a new author account'}
+                  : 'Create a new author profile'}
               </SheetDescription>
             </SheetHeader>
             <div className="mt-6">
@@ -610,14 +439,18 @@ function AdminAuthorsPage() {
                   editingAuthor
                     ? {
                         name: editingAuthor.name,
-                        email: '', // Email not editable
                         phone: editingAuthor.phone ?? '',
                         bio: editingAuthor.bio ?? '',
                         photo_url: editingAuthor.photo_url ?? '',
                         photo_path: editingAuthor.photo_path ?? '',
                         social_links: editingAuthor.social_links ?? {},
-                        status: (editingAuthor.status as any) ?? 'pending',
-                        role: 'author',
+                        birth_date: editingAuthor.birth_date ?? '',
+                        residence_city: editingAuthor.residence_city ?? '',
+                        province: editingAuthor.province ?? '',
+                        published_works: editingAuthor.published_works ?? [],
+                        author_gallery: editingAuthor.author_gallery ?? [],
+                        featured_video: editingAuthor.featured_video ?? '',
+                        author_type: editingAuthor.author_type ?? '',
                       }
                     : undefined
                 }
@@ -651,7 +484,7 @@ function AdminAuthorsPage() {
               <DialogTitle>Delete Author</DialogTitle>
               <DialogDescription>
                 Are you sure you want to delete this author? This action cannot be undone
-                and will remove their account and all associated data.
+                and will remove their profile and all associated data.
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-3 mt-4">

@@ -1,6 +1,7 @@
 export type SocialLinks = {
   twitter?: string
   linkedin?: string
+  facebook?: string
   website?: string
   instagram?: string
   youtube?: string
@@ -25,15 +26,11 @@ export type AuthorStatus = 'pending' | 'approved' | 'rejected'
 
 export type AuthorFormValues = {
   name: string
-  email: string
-  password?: string
   phone: string
   bio: string
   photo_url: string
   photo_path: string
   social_links: SocialLinks
-  status: AuthorStatus
-  role: 'author'
   birth_date: string
   residence_city: string
   province: string
@@ -46,13 +43,12 @@ export type AuthorFormValues = {
 export type AuthorRow = {
   id: string
   name: string
-  email?: string
+  wp_id?: number | null
+  wp_slug?: string | null
   phone?: string | null
   bio?: string | null
   photo_url?: string | null
   photo_path?: string | null
-  status: string | null
-  featured?: boolean | null
   social_links?: SocialLinks | null
   birth_date?: string | null
   residence_city?: string | null
