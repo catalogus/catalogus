@@ -27,6 +27,7 @@ create table public.profiles (
   author_gallery jsonb default '[]'::jsonb,
   featured_video text,
   author_type text,
+  featured boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -203,7 +204,8 @@ alter table public.profiles
   add column if not exists published_works jsonb default '[]'::jsonb,
   add column if not exists author_gallery jsonb default '[]'::jsonb,
   add column if not exists featured_video text,
-  add column if not exists author_type text;
+  add column if not exists author_type text,
+  add column if not exists featured boolean default false;
 
 alter table public.authors
   add column if not exists author_type text;

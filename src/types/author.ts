@@ -52,6 +52,7 @@ export type AuthorRow = {
   photo_url?: string | null
   photo_path?: string | null
   status: string | null
+  featured?: boolean | null
   social_links?: SocialLinks | null
   birth_date?: string | null
   residence_city?: string | null

@@ -4,6 +4,7 @@ import Header from '../components/Header'
 import { Hero } from '../components/Hero'
 import AboutSection from '../components/home/AboutSection'
 import FeaturedBooksSection from '../components/home/FeaturedBooksSection'
+import FeaturedAuthorsSection from '../components/home/FeaturedAuthorsSection'
 import NewsSection from '../components/home/NewsSection'
 import { supabase } from '../lib/supabaseClient'
 import type { HeroSlide } from '../types/hero'
@@ -35,6 +36,7 @@ function Home() {
         <AboutSection />
         <NewsSection />
         <FeaturedBooksSection />
+        <FeaturedAuthorsSection />
       </main>
     </div>
   )

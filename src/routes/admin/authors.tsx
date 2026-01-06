@@ -56,7 +56,7 @@ function AdminAuthorsPage() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, name, email, status, phone, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type, created_at, updated_at')
+          .select('id, name, email, status, phone, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type, featured, created_at, updated_at')
           .eq('role', 'author')
           .order('created_at', { ascending: false })
         if (error) {
@@ -74,11 +74,60 @@ function AdminAuthorsPage() {
     retry: 1,
   })
 
+  const resizePhoto = async (file: File) => {
+    if (!file.type.startsWith('image/')) return file
+
+    const maxDimension = 1400
+    const quality = 0.85
+    const shouldResize = file.size > 1_200_000
+
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const url = URL.createObjectURL(file)
+      const image = new Image()
+      image.onload = () => {
+        URL.revokeObjectURL(url)
+        resolve(image)
+      }
+      image.onerror = () => {
+        URL.revokeObjectURL(url)
+        reject(new Error('Failed to load image'))
+      }
+      image.src = url
+    })
+
+    const scale = Math.min(1, maxDimension / Math.max(img.width, img.height))
+    if (!shouldResize && scale === 1) return file
+
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(img.width * scale)
+    canvas.height = Math.round(img.height * scale)
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return file
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (result) => (result ? resolve(result) : reject(new Error('Resize failed'))),
+        'image/jpeg',
+        quality,
+      )
+    })
+
+    const fileName = file.name.replace(/\.[^/.]+$/, '.jpg')
+    return new File([blob], fileName, { type: blob.type })
+  }
+
   const uploadPhoto = async (file: File, userId: string) => {
-    const path = `author-photos/${userId}/${Date.now()}-${file.name}`
+    const preparedFile = await resizePhoto(file)
+    const maxSize = 5 * 1024 * 1024
+    if (preparedFile.size > maxSize) {
+      throw new Error('Profile photo must be 5MB or less.')
+    }
+
+    const path = `author-photos/${userId}/${Date.now()}-${preparedFile.name}`
     const { error: uploadError } = await supabase.storage
       .from('author-photos')
-      .upload(path, file, { upsert: true })
+      .upload(path, preparedFile, { upsert: true, contentType: preparedFile.type })
     if (uploadError) throw uploadError
     const { data } = supabase.storage.from('author-photos').getPublicUrl(path)
     return { path, publicUrl: data.publicUrl }
@@ -258,6 +307,22 @@ function AdminAuthorsPage() {
       console.error('Update author error:', err)
       toast.error(err.message ?? 'Failed to update author')
     },
+  })
+
+  const toggleFeatured = useMutation({
+    mutationFn: async (payload: { id: string; featured: boolean }) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ featured: payload.featured })
+        .eq('id', payload.id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'authors'] })
+      toast.success('Featured status updated')
+    },
+    onError: (err: any) =>
+      toast.error(err.message ?? 'Failed to update featured status'),
   })
 
   const deleteAuthor = useMutation({
@@ -492,6 +557,18 @@ function AdminAuthorsPage() {
                                   Set to Pending
                                 </DropdownMenuItem>
                               )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  toggleFeatured.mutate({
+                                    id: author.id,
+                                    featured: !(author.featured ?? false),
+                                  })
+                                }}
+                              >
+                                {author.featured ? 'Unfeature' : 'Mark featured'}
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={(e) => {
