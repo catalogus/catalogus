@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { BookOpen, ShoppingBag, PenSquare, Shield } from 'lucide-react'
 import { createFileRoute } from '@tanstack/react-router'
+import Header from '../components/Header'
 
 export const Route = createFileRoute('/')({ component: Home })
 
@@ -30,6 +31,7 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
+      <Header />
       <main className="max-w-6xl mx-auto px-4 py-16 space-y-16">
         <section className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
           <div className="space-y-6">

@@ -90,6 +90,14 @@ code {
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --header-bg: #ffffff;
+  --header-bg-scrolled: rgba(255, 255, 255, 0.92);
+  --header-border: #eadfd2;
+  --header-ink: #1f1b16;
+  --header-muted: #6d6458;
+  --header-accent: #f26a3d;
+  --header-panel: #15110c;
+  --header-panel-muted: #b9aca0;
 }
 
 .dark {
