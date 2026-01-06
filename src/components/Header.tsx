@@ -1,10 +1,10 @@
 import { Link } from '@tanstack/react-router'
-import { Menu, ShoppingBag, X } from 'lucide-react'
+import { Menu, X, User, LogOut, LayoutDashboard, ChevronDown } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useAuth } from '../contexts/AuthProvider'
 
 const navItems = [
   { label: 'Inicio', href: '/', spa: true },
-  { label: 'Livros', href: '/livros' },
   { label: 'Autores', href: '/autores' },
   { label: 'Noticias', href: '/noticias' },
   { label: 'Eventos', href: '/eventos' },
@@ -13,8 +13,38 @@ const navItems = [
 ] as const
 
 export default function Header() {
+  const { session, profile, signOut } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+
+  // Set CSS custom property for header height
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      const headerEl = document.querySelector('header')
+      if (headerEl) {
+        document.documentElement.style.setProperty(
+          '--header-height',
+          `${headerEl.offsetHeight}px`
+        )
+      }
+    }
+
+    updateHeaderHeight()
+    window.addEventListener('resize', updateHeaderHeight)
+    return () => window.removeEventListener('resize', updateHeaderHeight)
+  }, [])
+
+  // Update header height when scroll state changes (header size might change)
+  useEffect(() => {
+    const headerEl = document.querySelector('header')
+    if (headerEl) {
+      document.documentElement.style.setProperty(
+        '--header-height',
+        `${headerEl.offsetHeight}px`
+      )
+    }
+  }, [isScrolled])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,6 +66,15 @@ export default function Header() {
     }
   }, [menuOpen])
 
+  // Close user menu on scroll
+  useEffect(() => {
+    if (!userMenuOpen) return
+
+    const handleScroll = () => setUserMenuOpen(false)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [userMenuOpen])
+
   return (
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-300 `}
@@ -44,16 +83,13 @@ export default function Header() {
         borderColor: isScrolled ? 'var(--header-border)' : 'transparent',
       }}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 lg:py-4">
+      <div className="flex items-center justify-between px-4 py-3 md:px-15 lg:py-6">
         <Link to="/" className="group flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[color:var(--header-border)] bg-white text-[color:var(--header-ink)] shadow-sm transition-transform duration-300 group-hover:-translate-y-0.5">
-            C
-          </div>
           <div className="leading-tight">
-            <p className="text-base font-semibold text-[color:var(--header-ink)] sm:text-lg">
+            <p className="text-base font-semibold text-(--header-ink) sm:text-lg">
               Catalogus
             </p>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--header-muted)]">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-(--header-muted)">
               Livraria & cultura
             </p>
           </div>
@@ -62,7 +98,7 @@ export default function Header() {
         <nav className="hidden items-center gap-6 lg:flex">
           {navItems.map((item) => {
             const className =
-              "relative text-sm font-medium text-[color:var(--header-ink)] transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-[color:var(--header-accent)] after:transition-transform after:duration-300 after:content-[''] hover:text-[color:var(--header-accent)] hover:after:scale-x-100"
+              "relative text-xl font-medium text-[color:var(--header-ink)] transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-[color:var(--header-accent)] after:transition-transform after:duration-300 after:content-[''] hover:text-[color:var(--header-accent)] hover:after:scale-x-100"
             if (item.spa) {
               return (
                 <Link key={item.label} to="/" className={className}>
@@ -79,19 +115,66 @@ export default function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <a
-            href="/carrinho"
-            className="flex items-center gap-2 rounded-full border border-[color:var(--header-border)] px-3 py-2 text-sm font-medium text-[color:var(--header-ink)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[color:var(--header-accent)]"
-          >
-            <ShoppingBag className="h-4 w-4" />
-            Carrinho
-          </a>
-          <Link
-            to="/auth/sign-in"
-            className="rounded-full bg-[color:var(--header-ink)] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[color:var(--header-accent)]"
-          >
-            Entrar
-          </Link>
+          {session && profile ? (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 bg-[color:var(--header-ink)] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[color:var(--header-accent)]"
+              >
+                {profile.photo_url ? (
+                  <img
+                    src={profile.photo_url}
+                    alt={profile.name ?? 'User'}
+                    className="h-6 w-6 rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="h-4 w-4" />
+                )}
+                <span>{profile.name ?? session.user.email}</span>
+                <ChevronDown className="h-4 w-4" />
+              </button>
+
+              {userMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setUserMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 shadow-lg z-50">
+                    {(profile.role === 'admin' || profile.role === 'author') && (
+                      <Link
+                        to="/admin/dashboard"
+                        className="flex items-center gap-2 px-4 py-3 text-sm text-gray-900 hover:bg-gray-100 transition-colors"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <LayoutDashboard className="h-4 w-4" />
+                        Painel Admin
+                      </Link>
+                    )}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setUserMenuOpen(false)
+                        await signOut()
+                      }}
+                      className="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-900 hover:bg-gray-100 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sair
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <Link
+              to="/auth/sign-in"
+              className="bg-[color:var(--header-ink)] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[color:var(--header-accent)]"
+            >
+              Entrar
+            </Link>
+          )}
         </div>
 
         <button
@@ -126,7 +209,7 @@ export default function Header() {
             className="flex items-center gap-3"
             onClick={() => setMenuOpen(false)}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/20 bg-white/10">
+            <div className="flex h-10 w-10 items-center justify-center border border-white/20 bg-white/10">
               C
             </div>
             <div className="leading-tight">
@@ -139,7 +222,7 @@ export default function Header() {
           <button
             type="button"
             onClick={() => setMenuOpen(false)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-white"
+            className="flex h-10 w-10 items-center justify-center border border-white/20 text-white"
             aria-label="Fechar menu"
           >
             <X className="h-5 w-5" />
@@ -149,7 +232,7 @@ export default function Header() {
         <div className="flex flex-col gap-4 pt-4 text-lg">
           {navItems.map((item, index) => {
             const baseClass =
-              "flex items-center justify-between border-b border-white/10 pb-3 text-white transition-all duration-300 hover:translate-x-1 hover:text-[color:var(--header-accent)]"
+              "flex items-center justify-between border-b border-white/10 pb-3 text-white font-semibold transition-all duration-300 hover:translate-x-1 hover:text-[color:var(--header-accent)]"
             const style = { transitionDelay: `${index * 40}ms` }
             if (item.spa) {
               return (
@@ -179,20 +262,62 @@ export default function Header() {
         </div>
 
         <div className="mt-auto space-y-3">
-          <a
-            href="/carrinho"
-            className="flex items-center justify-between rounded-2xl border border-white/20 px-4 py-3 text-sm font-semibold"
-          >
-            Carrinho
-            <ShoppingBag className="h-4 w-4" />
-          </a>
-          <Link
-            to="/auth/sign-in"
-            className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[color:var(--header-ink)]"
-            onClick={() => setMenuOpen(false)}
-          >
-            Entrar
-          </Link>
+          {session && profile ? (
+            <>
+              <div className="border-t border-white/10 pt-3">
+                <div className="flex items-center gap-3 px-4 py-2">
+                  {profile.photo_url ? (
+                    <img
+                      src={profile.photo_url}
+                      alt={profile.name ?? 'User'}
+                      className="h-10 w-10 rounded-full object-cover border-2 border-white/20"
+                    />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 border-2 border-white/20">
+                      <User className="h-5 w-5" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-white">
+                      {profile.name ?? 'Usuário'}
+                    </p>
+                    <p className="text-xs text-white/60">{session.user.email}</p>
+                  </div>
+                </div>
+              </div>
+
+              {(profile.role === 'admin' || profile.role === 'author') && (
+                <Link
+                  to="/admin/dashboard"
+                  className="flex items-center gap-2 bg-white/10 px-4 py-3 text-sm font-semibold text-white border border-white/20 hover:bg-white/20 transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Painel Admin
+                </Link>
+              )}
+
+              <button
+                type="button"
+                onClick={async () => {
+                  setMenuOpen(false)
+                  await signOut()
+                }}
+                className="flex w-full items-center gap-2 bg-white px-4 py-3 text-sm font-semibold text-[color:var(--header-ink)] hover:bg-gray-100 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Sair
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/auth/sign-in"
+              className="flex items-center justify-between bg-white px-4 py-3 text-sm font-semibold text-[color:var(--header-ink)]"
+              onClick={() => setMenuOpen(false)}
+            >
+              Entrar
+            </Link>
+          )}
         </div>
       </aside>
     </header>
