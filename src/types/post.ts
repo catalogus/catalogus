@@ -56,6 +56,7 @@ export type PostRow = {
   slug: string
   excerpt: string | null
   body: string | null
+  previous_status: PostStatus | null
   featured_image_url: string | null
   featured_image_path: string | null
   author_id: string | null

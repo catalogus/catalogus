@@ -52,19 +52,32 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
 
-  const ensureProfile = async (userId: string, name?: string) => {
-    const { data: existing } = await supabase
+  const ensureProfile = async (userId: string, name?: string, email?: string) => {
+    const normalizedEmail = email?.toLowerCase().trim()
+    const { data: existing, error: existingError } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, email')
       .eq('id', userId)
       .maybeSingle()
 
-    if (existing) return null
+    if (existingError) return new Error(existingError.message)
+
+    if (existing) {
+      if (!existing.email && normalizedEmail) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ email: normalizedEmail })
+          .eq('id', userId)
+        return error ? new Error(error.message) : null
+      }
+      return null
+    }
 
     const { error } = await supabase.from('profiles').upsert({
       id: userId,
       name: name ?? 'Catalogus User',
       role: 'customer',
+      email: normalizedEmail ?? null,
     })
 
     return error ? new Error(error.message) : null
@@ -152,6 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data.session.user.id,
         (data.session.user.user_metadata as { name?: string } | null)?.name ??
           email,
+        email,
       )
       if (profileError) return { error: profileError }
       queryClient.setQueryData(['auth', 'session'], data.session)
@@ -176,6 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const profileError = await ensureProfile(
         data.session.user.id,
         name ?? email,
+        email,
       )
       if (profileError) return { error: profileError }
       queryClient.setQueryData(['auth', 'session'], data.session)

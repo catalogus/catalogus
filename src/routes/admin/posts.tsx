@@ -310,6 +310,23 @@ function AdminPostsPage() {
     draft: 0,
     trash: 0,
   }
+  const emptyStateConfig = {
+    published: {
+      title: 'No published posts yet',
+      description: 'Create a post and publish it when you are ready.',
+      action: 'New Post',
+    },
+    draft: {
+      title: 'No drafts yet',
+      description: 'Start a draft to save your work for later.',
+      action: 'Start Draft',
+    },
+    trash: {
+      title: 'Trash is empty',
+      description: 'Deleted posts will show up here.',
+      action: null,
+    },
+  }
 
   const createTag = useMutation({
     mutationFn: async (name: string) => {
@@ -410,7 +427,7 @@ function AdminPostsPage() {
     }
   }
 
-  const updatePostsStatusViaRest = async (ids: string[], status: PostStatus) => {
+  const updatePostsViaRest = async (ids: string[], patch: Record<string, any>) => {
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Missing Supabase configuration.')
     }
@@ -434,7 +451,7 @@ function AdminPostsPage() {
             'Content-Type': 'application/json',
             Prefer: 'return=minimal',
           },
-          body: JSON.stringify({ status }),
+          body: JSON.stringify(patch),
           signal: controller.signal,
         },
       )
@@ -445,6 +462,10 @@ function AdminPostsPage() {
     } finally {
       clearTimeout(timeoutId)
     }
+  }
+
+  const updatePostsStatusViaRest = async (ids: string[], status: PostStatus) => {
+    await updatePostsViaRest(ids, { status })
   }
 
   const deletePostsViaRest = async (ids: string[]) => {
@@ -629,7 +650,11 @@ function AdminPostsPage() {
 
   const moveToTrash = useMutation({
     mutationFn: async (ids: string[]) => {
-      await updatePostsStatusViaRest(ids, 'trash')
+      const fromStatus = (filters.status ?? 'published') as PostStatus
+      await updatePostsViaRest(ids, {
+        status: 'trash',
+        previous_status: fromStatus,
+      })
     },
     onSuccess: (_data, ids) => {
       const fromStatus = (filters.status ?? 'published') as PostStatus
@@ -638,7 +663,11 @@ function AdminPostsPage() {
         const next = data.posts
           .map((post) =>
             ids.includes(post.id)
-              ? { ...post, status: 'trash' as PostStatus }
+              ? {
+                  ...post,
+                  status: 'trash' as PostStatus,
+                  previous_status: fromStatus,
+                }
               : post,
           )
           .filter((post) => post.status === filters.status)
@@ -655,10 +684,36 @@ function AdminPostsPage() {
 
   const restoreFromTrash = useMutation({
     mutationFn: async (ids: string[]) => {
-      await updatePostsStatusViaRest(ids, 'draft')
+      const currentPosts = postsQuery.data?.posts ?? []
+      const selected = currentPosts.filter((post) => ids.includes(post.id))
+      const grouped = selected.reduce((acc, post) => {
+        const nextStatus = post.previous_status ?? 'draft'
+        if (!acc[nextStatus]) acc[nextStatus] = []
+        acc[nextStatus].push(post.id)
+        return acc
+      }, {} as Record<PostStatus, string[]>)
+
+      await Promise.all(
+        Object.entries(grouped).map(([status, postIds]) =>
+          updatePostsViaRest(postIds, {
+            status,
+            previous_status: null,
+          }),
+        ),
+      )
     },
     onSuccess: (_data, ids) => {
-      updateStatusCounts('trash', 'draft', ids.length)
+      const currentPosts = postsQuery.data?.posts ?? []
+      const selected = currentPosts.filter((post) => ids.includes(post.id))
+      const grouped = selected.reduce((acc, post) => {
+        const nextStatus = post.previous_status ?? 'draft'
+        acc[nextStatus] = (acc[nextStatus] ?? 0) + 1
+        return acc
+      }, {} as Record<PostStatus, number>)
+
+      Object.entries(grouped).forEach(([status, count]) => {
+        updateStatusCounts('trash', status as PostStatus, count)
+      })
       updateCurrentPosts((data) => {
         const next = data.posts.filter((post) => !ids.includes(post.id))
         return { ...data, posts: next, total: next.length }
@@ -955,13 +1010,40 @@ function AdminPostsPage() {
             </div>
 
             {(filters.search ||
-              filters.status !== 'all' ||
+              filters.status !== 'published' ||
               filters.category_id ||
               filters.tag_id) && (
               <Button variant="outline" size="sm" onClick={clearFilters}>
                 Clear Filters
               </Button>
             )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              {
+                label: 'Published',
+                count: statusCountsQuery.isLoading ? '…' : statusCounts.published,
+              },
+              {
+                label: 'Drafts',
+                count: statusCountsQuery.isLoading ? '…' : statusCounts.draft,
+              },
+              {
+                label: 'Trash',
+                count: statusCountsQuery.isLoading ? '…' : statusCounts.trash,
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="rounded-2xl border border-gray-200 bg-white px-4 py-3"
+              >
+                <p className="text-xs uppercase text-gray-500">{item.label}</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {item.count}
+                </p>
+              </div>
+            ))}
           </div>
 
           {selectedIds.size > 0 && (
@@ -1037,6 +1119,26 @@ function AdminPostsPage() {
               <p className="text-sm text-rose-600 p-4">
                 Failed to load posts. Check connection or permissions.
               </p>
+            ) : (postsQuery.data?.posts.length ?? 0) === 0 ? (
+              <div className="p-8 text-center space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {emptyStateConfig[filters.status]?.title ?? 'No posts yet'}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {emptyStateConfig[filters.status]?.description ??
+                    'Create your first post to get started.'}
+                </p>
+                {emptyStateConfig[filters.status]?.action && (
+                  <Button
+                    onClick={() => {
+                      setEditingPost(null)
+                      setShowForm(true)
+                    }}
+                  >
+                    {emptyStateConfig[filters.status].action}
+                  </Button>
+                )}
+              </div>
             ) : (
               <>
                 <Table>
@@ -1166,9 +1268,6 @@ function AdminPostsPage() {
                       </TableRow>
                     ))}
                   </TableBody>
-                  {postsQuery.data?.posts.length === 0 && (
-                    <TableCaption>No posts found.</TableCaption>
-                  )}
                 </Table>
 
                 {totalPages > 1 && (

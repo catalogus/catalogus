@@ -16,6 +16,8 @@ import { Route as AuthorSignInRouteImport } from './routes/author/sign-in'
 import { Route as AuthorProfileRouteImport } from './routes/author/profile'
 import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminPostsRouteImport } from './routes/admin/posts'
 import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminContentRouteImport } from './routes/admin/content'
@@ -26,7 +28,6 @@ import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
 import { Route as AdminContentServicesRouteImport } from './routes/admin/content.services'
 import { Route as AdminContentProjectsRouteImport } from './routes/admin/content.projects'
-import { Route as AdminContentPostsRouteImport } from './routes/admin/content.posts'
 import { Route as AdminContentPartnersRouteImport } from './routes/admin/content.partners'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
@@ -66,6 +67,16 @@ const AuthSignUpRoute = AuthSignUpRouteImport.update({
 const AuthSignInRoute = AuthSignInRouteImport.update({
   id: '/auth/sign-in',
   path: '/auth/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPostsRoute = AdminPostsRouteImport.update({
+  id: '/admin/posts',
+  path: '/admin/posts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminOrdersRoute = AdminOrdersRouteImport.update({
@@ -118,11 +129,6 @@ const AdminContentProjectsRoute = AdminContentProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => AdminContentRoute,
 } as any)
-const AdminContentPostsRoute = AdminContentPostsRouteImport.update({
-  id: '/posts',
-  path: '/posts',
-  getParentRoute: () => AdminContentRoute,
-} as any)
 const AdminContentPartnersRoute = AdminContentPartnersRouteImport.update({
   id: '/partners',
   path: '/partners',
@@ -156,6 +162,8 @@ export interface FileRoutesByFullPath {
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/posts': typeof AdminPostsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/author/profile': typeof AuthorProfileRoute
@@ -163,7 +171,6 @@ export interface FileRoutesByFullPath {
   '/author/sign-up': typeof AuthorSignUpRoute
   '/admin': typeof AdminIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
-  '/admin/content/posts': typeof AdminContentPostsRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
   '/admin/content/services': typeof AdminContentServicesRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -181,6 +188,8 @@ export interface FileRoutesByTo {
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/posts': typeof AdminPostsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/author/profile': typeof AuthorProfileRoute
@@ -188,7 +197,6 @@ export interface FileRoutesByTo {
   '/author/sign-up': typeof AuthorSignUpRoute
   '/admin': typeof AdminIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
-  '/admin/content/posts': typeof AdminContentPostsRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
   '/admin/content/services': typeof AdminContentServicesRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -207,6 +215,8 @@ export interface FileRoutesById {
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/posts': typeof AdminPostsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/author/profile': typeof AuthorProfileRoute
@@ -214,7 +224,6 @@ export interface FileRoutesById {
   '/author/sign-up': typeof AuthorSignUpRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
-  '/admin/content/posts': typeof AdminContentPostsRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
   '/admin/content/services': typeof AdminContentServicesRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -234,6 +243,8 @@ export interface FileRouteTypes {
     | '/admin/content'
     | '/admin/dashboard'
     | '/admin/orders'
+    | '/admin/posts'
+    | '/admin/users'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/author/profile'
@@ -241,7 +252,6 @@ export interface FileRouteTypes {
     | '/author/sign-up'
     | '/admin'
     | '/admin/content/partners'
-    | '/admin/content/posts'
     | '/admin/content/projects'
     | '/admin/content/services'
     | '/demo/api/names'
@@ -259,6 +269,8 @@ export interface FileRouteTypes {
     | '/admin/content'
     | '/admin/dashboard'
     | '/admin/orders'
+    | '/admin/posts'
+    | '/admin/users'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/author/profile'
@@ -266,7 +278,6 @@ export interface FileRouteTypes {
     | '/author/sign-up'
     | '/admin'
     | '/admin/content/partners'
-    | '/admin/content/posts'
     | '/admin/content/projects'
     | '/admin/content/services'
     | '/demo/api/names'
@@ -284,6 +295,8 @@ export interface FileRouteTypes {
     | '/admin/content'
     | '/admin/dashboard'
     | '/admin/orders'
+    | '/admin/posts'
+    | '/admin/users'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/author/profile'
@@ -291,7 +304,6 @@ export interface FileRouteTypes {
     | '/author/sign-up'
     | '/admin/'
     | '/admin/content/partners'
-    | '/admin/content/posts'
     | '/admin/content/projects'
     | '/admin/content/services'
     | '/demo/api/names'
@@ -310,6 +322,8 @@ export interface RootRouteChildren {
   AdminContentRoute: typeof AdminContentRouteWithChildren
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
+  AdminPostsRoute: typeof AdminPostsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
   AuthSignInRoute: typeof AuthSignInRoute
   AuthSignUpRoute: typeof AuthSignUpRoute
   AuthorProfileRoute: typeof AuthorProfileRoute
@@ -374,6 +388,20 @@ declare module '@tanstack/react-router' {
       path: '/auth/sign-in'
       fullPath: '/auth/sign-in'
       preLoaderRoute: typeof AuthSignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/posts': {
+      id: '/admin/posts'
+      path: '/admin/posts'
+      fullPath: '/admin/posts'
+      preLoaderRoute: typeof AdminPostsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/orders': {
@@ -446,13 +474,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContentProjectsRouteImport
       parentRoute: typeof AdminContentRoute
     }
-    '/admin/content/posts': {
-      id: '/admin/content/posts'
-      path: '/posts'
-      fullPath: '/admin/content/posts'
-      preLoaderRoute: typeof AdminContentPostsRouteImport
-      parentRoute: typeof AdminContentRoute
-    }
     '/admin/content/partners': {
       id: '/admin/content/partners'
       path: '/partners'
@@ -493,14 +514,12 @@ declare module '@tanstack/react-router' {
 
 interface AdminContentRouteChildren {
   AdminContentPartnersRoute: typeof AdminContentPartnersRoute
-  AdminContentPostsRoute: typeof AdminContentPostsRoute
   AdminContentProjectsRoute: typeof AdminContentProjectsRoute
   AdminContentServicesRoute: typeof AdminContentServicesRoute
 }
 
 const AdminContentRouteChildren: AdminContentRouteChildren = {
   AdminContentPartnersRoute: AdminContentPartnersRoute,
-  AdminContentPostsRoute: AdminContentPostsRoute,
   AdminContentProjectsRoute: AdminContentProjectsRoute,
   AdminContentServicesRoute: AdminContentServicesRoute,
 }
@@ -516,6 +535,8 @@ const rootRouteChildren: RootRouteChildren = {
   AdminContentRoute: AdminContentRouteWithChildren,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminOrdersRoute: AdminOrdersRoute,
+  AdminPostsRoute: AdminPostsRoute,
+  AdminUsersRoute: AdminUsersRoute,
   AuthSignInRoute: AuthSignInRoute,
   AuthSignUpRoute: AuthSignUpRoute,
   AuthorProfileRoute: AuthorProfileRoute,
