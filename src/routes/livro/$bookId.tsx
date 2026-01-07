@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
-import { Facebook, Link2, MessageCircle, ShoppingCart, Twitter } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ShoppingCart } from 'lucide-react'
 import { toast } from 'sonner'
 import Header from '../../components/Header'
 import { ProductCard, type ProductCardBook } from '../../components/shop/ProductCard'
@@ -57,6 +57,7 @@ function BookDetailPage() {
   const { bookId } = Route.useParams()
   const { addToCart } = useCart()
   const [quantity, setQuantity] = useState(1)
+  const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description')
 
   const bookQuery = useQuery({
     queryKey: ['book', bookId],
@@ -160,15 +161,6 @@ function BookDetailPage() {
       })
       .filter(Boolean) ?? []
 
-  const shareUrl = useMemo(() => {
-    if (!book) return ''
-    const path = `/livro/${book.slug || book.id}`
-    if (typeof window === 'undefined') return path
-    return new URL(path, window.location.origin).toString()
-  }, [book])
-
-  const shareText = book ? truncateText(book.title, 80) : ''
-
   const handleAddToCart = () => {
     if (!book) return
     if (!inStock) {
@@ -192,7 +184,7 @@ function BookDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f4ef] text-gray-900">
+    <div className="min-h-screen bg-white text-gray-900">
       <Header />
 
       {bookQuery.isLoading && (
@@ -218,169 +210,178 @@ function BookDetailPage() {
       )}
 
       {!bookQuery.isLoading && !bookQuery.isError && book && (
-        <main className="container mx-auto px-4 py-16 lg:px-15">
-          <div className="mb-8 text-xs uppercase tracking-[0.3em] text-gray-500">
-            <a href="/" className="hover:text-gray-900">
-              Home
-            </a>{' '}
-            /{' '}
-            <a href="/loja" className="hover:text-gray-900">
-              Loja
-            </a>{' '}
-            / {book.title}
-          </div>
-
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,420px)_1fr]">
-            <div className="bg-white p-6 shadow-sm">
-              <div className="aspect-[3/4] w-full overflow-hidden bg-gray-100">
-                {coverUrl ? (
-                  <img
-                    src={coverUrl}
-                    alt={book.title}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-4xl font-semibold text-gray-300">
-                    {book.title.charAt(0).toUpperCase()}
+        <>
+          <section
+            className="relative overflow-hidden bg-[#1c1b1a] text-white"
+            style={
+              coverUrl
+                ? {
+                    backgroundImage: `url(${coverUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }
+                : undefined
+            }
+          >
+            <div className="absolute inset-0 bg-black/60" />
+            <div className="relative z-10">
+              <div className="container mx-auto px-4 py-20 lg:px-15">
+                <div className="max-w-3xl space-y-4">
+                  <h1 className="text-4xl font-semibold md:text-6xl">
+                    {book.title}
+                  </h1>
+                  <div className="text-xs uppercase tracking-[0.3em] text-white/70">
+                    <a href="/" className="hover:text-white">
+                      Home
+                    </a>{' '}
+                    /{' '}
+                    <a href="/loja" className="hover:text-white">
+                      Loja
+                    </a>{' '}
+                    / {book.title}
                   </div>
-                )}
+                </div>
               </div>
             </div>
+          </section>
 
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-3xl font-semibold md:text-5xl">{book.title}</h1>
-                {authorLinks.length > 0 && (
-                  <p className="mt-2 text-sm text-gray-600">
-                    {authorLinks.map((author, index) => (
-                      <span key={author.id}>
-                        <a href={author.href} className="hover:text-gray-900">
-                          {author.name}
-                        </a>
-                        {index < authorLinks.length - 1 ? ', ' : ''}
-                      </span>
-                    ))}
+          <main className="container mx-auto px-4 py-16 lg:px-15">
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,420px)_1fr]">
+              <div className="bg-[#f2eee9] p-10 shadow-sm">
+                <div className="aspect-[3/4] w-full overflow-hidden bg-white">
+                  {coverUrl ? (
+                    <img
+                      src={coverUrl}
+                      alt={book.title}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-4xl font-semibold text-gray-300">
+                      {book.title.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-3xl font-semibold md:text-4xl">
+                    {book.title}
+                  </h2>
+                  {authorLinks.length > 0 && (
+                    <p className="mt-2 text-sm text-gray-600">
+                      {authorLinks.map((author, index) => (
+                        <span key={author.id}>
+                          <a href={author.href} className="hover:text-gray-900">
+                            {author.name}
+                          </a>
+                          {index < authorLinks.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-2xl font-bold text-[color:var(--brand)]">
+                    {formatPrice(book.price_mzn ?? 0)}
                   </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-3xl font-bold text-[color:var(--brand)]">
-                  {formatPrice(book.price_mzn ?? 0)}
-                </p>
-                <p className={`text-sm font-medium ${stockColor}`}>{stockLabel}</p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-4">
-                <QuantitySelector
-                  value={quantity}
-                  onChange={setQuantity}
-                  min={1}
-                  max={maxQuantity || 1}
-                  disabled={!inStock}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddToCart}
-                  disabled={!inStock}
-                  className="flex items-center gap-2 bg-[color:var(--brand)] px-6 py-3 text-sm font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#a25a2c] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  {inStock ? 'Adicionar ao carrinho' : 'Esgotado'}
-                </button>
-              </div>
-
-              <div className="space-y-3 text-sm text-gray-700">
-                <p>{book.description || book.seo_description || 'Descricao indisponivel.'}</p>
-              </div>
-
-              <div className="grid gap-3 border-t border-gray-200 pt-4 text-sm text-gray-700 md:grid-cols-2">
-                <div>
-                  <span className="block text-xs uppercase tracking-wider text-gray-500">
-                    ISBN
-                  </span>
-                  <span>{book.isbn || 'Nao informado'}</span>
+                  <p className={`text-sm font-medium ${stockColor}`}>{stockLabel}</p>
                 </div>
-                <div>
-                  <span className="block text-xs uppercase tracking-wider text-gray-500">
-                    Editora
-                  </span>
-                  <span>{book.publisher || 'Nao informado'}</span>
-                </div>
-                <div>
-                  <span className="block text-xs uppercase tracking-wider text-gray-500">
-                    Categoria
-                  </span>
-                  <span>{book.category || 'Nao informado'}</span>
-                </div>
-                <div>
-                  <span className="block text-xs uppercase tracking-wider text-gray-500">
-                    Idioma
-                  </span>
-                  <span>{book.language?.toUpperCase() || 'Nao informado'}</span>
-                </div>
-              </div>
 
-              <div className="space-y-3 border-t border-gray-200 pt-4">
-                <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-                  Partilhar
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <a
-                    href={`https://wa.me/?text=${encodeURIComponent(
-                      `${shareText} ${shareUrl}`,
-                    )}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 border border-gray-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-700 hover:border-[color:var(--brand)]"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    WhatsApp
-                  </a>
-                  <a
-                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-                      shareUrl,
-                    )}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 border border-gray-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-700 hover:border-[color:var(--brand)]"
-                  >
-                    <Facebook className="h-4 w-4" />
-                    Facebook
-                  </a>
-                  <a
-                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                      shareText,
-                    )}&url=${encodeURIComponent(shareUrl)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 border border-gray-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-700 hover:border-[color:var(--brand)]"
-                  >
-                    <Twitter className="h-4 w-4" />
-                    Twitter
-                  </a>
+                <div className="space-y-4 text-sm text-gray-700">
+                  <p>
+                    {book.description ||
+                      book.seo_description ||
+                      'Descricao indisponivel.'}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  <QuantitySelector
+                    value={quantity}
+                    onChange={setQuantity}
+                    min={1}
+                    max={maxQuantity || 1}
+                    disabled={!inStock}
+                  />
                   <button
                     type="button"
-                    onClick={async () => {
-                      if (!shareUrl) return
-                      try {
-                        await navigator.clipboard.writeText(shareUrl)
-                        toast.success('Link copiado')
-                      } catch {
-                        toast.error('Nao foi possivel copiar o link')
-                      }
-                    }}
-                    className="inline-flex items-center gap-2 border border-gray-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-700 hover:border-[color:var(--brand)]"
+                    onClick={handleAddToCart}
+                    disabled={!inStock}
+                    className="flex items-center gap-2 bg-[color:var(--brand)] px-6 py-3 text-sm font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#a25a2c] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
                   >
-                    <Link2 className="h-4 w-4" />
-                    Copiar link
+                    <ShoppingCart className="h-4 w-4" />
+                    {inStock ? 'Adicionar ao carrinho' : 'Esgotado'}
                   </button>
+                </div>
+
+                <div className="space-y-2 text-xs uppercase tracking-wider text-gray-500">
+                  <p>
+                    Categoria:{' '}
+                    <span className="text-gray-700 normal-case">
+                      {book.category || 'Nao informado'}
+                    </span>
+                  </p>
+                  <p>
+                    Idioma:{' '}
+                    <span className="text-gray-700 normal-case">
+                      {book.language?.toUpperCase() || 'Nao informado'}
+                    </span>
+                  </p>
+                  <p>
+                    ISBN:{' '}
+                    <span className="text-gray-700 normal-case">
+                      {book.isbn || 'Nao informado'}
+                    </span>
+                  </p>
+                  <p>
+                    ID:{' '}
+                    <span className="text-gray-700 normal-case">{book.id}</span>
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
 
-          <section className="mt-16">
+            <section className="mt-12">
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('description')}
+                  className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                    activeTab === 'description'
+                      ? 'bg-[color:var(--brand)] text-white'
+                      : 'bg-white text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Descricao
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('reviews')}
+                  className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                    activeTab === 'reviews'
+                      ? 'bg-[color:var(--brand)] text-white'
+                      : 'bg-white text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Reviews (0)
+                </button>
+              </div>
+              <div className="mt-4 border border-gray-200 bg-white p-6 text-sm text-gray-700">
+                {activeTab === 'description' ? (
+                  <p>
+                    {book.description ||
+                      book.seo_description ||
+                      'Descricao indisponivel.'}
+                  </p>
+                ) : (
+                  <p>Sem reviews ainda.</p>
+                )}
+              </div>
+            </section>
+
+            <section className="mt-16">
             <div className="mb-8 flex items-center justify-between">
               <h2 className="text-2xl font-semibold md:text-3xl">Livros relacionados</h2>
             </div>
@@ -421,6 +422,7 @@ function BookDetailPage() {
               )}
           </section>
         </main>
+        </>
       )}
     </div>
   )

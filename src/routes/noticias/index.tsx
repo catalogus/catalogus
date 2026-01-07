@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import Header from '../../components/Header'
 import { supabase } from '../../lib/supabaseClient'
 import {
@@ -37,8 +37,43 @@ type NewsPost = {
 function NewsListingPage() {
   const { q, categoria, tag } = Route.useSearch()
 
+  // Query for featured post (hero spotlight)
+  const featuredPostQuery = useQuery({
+    queryKey: ['news-posts', 'featured-spotlight'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select(
+          `
+          id,
+          title,
+          slug,
+          featured_image_url,
+          categories:post_categories_map(category:post_categories(name, slug))
+        `,
+        )
+        .eq('status', 'published')
+        .eq('featured', true)
+
+      if (error) throw error
+      if (!data || data.length === 0) return null
+
+      // Randomly select one featured post for spotlight
+      const randomIndex = Math.floor(Math.random() * data.length)
+      const post = data[randomIndex]
+      return {
+        ...post,
+        categories:
+          post.categories?.map((c: any) => ({
+            category: c.category,
+          })) ?? [],
+      } as NewsPost
+    },
+    staleTime: 60_000,
+  })
+
   const postsQuery = useInfiniteQuery({
-    queryKey: ['news-posts', 'listing', q, categoria, tag],
+    queryKey: ['news-posts', 'listing', q, categoria, tag, featuredPostQuery.data?.id],
     queryFn: async ({ pageParam = 1 }) => {
       let query = supabase
         .from('posts')
@@ -58,6 +93,11 @@ function NewsListingPage() {
         .eq('status', 'published')
         .order('published_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
+
+      // Exclude hero post to avoid duplication
+      if (featuredPostQuery.data?.id) {
+        query = query.neq('id', featuredPostQuery.data.id)
+      }
 
       // Apply search filter
       if (q) {
@@ -140,9 +180,12 @@ function NewsListingPage() {
     },
     initialPageParam: 1,
     staleTime: 60_000,
+    enabled: featuredPostQuery.isSuccess, // Wait for featured query
   })
 
   const allPosts = postsQuery.data?.pages.flatMap((page) => page.posts) ?? []
+  const featuredPost = featuredPostQuery.data
+  const featuredCategory = featuredPost?.categories?.[0]?.category
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -150,16 +193,54 @@ function NewsListingPage() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-[#1c1b1a] text-white">
-        {/* Static gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#3d2f23] to-[#0f0c0a]" />
+        {/* Background Image */}
+        {featuredPost && featuredPost.featured_image_url && (
+          <img
+            src={featuredPost.featured_image_url}
+            alt={featuredPost.title}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
+
+        {/* Fallback gradient if no featured post or no image */}
+        {(!featuredPost || !featuredPost.featured_image_url) && (
+          <div className="absolute inset-0 bg-gradient-to-br from-[#3d2f23] to-[#0f0c0a]" />
+        )}
+
+        {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/10" />
 
         <div className="relative z-10">
           <div className="container mx-auto px-4 py-24 lg:px-15">
             <div className="max-w-3xl space-y-5">
+              {/* Category Badge or Label */}
+              {featuredPost && featuredCategory ? (
+                <span
+                  className={`${getCategoryBadgeClass(featuredCategory.slug || featuredCategory.name || '')} inline-flex px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] rounded-none`}
+                >
+                  {featuredCategory.name}
+                </span>
+              ) : (
+                <p className="text-xs uppercase tracking-[0.4em] text-white/70">
+                  Notícias
+                </p>
+              )}
+
+              {/* Title */}
               <h1 className="text-2xl font-semibold leading-tight md:text-4xl">
-                Notícias
+                {featuredPost ? featuredPost.title : 'Notícias'}
               </h1>
+
+              {/* CTA Button */}
+              {featuredPost && (
+                <a
+                  href={`/noticias/${featuredPost.slug}`}
+                  className="inline-flex items-center gap-2 bg-[color:var(--brand)] px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#a25a2c]"
+                >
+                  Ler artigo completo
+                </a>
+              )}
+
               {/* Show active filters */}
               {(q || categoria || tag) && (
                 <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.3em] text-white/70">

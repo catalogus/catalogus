@@ -133,7 +133,7 @@ function AuthorPublicPage() {
   const embedUrl = buildEmbedUrl(author?.featured_video)
 
   return (
-    <div className="min-h-screen bg-[#f8f4ef] text-gray-900">
+    <div className="min-h-screen bg-white text-gray-900">
       <Header />
 
       {authorQuery.isLoading && (

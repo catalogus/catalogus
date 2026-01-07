@@ -313,7 +313,7 @@ function NewsPostDetailPage() {
                       {primaryCategory.name}
                     </span>
                   )}
-                  <h1 className="text-4xl font-semibold leading-tight md:text-4xl">
+                  <h1 className="text-2xl font-semibold leading-tight md:text-4xl">
                     {post.title}
                   </h1>
                   <div className="flex flex-wrap items-center gap-4 text-xs uppercase tracking-[0.3em] text-white/70">
