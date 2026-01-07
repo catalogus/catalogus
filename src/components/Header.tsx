@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { Menu, X, User, LogOut, LayoutDashboard, ChevronDown } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthProvider'
+import { CartButton } from './shop/CartButton'
 
 const navItems = [
   { label: 'Inicio', href: '/', spa: true },
@@ -88,7 +89,7 @@ export default function Header() {
           <img
             src="/logo.svg"
             alt="Catalogus"
-            className="h-10 w-auto sm:h-4"
+            className="h-4 w-auto sm:h-4"
           />
         </Link>
 
@@ -112,6 +113,7 @@ export default function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
+          <CartButton className="bg-white/0" />
           {session && profile ? (
             <div className="relative">
               <button
@@ -174,16 +176,19 @@ export default function Header() {
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setMenuOpen(true)}
-          className="flex h-10 w-10 items-center justify-center text-[color:var(--header-ink)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[color:var(--header-accent)] lg:hidden"
-          aria-label="Abrir menu"
-          aria-expanded={menuOpen}
-          aria-controls="mobile-menu"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2 lg:hidden">
+          <CartButton className="h-10 w-10 justify-center px-0" />
+          <button
+            type="button"
+            onClick={() => setMenuOpen(true)}
+            className="flex h-10 w-10 items-center justify-center text-[color:var(--header-ink)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[color:var(--header-accent)]"
+            aria-label="Abrir menu"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       <div

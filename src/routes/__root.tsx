@@ -6,6 +6,7 @@ import { Toaster } from 'sonner'
 
 import { AuthProvider } from '../contexts/AuthProvider'
 import { ErrorBoundary } from '../components/ErrorBoundary'
+import { CartProvider } from '../lib/useCart'
 
 import appCss from '../styles.css?url'
 
@@ -68,19 +69,21 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <ErrorBoundary>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
-              {children}
-              <Toaster position="top-right" richColors />
-              <TanStackDevtools
-                config={{
-                  position: 'bottom-right',
-                }}
-                plugins={[
-                  {
-                    name: 'Tanstack Router',
-                    render: <TanStackRouterDevtoolsPanel />,
-                  },
-                ]}
-              />
+              <CartProvider>
+                {children}
+                <Toaster position="top-right" richColors />
+                <TanStackDevtools
+                  config={{
+                    position: 'bottom-right',
+                  }}
+                  plugins={[
+                    {
+                      name: 'Tanstack Router',
+                      render: <TanStackRouterDevtoolsPanel />,
+                    },
+                  ]}
+                />
+              </CartProvider>
             </AuthProvider>
           </QueryClientProvider>
         </ErrorBoundary>

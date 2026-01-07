@@ -11,8 +11,15 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as NoticiasIndexRouteImport } from './routes/noticias/index'
+import { Route as MeusPedidosIndexRouteImport } from './routes/meus-pedidos/index'
+import { Route as LojaIndexRouteImport } from './routes/loja/index'
+import { Route as CheckoutIndexRouteImport } from './routes/checkout/index'
+import { Route as CarrinhoIndexRouteImport } from './routes/carrinho/index'
+import { Route as AutoresIndexRouteImport } from './routes/autores/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as PedidoOrderIdRouteImport } from './routes/pedido/$orderId'
 import { Route as NoticiasSlugRouteImport } from './routes/noticias/$slug'
+import { Route as LivroBookIdRouteImport } from './routes/livro/$bookId'
 import { Route as AutorAuthorIdRouteImport } from './routes/autor/$authorId'
 import { Route as AuthorSignUpRouteImport } from './routes/author/sign-up'
 import { Route as AuthorSignInRouteImport } from './routes/author/sign-in'
@@ -48,14 +55,49 @@ const NoticiasIndexRoute = NoticiasIndexRouteImport.update({
   path: '/noticias/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MeusPedidosIndexRoute = MeusPedidosIndexRouteImport.update({
+  id: '/meus-pedidos/',
+  path: '/meus-pedidos/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LojaIndexRoute = LojaIndexRouteImport.update({
+  id: '/loja/',
+  path: '/loja/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
+  id: '/checkout/',
+  path: '/checkout/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CarrinhoIndexRoute = CarrinhoIndexRouteImport.update({
+  id: '/carrinho/',
+  path: '/carrinho/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AutoresIndexRoute = AutoresIndexRouteImport.update({
+  id: '/autores/',
+  path: '/autores/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PedidoOrderIdRoute = PedidoOrderIdRouteImport.update({
+  id: '/pedido/$orderId',
+  path: '/pedido/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NoticiasSlugRoute = NoticiasSlugRouteImport.update({
   id: '/noticias/$slug',
   path: '/noticias/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LivroBookIdRoute = LivroBookIdRouteImport.update({
+  id: '/livro/$bookId',
+  path: '/livro/$bookId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AutorAuthorIdRoute = AutorAuthorIdRouteImport.update({
@@ -195,8 +237,15 @@ export interface FileRoutesByFullPath {
   '/author/sign-in': typeof AuthorSignInRoute
   '/author/sign-up': typeof AuthorSignUpRoute
   '/autor/$authorId': typeof AutorAuthorIdRoute
+  '/livro/$bookId': typeof LivroBookIdRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
+  '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/admin': typeof AdminIndexRoute
+  '/autores': typeof AutoresIndexRoute
+  '/carrinho': typeof CarrinhoIndexRoute
+  '/checkout': typeof CheckoutIndexRoute
+  '/loja': typeof LojaIndexRoute
+  '/meus-pedidos': typeof MeusPedidosIndexRoute
   '/noticias': typeof NoticiasIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
@@ -225,8 +274,15 @@ export interface FileRoutesByTo {
   '/author/sign-in': typeof AuthorSignInRoute
   '/author/sign-up': typeof AuthorSignUpRoute
   '/autor/$authorId': typeof AutorAuthorIdRoute
+  '/livro/$bookId': typeof LivroBookIdRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
+  '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/admin': typeof AdminIndexRoute
+  '/autores': typeof AutoresIndexRoute
+  '/carrinho': typeof CarrinhoIndexRoute
+  '/checkout': typeof CheckoutIndexRoute
+  '/loja': typeof LojaIndexRoute
+  '/meus-pedidos': typeof MeusPedidosIndexRoute
   '/noticias': typeof NoticiasIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
@@ -256,8 +312,15 @@ export interface FileRoutesById {
   '/author/sign-in': typeof AuthorSignInRoute
   '/author/sign-up': typeof AuthorSignUpRoute
   '/autor/$authorId': typeof AutorAuthorIdRoute
+  '/livro/$bookId': typeof LivroBookIdRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
+  '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/autores/': typeof AutoresIndexRoute
+  '/carrinho/': typeof CarrinhoIndexRoute
+  '/checkout/': typeof CheckoutIndexRoute
+  '/loja/': typeof LojaIndexRoute
+  '/meus-pedidos/': typeof MeusPedidosIndexRoute
   '/noticias/': typeof NoticiasIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
@@ -288,8 +351,15 @@ export interface FileRouteTypes {
     | '/author/sign-in'
     | '/author/sign-up'
     | '/autor/$authorId'
+    | '/livro/$bookId'
     | '/noticias/$slug'
+    | '/pedido/$orderId'
     | '/admin'
+    | '/autores'
+    | '/carrinho'
+    | '/checkout'
+    | '/loja'
+    | '/meus-pedidos'
     | '/noticias'
     | '/admin/content/partners'
     | '/admin/content/projects'
@@ -318,8 +388,15 @@ export interface FileRouteTypes {
     | '/author/sign-in'
     | '/author/sign-up'
     | '/autor/$authorId'
+    | '/livro/$bookId'
     | '/noticias/$slug'
+    | '/pedido/$orderId'
     | '/admin'
+    | '/autores'
+    | '/carrinho'
+    | '/checkout'
+    | '/loja'
+    | '/meus-pedidos'
     | '/noticias'
     | '/admin/content/partners'
     | '/admin/content/projects'
@@ -348,8 +425,15 @@ export interface FileRouteTypes {
     | '/author/sign-in'
     | '/author/sign-up'
     | '/autor/$authorId'
+    | '/livro/$bookId'
     | '/noticias/$slug'
+    | '/pedido/$orderId'
     | '/admin/'
+    | '/autores/'
+    | '/carrinho/'
+    | '/checkout/'
+    | '/loja/'
+    | '/meus-pedidos/'
     | '/noticias/'
     | '/admin/content/partners'
     | '/admin/content/projects'
@@ -379,8 +463,15 @@ export interface RootRouteChildren {
   AuthorSignInRoute: typeof AuthorSignInRoute
   AuthorSignUpRoute: typeof AuthorSignUpRoute
   AutorAuthorIdRoute: typeof AutorAuthorIdRoute
+  LivroBookIdRoute: typeof LivroBookIdRoute
   NoticiasSlugRoute: typeof NoticiasSlugRoute
+  PedidoOrderIdRoute: typeof PedidoOrderIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AutoresIndexRoute: typeof AutoresIndexRoute
+  CarrinhoIndexRoute: typeof CarrinhoIndexRoute
+  CheckoutIndexRoute: typeof CheckoutIndexRoute
+  LojaIndexRoute: typeof LojaIndexRoute
+  MeusPedidosIndexRoute: typeof MeusPedidosIndexRoute
   NoticiasIndexRoute: typeof NoticiasIndexRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
@@ -407,6 +498,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NoticiasIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/meus-pedidos/': {
+      id: '/meus-pedidos/'
+      path: '/meus-pedidos'
+      fullPath: '/meus-pedidos'
+      preLoaderRoute: typeof MeusPedidosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/loja/': {
+      id: '/loja/'
+      path: '/loja'
+      fullPath: '/loja'
+      preLoaderRoute: typeof LojaIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/': {
+      id: '/checkout/'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/carrinho/': {
+      id: '/carrinho/'
+      path: '/carrinho'
+      fullPath: '/carrinho'
+      preLoaderRoute: typeof CarrinhoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/autores/': {
+      id: '/autores/'
+      path: '/autores'
+      fullPath: '/autores'
+      preLoaderRoute: typeof AutoresIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/admin'
@@ -414,11 +540,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pedido/$orderId': {
+      id: '/pedido/$orderId'
+      path: '/pedido/$orderId'
+      fullPath: '/pedido/$orderId'
+      preLoaderRoute: typeof PedidoOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/noticias/$slug': {
       id: '/noticias/$slug'
       path: '/noticias/$slug'
       fullPath: '/noticias/$slug'
       preLoaderRoute: typeof NoticiasSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/livro/$bookId': {
+      id: '/livro/$bookId'
+      path: '/livro/$bookId'
+      fullPath: '/livro/$bookId'
+      preLoaderRoute: typeof LivroBookIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/autor/$authorId': {
@@ -624,8 +764,15 @@ const rootRouteChildren: RootRouteChildren = {
   AuthorSignInRoute: AuthorSignInRoute,
   AuthorSignUpRoute: AuthorSignUpRoute,
   AutorAuthorIdRoute: AutorAuthorIdRoute,
+  LivroBookIdRoute: LivroBookIdRoute,
   NoticiasSlugRoute: NoticiasSlugRoute,
+  PedidoOrderIdRoute: PedidoOrderIdRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AutoresIndexRoute: AutoresIndexRoute,
+  CarrinhoIndexRoute: CarrinhoIndexRoute,
+  CheckoutIndexRoute: CheckoutIndexRoute,
+  LojaIndexRoute: LojaIndexRoute,
+  MeusPedidosIndexRoute: MeusPedidosIndexRoute,
   NoticiasIndexRoute: NoticiasIndexRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
