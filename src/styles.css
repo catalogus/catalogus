@@ -223,3 +223,70 @@ code {
     transition: none;
   }
 }
+
+.post-content > * + * {
+  margin-top: 1.5rem;
+}
+
+.post-content h2 {
+  margin-top: 2.5rem;
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: #1f1b16;
+}
+
+.post-content h3 {
+  margin-top: 2rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f1b16;
+}
+
+.post-content h4 {
+  margin-top: 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f1b16;
+}
+
+.post-content p {
+  line-height: 1.8;
+}
+
+.post-content ul,
+.post-content ol {
+  padding-left: 1.5rem;
+}
+
+.post-content li + li {
+  margin-top: 0.5rem;
+}
+
+.post-content blockquote {
+  border-left: 3px solid var(--brand);
+  padding: 0.75rem 1rem;
+  background: #f4f1ec;
+  color: #5d554a;
+}
+
+.post-content img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.post-content a {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.post-content hr {
+  border: none;
+  border-top: 1px solid #e3d7ca;
+  margin: 2rem 0;
+}
+
+.post-content figure {
+  margin: 0;
+}

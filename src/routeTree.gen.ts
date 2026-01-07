@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as NoticiasSlugRouteImport } from './routes/noticias/$slug'
 import { Route as AutorAuthorIdRouteImport } from './routes/autor/$authorId'
 import { Route as AuthorSignUpRouteImport } from './routes/author/sign-up'
 import { Route as AuthorSignInRouteImport } from './routes/author/sign-in'
@@ -44,6 +45,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NoticiasSlugRoute = NoticiasSlugRouteImport.update({
+  id: '/noticias/$slug',
+  path: '/noticias/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AutorAuthorIdRoute = AutorAuthorIdRouteImport.update({
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/author/sign-in': typeof AuthorSignInRoute
   '/author/sign-up': typeof AuthorSignUpRoute
   '/autor/$authorId': typeof AutorAuthorIdRoute
+  '/noticias/$slug': typeof NoticiasSlugRoute
   '/admin': typeof AdminIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
@@ -211,6 +218,7 @@ export interface FileRoutesByTo {
   '/author/sign-in': typeof AuthorSignInRoute
   '/author/sign-up': typeof AuthorSignUpRoute
   '/autor/$authorId': typeof AutorAuthorIdRoute
+  '/noticias/$slug': typeof NoticiasSlugRoute
   '/admin': typeof AdminIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
@@ -240,6 +248,7 @@ export interface FileRoutesById {
   '/author/sign-in': typeof AuthorSignInRoute
   '/author/sign-up': typeof AuthorSignUpRoute
   '/autor/$authorId': typeof AutorAuthorIdRoute
+  '/noticias/$slug': typeof NoticiasSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
@@ -270,6 +279,7 @@ export interface FileRouteTypes {
     | '/author/sign-in'
     | '/author/sign-up'
     | '/autor/$authorId'
+    | '/noticias/$slug'
     | '/admin'
     | '/admin/content/partners'
     | '/admin/content/projects'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/author/sign-in'
     | '/author/sign-up'
     | '/autor/$authorId'
+    | '/noticias/$slug'
     | '/admin'
     | '/admin/content/partners'
     | '/admin/content/projects'
@@ -326,6 +337,7 @@ export interface FileRouteTypes {
     | '/author/sign-in'
     | '/author/sign-up'
     | '/autor/$authorId'
+    | '/noticias/$slug'
     | '/admin/'
     | '/admin/content/partners'
     | '/admin/content/projects'
@@ -355,6 +367,7 @@ export interface RootRouteChildren {
   AuthorSignInRoute: typeof AuthorSignInRoute
   AuthorSignUpRoute: typeof AuthorSignUpRoute
   AutorAuthorIdRoute: typeof AutorAuthorIdRoute
+  NoticiasSlugRoute: typeof NoticiasSlugRoute
   AdminIndexRoute: typeof AdminIndexRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
@@ -379,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/noticias/$slug': {
+      id: '/noticias/$slug'
+      path: '/noticias/$slug'
+      fullPath: '/noticias/$slug'
+      preLoaderRoute: typeof NoticiasSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/autor/$authorId': {
@@ -584,6 +604,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthorSignInRoute: AuthorSignInRoute,
   AuthorSignUpRoute: AuthorSignUpRoute,
   AutorAuthorIdRoute: AutorAuthorIdRoute,
+  NoticiasSlugRoute: NoticiasSlugRoute,
   AdminIndexRoute: AdminIndexRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
