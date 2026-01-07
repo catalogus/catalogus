@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NoticiasIndexRouteImport } from './routes/noticias/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as NoticiasSlugRouteImport } from './routes/noticias/$slug'
 import { Route as AutorAuthorIdRouteImport } from './routes/autor/$authorId'
@@ -40,6 +41,11 @@ import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ss
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NoticiasIndexRoute = NoticiasIndexRouteImport.update({
+  id: '/noticias/',
+  path: '/noticias/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/autor/$authorId': typeof AutorAuthorIdRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/admin': typeof AdminIndexRoute
+  '/noticias': typeof NoticiasIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
   '/admin/content/services': typeof AdminContentServicesRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/autor/$authorId': typeof AutorAuthorIdRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/admin': typeof AdminIndexRoute
+  '/noticias': typeof NoticiasIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
   '/admin/content/services': typeof AdminContentServicesRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/autor/$authorId': typeof AutorAuthorIdRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/noticias/': typeof NoticiasIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
   '/admin/content/services': typeof AdminContentServicesRoute
@@ -281,6 +290,7 @@ export interface FileRouteTypes {
     | '/autor/$authorId'
     | '/noticias/$slug'
     | '/admin'
+    | '/noticias'
     | '/admin/content/partners'
     | '/admin/content/projects'
     | '/admin/content/services'
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/autor/$authorId'
     | '/noticias/$slug'
     | '/admin'
+    | '/noticias'
     | '/admin/content/partners'
     | '/admin/content/projects'
     | '/admin/content/services'
@@ -339,6 +350,7 @@ export interface FileRouteTypes {
     | '/autor/$authorId'
     | '/noticias/$slug'
     | '/admin/'
+    | '/noticias/'
     | '/admin/content/partners'
     | '/admin/content/projects'
     | '/admin/content/services'
@@ -369,6 +381,7 @@ export interface RootRouteChildren {
   AutorAuthorIdRoute: typeof AutorAuthorIdRoute
   NoticiasSlugRoute: typeof NoticiasSlugRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  NoticiasIndexRoute: typeof NoticiasIndexRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
   DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
@@ -385,6 +398,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/noticias/': {
+      id: '/noticias/'
+      path: '/noticias'
+      fullPath: '/noticias'
+      preLoaderRoute: typeof NoticiasIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -606,6 +626,7 @@ const rootRouteChildren: RootRouteChildren = {
   AutorAuthorIdRoute: AutorAuthorIdRoute,
   NoticiasSlugRoute: NoticiasSlugRoute,
   AdminIndexRoute: AdminIndexRoute,
+  NoticiasIndexRoute: NoticiasIndexRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
   DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
