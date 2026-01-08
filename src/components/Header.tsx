@@ -3,6 +3,7 @@ import { Menu, X, User, LogOut, LayoutDashboard, ChevronDown } from 'lucide-reac
 import { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthProvider'
 import { CartButton } from './shop/CartButton'
+import { FloatingSearch } from './search/FloatingSearch'
 
 const navItems = [
   { label: 'Inicio', href: '/', spa: true },
@@ -77,7 +78,8 @@ export default function Header() {
   }, [userMenuOpen])
 
   return (
-    <header
+    <>
+      <header
       className={`sticky top-0 z-50 w-full transition-all duration-300 `}
       style={{
         background: isScrolled ? 'var(--header-bg-scrolled)' : 'var(--header-bg)',
@@ -322,6 +324,8 @@ export default function Header() {
           )}
         </div>
       </aside>
-    </header>
+      </header>
+      <FloatingSearch />
+    </>
   )
 }

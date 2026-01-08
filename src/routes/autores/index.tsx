@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import Header from '../../components/Header'
+import { AuthorCard } from '../../components/author/AuthorCard'
 import { supabase } from '../../lib/supabaseClient'
 import {
   Globe,
@@ -69,82 +70,6 @@ const getSocialLinks = (author: AuthorData) => {
     { key: 'twitter', href: links.twitter, icon: Twitter, label: 'Twitter' },
     { key: 'youtube', href: links.youtube, icon: Youtube, label: 'YouTube' },
   ].filter((item) => item.href)
-}
-
-// Author Card Component
-const AuthorCard = ({ author }: { author: AuthorData }) => {
-  const photoUrl = resolvePhotoUrl(author.photo_url, author.photo_path)
-  const socialLinks = getSocialLinks(author)
-  const authorHref = `/autor/${author.wp_slug || author.id}`
-
-  return (
-    <div className="space-y-3">
-      {/* Photo Container with Hover Overlay */}
-      <div className="group relative aspect-[4/5] w-full overflow-hidden border border-gray-200 bg-[#f4f1ec] transition-all hover:border-gray-400">
-        {/* Photo or Fallback Initial */}
-        {photoUrl ? (
-          <img
-            src={photoUrl}
-            alt={author.name}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-5xl font-semibold text-gray-300">
-            {author.name.charAt(0).toUpperCase()}
-          </div>
-        )}
-
-        {/* Social Icons Overlay (on hover) */}
-        {socialLinks.length > 0 && (
-          <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-            {socialLinks.map((item) => {
-              const Icon = item.icon
-              return (
-                <a
-                  key={item.key}
-                  href={item.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex h-10 w-10 items-center justify-center bg-white text-gray-900 transition-transform hover:scale-105"
-                  aria-label={item.label}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Icon className="h-4 w-4" />
-                </a>
-              )
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Author Info */}
-      <div className="space-y-2">
-        <h3 className="text-xl font-semibold text-gray-900">
-          <a href={authorHref} className="hover:underline">
-            {author.name}
-          </a>
-        </h3>
-
-        {/* Author Type */}
-        {author.author_type && (
-          <p className="text-sm text-gray-600">{author.author_type}</p>
-        )}
-
-        {/* Location Info */}
-        {(author.residence_city || author.province) && (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <MapPin className="h-3.5 w-3.5" />
-            <span>
-              {[author.residence_city, author.province]
-                .filter(Boolean)
-                .join(', ')}
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  )
 }
 
 function AutoresListingPage() {
