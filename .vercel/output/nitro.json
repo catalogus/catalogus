@@ -1,0 +1,22 @@
+{
+  "date": "2026-01-07T06:54:58.035Z",
+  "preset": "vercel",
+  "framework": {
+    "name": "nitro",
+    "version": ""
+  },
+  "versions": {
+    "nitro": "3.0.1-alpha.1"
+  },
+  "commands": {
+    "preview": "",
+    "deploy": "npx vercel deploy --prebuilt"
+  },
+  "config": {
+    "vercel": {
+      "functions": {
+        "runtime": "nodejs22.x"
+      }
+    }
+  }
+}

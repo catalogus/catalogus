@@ -24,7 +24,7 @@ export function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex overflow-hidden">
+    <div className="admin-shell min-h-screen bg-[#FAFAFA] flex overflow-hidden">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
