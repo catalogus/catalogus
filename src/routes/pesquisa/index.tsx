@@ -11,6 +11,21 @@ import {
 } from '../../components/search/SearchResultCards'
 import { buildSearchOrFilter, normalizeSearchTerm } from '../../lib/searchHelpers'
 import { supabase } from '../../lib/supabaseClient'
+import type { SocialLinks } from '../../types/author'
+
+// Helper to merge profile data when claim is approved
+const getMergedAuthorData = (author: any): SearchAuthor => {
+  if (author.claim_status === 'approved' && author.profile) {
+    return {
+      ...author,
+      name: author.profile.name || author.name,
+      photo_url: author.profile.photo_url || author.photo_url,
+      photo_path: author.profile.photo_path || author.photo_path,
+      social_links: author.profile.social_links || author.social_links,
+    }
+  }
+  return author as SearchAuthor
+}
 
 export const Route = createFileRoute('/pesquisa/')({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -69,7 +84,10 @@ function SearchResultsPage() {
           photo_path,
           social_links,
           residence_city,
-          province
+          province,
+          claim_status,
+          profile_id,
+          profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, bio, social_links)
         `,
         )
         .order('name', { ascending: true })
@@ -114,7 +132,7 @@ function SearchResultsPage() {
 
       return {
         books: (booksResult.data ?? []) as SearchBook[],
-        authors: (authorsResult.data ?? []) as SearchAuthor[],
+        authors: (authorsResult.data ?? []).map(getMergedAuthorData),
         posts: (postsResult.data ?? []) as SearchPost[],
       }
     },

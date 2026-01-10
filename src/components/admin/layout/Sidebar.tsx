@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
 import {
   LayoutDashboard,
   BookOpen,
@@ -9,13 +10,16 @@ import {
   LibraryBig,
   ChevronDown,
   Image,
+  UserCheck,
 } from 'lucide-react'
 import type { UserRole } from '../../../types/admin'
+import { supabase } from '../../../lib/supabaseClient'
 
 type NavigationItem = {
   name: string
   href: string
   icon: React.ComponentType<{ className?: string }>
+  badge?: number
   subItems?: Array<{
     name: string
     href: string
@@ -31,6 +35,7 @@ const adminNavigation: NavigationItem[] = [
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Authors', href: '/admin/authors', icon: Users },
+  { name: 'Author Claims', href: '/admin/author-claims', icon: UserCheck },
   {
     name: 'Content',
     href: '/admin/content',
@@ -61,11 +66,35 @@ export function Sidebar({ userRole = 'admin' }: SidebarProps) {
   })
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
+  // Query pending claims count for admins
+  const pendingClaimsQuery = useQuery({
+    queryKey: ['admin', 'pending-claims-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('authors')
+        .select('id', { count: 'exact', head: true })
+        .eq('claim_status', 'pending')
+
+      if (error) throw error
+      return count ?? 0
+    },
+    enabled: userRole === 'admin',
+    staleTime: 30_000,
+    refetchInterval: 60_000, // Refresh every minute
+  })
+
   const navigation = useMemo(() => {
     if (userRole === 'author') return authorNavigation
     if (userRole === 'customer') return customerNavigation
-    return adminNavigation
-  }, [userRole])
+
+    // Add badge count to Author Claims nav item for admins
+    return adminNavigation.map((item) => {
+      if (item.name === 'Author Claims') {
+        return { ...item, badge: pendingClaimsQuery.data }
+      }
+      return item
+    })
+  }, [userRole, pendingClaimsQuery.data])
 
   useEffect(() => {
     const updated = new Set(expandedItems)
@@ -165,14 +194,21 @@ export function Sidebar({ userRole = 'admin' }: SidebarProps) {
             <Link
               key={item.name}
               to={item.href}
-              className={`flex items-center px-3 py-3 rounded-3xl text-sm font-medium transition-colors ${
+              className={`flex items-center justify-between px-3 py-3 rounded-3xl text-sm font-medium transition-colors ${
                 active
                   ? 'bg-[#EAEAEA] text-black'
                   : 'text-[#111827] hover:bg-gray-900 hover:text-white'
               }`}
             >
-              <Icon className="w-5 h-5 mr-3" />
-              {item.name}
+              <div className="flex items-center">
+                <Icon className="w-5 h-5 mr-3" />
+                {item.name}
+              </div>
+              {item.badge !== undefined && item.badge > 0 && (
+                <span className="ml-auto px-2 py-0.5 bg-amber-500 text-white text-xs font-semibold rounded-full min-w-[20px] text-center">
+                  {item.badge}
+                </span>
+              )}
             </Link>
           )
         })}

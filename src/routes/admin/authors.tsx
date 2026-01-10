@@ -48,6 +48,8 @@ function AdminAuthorsPage() {
   const [editingAuthor, setEditingAuthor] = useState<AuthorRow | null>(null)
   const [detailAuthor, setDetailAuthor] = useState<AuthorRow | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [linkingAuthor, setLinkingAuthor] = useState<AuthorRow | null>(null)
+  const [profileSearch, setProfileSearch] = useState('')
 
   const authorsQuery = useQuery({
     queryKey: ['admin', 'authors'],
@@ -55,7 +57,14 @@ function AdminAuthorsPage() {
       try {
         const { data, error } = await supabase
           .from('authors')
-          .select('id, name, wp_id, wp_slug, bio, photo_url, photo_path, phone, social_links, featured, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type, created_at, updated_at')
+          .select(`
+            id, name, wp_id, wp_slug, bio, photo_url, photo_path, phone,
+            social_links, featured, birth_date, residence_city, province,
+            published_works, author_gallery, featured_video, author_type,
+            claim_status, profile_id, claimed_at,
+            profile:profiles!authors_profile_id_fkey(id, name, email, status),
+            created_at, updated_at
+          `)
           .order('created_at', { ascending: false })
         if (error) {
           console.error('Authors query error:', error)
@@ -281,6 +290,82 @@ function AdminAuthorsPage() {
       toast.error(err.message ?? 'Failed to update featured status'),
   })
 
+  // Profile search query for linking
+  const profilesQuery = useQuery({
+    queryKey: ['admin', 'profiles-search', profileSearch],
+    queryFn: async () => {
+      if (!profileSearch.trim()) return []
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name, email, role, status')
+        .eq('role', 'author')
+        .or(`name.ilike.%${profileSearch}%,email.ilike.%${profileSearch}%`)
+        .limit(10)
+
+      if (error) throw error
+      return data
+    },
+    enabled: !!linkingAuthor && profileSearch.length > 0,
+  })
+
+  const linkProfile = useMutation({
+    mutationFn: async (payload: { authorId: string; profileId: string }) => {
+      const adminId = session?.user?.id
+
+      const { error } = await supabase
+        .from('authors')
+        .update({
+          profile_id: payload.profileId,
+          claim_status: 'approved',
+          claimed_at: new Date().toISOString(),
+          claim_reviewed_at: new Date().toISOString(),
+          claim_reviewed_by: adminId,
+        })
+        .eq('id', payload.authorId)
+
+      if (error) throw error
+
+      // Ensure profile is approved
+      await supabase
+        .from('profiles')
+        .update({ status: 'approved' })
+        .eq('id', payload.profileId)
+        .eq('status', 'pending')
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'authors'] })
+      setLinkingAuthor(null)
+      setProfileSearch('')
+      toast.success('Profile linked successfully')
+    },
+    onError: (err: any) => {
+      toast.error(err.message ?? 'Failed to link profile')
+    },
+  })
+
+  const unlinkProfile = useMutation({
+    mutationFn: async (authorId: string) => {
+      const { error } = await supabase
+        .from('authors')
+        .update({
+          profile_id: null,
+          claim_status: 'unclaimed',
+          claim_reviewed_at: null,
+          claim_reviewed_by: null,
+        })
+        .eq('id', authorId)
+
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'authors'] })
+      toast.success('Profile unlinked')
+    },
+    onError: (err: any) => {
+      toast.error(err.message ?? 'Failed to unlink profile')
+    },
+  })
+
   const handleFormSubmit = async (values: AuthorFormValues, file?: File | null) => {
     if (editingAuthor) {
       await updateAuthor.mutateAsync({ values, file, id: editingAuthor.id })
@@ -342,6 +427,7 @@ function AdminAuthorsPage() {
                       <th className="py-2 pr-3">Author</th>
                       <th className="py-2 pr-3">Phone</th>
                       <th className="py-2 pr-3">Tipo de Autor</th>
+                      <th className="py-2 pr-3">Linked Profile</th>
                       <th className="py-2 pr-3">WordPress</th>
                       <th className="py-2 pr-3">Featured</th>
                       <th className="py-2 pr-3">Actions</th>
@@ -379,6 +465,31 @@ function AdminAuthorsPage() {
                         </td>
                         <td className="py-3 pr-3 text-gray-600">
                           {author.author_type ?? '—'}
+                        </td>
+                        <td className="py-3 pr-3">
+                          {author.profile ? (
+                            <div className="text-sm">
+                              <div className="font-medium text-gray-900">
+                                {author.profile.name}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {author.profile.email}
+                              </div>
+                              <span
+                                className={`inline-block mt-1 px-2 py-0.5 text-xs rounded ${
+                                  author.claim_status === 'approved'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : author.claim_status === 'pending'
+                                      ? 'bg-amber-100 text-amber-800'
+                                      : 'bg-gray-100 text-gray-800'
+                                }`}
+                              >
+                                {author.claim_status}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-sm">Not linked</span>
+                          )}
                         </td>
                         <td className="py-3 pr-3">
                           <div className="text-sm text-gray-600">
@@ -430,6 +541,27 @@ function AdminAuthorsPage() {
                               >
                                 {author.featured ? 'Unfeature' : 'Mark featured'}
                               </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setLinkingAuthor(author)
+                                }}
+                                disabled={!!author.profile_id}
+                              >
+                                {author.profile_id ? 'Change Linked Profile' : 'Link to Profile'}
+                              </DropdownMenuItem>
+                              {author.profile_id && (
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    unlinkProfile.mutate(author.id)
+                                  }}
+                                  className="text-orange-600"
+                                >
+                                  Unlink Profile
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={(e) => {
@@ -534,6 +666,86 @@ function AdminAuthorsPage() {
               >
                 {deleteAuthor.isPending ? 'Deleting...' : 'Delete'}
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Profile Linking Dialog */}
+        <Dialog
+          open={!!linkingAuthor}
+          onOpenChange={() => {
+            setLinkingAuthor(null)
+            setProfileSearch('')
+          }}
+        >
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Link Profile to {linkingAuthor?.name}</DialogTitle>
+              <DialogDescription>
+                Search and select an author profile to link to this author record
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <label htmlFor="profile-search" className="text-sm font-medium text-gray-700 mb-2 block">
+                  Search profiles
+                </label>
+                <input
+                  id="profile-search"
+                  type="text"
+                  placeholder="Search by name or email..."
+                  value={profileSearch}
+                  onChange={(e) => setProfileSearch(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  autoFocus
+                />
+              </div>
+
+              {profileSearch && (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {profilesQuery.isLoading ? (
+                    <p className="text-sm text-gray-500 text-center py-4">Searching...</p>
+                  ) : profilesQuery.data?.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      No matching profiles found
+                    </p>
+                  ) : (
+                    profilesQuery.data?.map((profile) => (
+                      <button
+                        key={profile.id}
+                        onClick={() =>
+                          linkProfile.mutate({
+                            authorId: linkingAuthor!.id,
+                            profileId: profile.id,
+                          })
+                        }
+                        disabled={linkProfile.isPending}
+                        className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                      >
+                        <p className="font-medium text-gray-900">{profile.name}</p>
+                        <p className="text-sm text-gray-600">{profile.email}</p>
+                        <span
+                          className={`inline-block mt-1 px-2 py-0.5 text-xs rounded ${
+                            profile.status === 'approved'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : profile.status === 'pending'
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {profile.status}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {!profileSearch && (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  Start typing to search for author profiles
+                </p>
+              )}
             </div>
           </DialogContent>
         </Dialog>

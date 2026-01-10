@@ -28,6 +28,7 @@ import { Route as AutorAuthorIdRouteImport } from './routes/autor/$authorId'
 import { Route as AuthorSignUpRouteImport } from './routes/author/sign-up'
 import { Route as AuthorSignInRouteImport } from './routes/author/sign-in'
 import { Route as AuthorProfileRouteImport } from './routes/author/profile'
+import { Route as AuthorClaimProfileRouteImport } from './routes/author/claim-profile'
 import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
@@ -38,6 +39,7 @@ import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminContentRouteImport } from './routes/admin/content'
 import { Route as AdminBooksRouteImport } from './routes/admin/books'
 import { Route as AdminAuthorsRouteImport } from './routes/admin/authors'
+import { Route as AdminAuthorClaimsRouteImport } from './routes/admin/author-claims'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
@@ -144,6 +146,11 @@ const AuthorProfileRoute = AuthorProfileRouteImport.update({
   path: '/author/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthorClaimProfileRoute = AuthorClaimProfileRouteImport.update({
+  id: '/author/claim-profile',
+  path: '/author/claim-profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthSignUpRoute = AuthSignUpRouteImport.update({
   id: '/auth/sign-up',
   path: '/auth/sign-up',
@@ -192,6 +199,11 @@ const AdminBooksRoute = AdminBooksRouteImport.update({
 const AdminAuthorsRoute = AdminAuthorsRouteImport.update({
   id: '/admin/authors',
   path: '/admin/authors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAuthorClaimsRoute = AdminAuthorClaimsRouteImport.update({
+  id: '/admin/author-claims',
+  path: '/admin/author-claims',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
@@ -247,6 +259,7 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin/author-claims': typeof AdminAuthorClaimsRoute
   '/admin/authors': typeof AdminAuthorsRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/content': typeof AdminContentRouteWithChildren
@@ -257,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
+  '/author/claim-profile': typeof AuthorClaimProfileRoute
   '/author/profile': typeof AuthorProfileRoute
   '/author/sign-in': typeof AuthorSignInRoute
   '/author/sign-up': typeof AuthorSignUpRoute
@@ -288,6 +302,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin/author-claims': typeof AdminAuthorClaimsRoute
   '/admin/authors': typeof AdminAuthorsRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/content': typeof AdminContentRouteWithChildren
@@ -298,6 +313,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
+  '/author/claim-profile': typeof AuthorClaimProfileRoute
   '/author/profile': typeof AuthorProfileRoute
   '/author/sign-in': typeof AuthorSignInRoute
   '/author/sign-up': typeof AuthorSignUpRoute
@@ -330,6 +346,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin/author-claims': typeof AdminAuthorClaimsRoute
   '/admin/authors': typeof AdminAuthorsRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/content': typeof AdminContentRouteWithChildren
@@ -340,6 +357,7 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
+  '/author/claim-profile': typeof AuthorClaimProfileRoute
   '/author/profile': typeof AuthorProfileRoute
   '/author/sign-in': typeof AuthorSignInRoute
   '/author/sign-up': typeof AuthorSignUpRoute
@@ -373,6 +391,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin/author-claims'
     | '/admin/authors'
     | '/admin/books'
     | '/admin/content'
@@ -383,6 +402,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/sign-in'
     | '/auth/sign-up'
+    | '/author/claim-profile'
     | '/author/profile'
     | '/author/sign-in'
     | '/author/sign-up'
@@ -414,6 +434,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin/author-claims'
     | '/admin/authors'
     | '/admin/books'
     | '/admin/content'
@@ -424,6 +445,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/sign-in'
     | '/auth/sign-up'
+    | '/author/claim-profile'
     | '/author/profile'
     | '/author/sign-in'
     | '/author/sign-up'
@@ -455,6 +477,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin/author-claims'
     | '/admin/authors'
     | '/admin/books'
     | '/admin/content'
@@ -465,6 +488,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/sign-in'
     | '/auth/sign-up'
+    | '/author/claim-profile'
     | '/author/profile'
     | '/author/sign-in'
     | '/author/sign-up'
@@ -497,6 +521,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminAuthorClaimsRoute: typeof AdminAuthorClaimsRoute
   AdminAuthorsRoute: typeof AdminAuthorsRoute
   AdminBooksRoute: typeof AdminBooksRoute
   AdminContentRoute: typeof AdminContentRouteWithChildren
@@ -507,6 +532,7 @@ export interface RootRouteChildren {
   AdminUsersRoute: typeof AdminUsersRoute
   AuthSignInRoute: typeof AuthSignInRoute
   AuthSignUpRoute: typeof AuthSignUpRoute
+  AuthorClaimProfileRoute: typeof AuthorClaimProfileRoute
   AuthorProfileRoute: typeof AuthorProfileRoute
   AuthorSignInRoute: typeof AuthorSignInRoute
   AuthorSignUpRoute: typeof AuthorSignUpRoute
@@ -669,6 +695,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthorProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/author/claim-profile': {
+      id: '/author/claim-profile'
+      path: '/author/claim-profile'
+      fullPath: '/author/claim-profile'
+      preLoaderRoute: typeof AuthorClaimProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/sign-up': {
       id: '/auth/sign-up'
       path: '/auth/sign-up'
@@ -737,6 +770,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/authors'
       fullPath: '/admin/authors'
       preLoaderRoute: typeof AdminAuthorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/author-claims': {
+      id: '/admin/author-claims'
+      path: '/admin/author-claims'
+      fullPath: '/admin/author-claims'
+      preLoaderRoute: typeof AdminAuthorClaimsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/start/server-funcs': {
@@ -830,6 +870,7 @@ const AdminContentRouteWithChildren = AdminContentRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminAuthorClaimsRoute: AdminAuthorClaimsRoute,
   AdminAuthorsRoute: AdminAuthorsRoute,
   AdminBooksRoute: AdminBooksRoute,
   AdminContentRoute: AdminContentRouteWithChildren,
@@ -840,6 +881,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminUsersRoute: AdminUsersRoute,
   AuthSignInRoute: AuthSignInRoute,
   AuthSignUpRoute: AuthSignUpRoute,
+  AuthorClaimProfileRoute: AuthorClaimProfileRoute,
   AuthorProfileRoute: AuthorProfileRoute,
   AuthorSignInRoute: AuthorSignInRoute,
   AuthorSignUpRoute: AuthorSignUpRoute,

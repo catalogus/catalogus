@@ -1,5 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useState, useEffect } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Calendar,
   Facebook,
@@ -9,9 +10,13 @@ import {
   MapPin,
   Twitter,
   Youtube,
+  UserCheck,
 } from 'lucide-react'
 import Header from '../../components/Header'
 import { supabase } from '../../lib/supabaseClient'
+import { useAuth } from '../../contexts/AuthProvider'
+import { toast } from 'sonner'
+import { ClaimAuthorModal } from '../../components/author/ClaimAuthorModal'
 import type { AuthorRow, GalleryImage, PublishedWork } from '../../types/author'
 
 export const Route = createFileRoute('/autor/$authorId')({
@@ -100,12 +105,17 @@ const getSocialLinks = (author: AuthorRow | null) => {
 
 function AuthorPublicPage() {
   const { authorId } = Route.useParams()
+  const { profile, session } = useAuth()
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
 
   const authorQuery = useQuery({
     queryKey: ['author', authorId],
     queryFn: async () => {
       const selectFields =
-        'id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video'
+        `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, claim_status, profile_id,
+        profile:profiles!authors_profile_id_fkey(id, name, bio, photo_url, photo_path, social_links)`
 
       const { data: bySlug, error: slugError } = await supabase
         .from('authors')
@@ -113,7 +123,21 @@ function AuthorPublicPage() {
         .eq('wp_slug', authorId)
         .maybeSingle()
       if (slugError) throw slugError
-      if (bySlug) return bySlug as AuthorRow
+      if (bySlug) {
+        const author = bySlug as AuthorRow
+        // Merge profile data if claim is approved
+        if (author.claim_status === 'approved' && author.profile) {
+          return {
+            ...author,
+            name: author.profile.name || author.name,
+            bio: author.profile.bio || author.bio,
+            photo_url: author.profile.photo_url || author.photo_url,
+            photo_path: author.profile.photo_path || author.photo_path,
+            social_links: author.profile.social_links || author.social_links,
+          }
+        }
+        return author
+      }
 
       const { data: byId, error: idError } = await supabase
         .from('authors')
@@ -121,16 +145,146 @@ function AuthorPublicPage() {
         .eq('id', authorId)
         .maybeSingle()
       if (idError) throw idError
-      return (byId as AuthorRow | null) ?? null
+      if (byId) {
+        const author = byId as AuthorRow
+        // Merge profile data if claim is approved
+        if (author.claim_status === 'approved' && author.profile) {
+          return {
+            ...author,
+            name: author.profile.name || author.name,
+            bio: author.profile.bio || author.bio,
+            photo_url: author.profile.photo_url || author.photo_url,
+            photo_path: author.profile.photo_path || author.photo_path,
+            social_links: author.profile.social_links || author.social_links,
+          }
+        }
+        return author
+      }
+      return null
     },
     staleTime: 60_000,
   })
+
+  // Check for pending claim on mount (after signup)
+  useEffect(() => {
+    const completePendingClaim = async () => {
+      if (!session?.user?.id) return
+
+      const pendingClaim = localStorage.getItem('pendingAuthorClaim')
+      if (!pendingClaim) return
+
+      try {
+        const claimData = JSON.parse(pendingClaim)
+
+        // Create audit record with verification info
+        await supabase.from('author_claims').insert({
+          author_id: claimData.authorId,
+          profile_id: session.user.id,
+          status: 'pending',
+          notes: `Email: ${claimData.email}\nPhone: ${claimData.phone}\nMessage: ${claimData.message}`,
+        })
+
+        // Update author record
+        await supabase
+          .from('authors')
+          .update({
+            profile_id: session.user.id,
+            claim_status: 'pending',
+            claimed_at: new Date().toISOString(),
+          })
+          .eq('id', claimData.authorId)
+
+        // Clear localStorage
+        localStorage.removeItem('pendingAuthorClaim')
+
+        // Invalidate queries
+        queryClient.invalidateQueries({ queryKey: ['author', authorId] })
+        queryClient.invalidateQueries({ queryKey: ['author', 'by-profile', profile?.id] })
+
+        toast.success('Reivindicação submetida com sucesso! Um administrador irá revisar.')
+      } catch (error: any) {
+        console.error('Failed to complete pending claim:', error)
+        toast.error('Falha ao completar reivindicação. Tente novamente.')
+        localStorage.removeItem('pendingAuthorClaim')
+      }
+    }
+
+    completePendingClaim()
+  }, [session?.user?.id, queryClient, authorId, profile?.id])
+
+  const handleClaimModalSubmit = (data: {
+    authorId: string
+    authorName: string
+    email: string
+    phone: string
+    message: string
+  }) => {
+    // Check if user is already logged in
+    if (session?.user?.id) {
+      // Directly submit claim
+      submitClaim(data)
+    } else {
+      // Store in localStorage and redirect to signup
+      localStorage.setItem('pendingAuthorClaim', JSON.stringify(data))
+      setIsClaimModalOpen(false)
+      toast.info('Por favor, crie uma conta para completar a reivindicação.')
+      navigate({ to: '/author/sign-up' })
+    }
+  }
+
+  const submitClaim = async (data: {
+    authorId: string
+    email: string
+    phone: string
+    message: string
+  }) => {
+    if (!session?.user?.id) return
+
+    try {
+      // Create audit record with verification info
+      await supabase.from('author_claims').insert({
+        author_id: data.authorId,
+        profile_id: session.user.id,
+        status: 'pending',
+        notes: `Email: ${data.email}\nPhone: ${data.phone}\nMessage: ${data.message}`,
+      })
+
+      // Update author record
+      await supabase
+        .from('authors')
+        .update({
+          profile_id: session.user.id,
+          claim_status: 'pending',
+          claimed_at: new Date().toISOString(),
+        })
+        .eq('id', data.authorId)
+
+      queryClient.invalidateQueries({ queryKey: ['author', authorId] })
+      queryClient.invalidateQueries({ queryKey: ['author', 'by-profile', profile?.id] })
+      setIsClaimModalOpen(false)
+      toast.success('Reivindicação submetida com sucesso! Um administrador irá revisar.')
+    } catch (error: any) {
+      console.error('Failed to submit claim:', error)
+      toast.error('Falha ao submeter reivindicação. Tente novamente.')
+    }
+  }
 
   const author = authorQuery.data ?? null
   const heroPhoto = resolvePhotoUrl(author?.photo_url, author?.photo_path)
   const socialLinks = getSocialLinks(author)
   const birthDateLabel = formatDate(author?.birth_date)
   const embedUrl = buildEmbedUrl(author?.featured_video)
+
+  // Show claim button if:
+  // - Author is unclaimed or rejected
+  // - NOT already claimed by someone else
+  const canClaim =
+    author &&
+    (author.claim_status === 'unclaimed' || author.claim_status === 'rejected') &&
+    (!author.profile_id || author.profile_id === session?.user?.id)
+
+  const alreadyClaimed = author?.profile_id === session?.user?.id
+  const claimedByOther = author?.profile_id && author.profile_id !== session?.user?.id
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -237,6 +391,68 @@ function AuthorPublicPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* Claim Button for Everyone */}
+                  {canClaim && !alreadyClaimed && !claimedByOther && (
+                    <div className="border border-gray-200 bg-[#f8f4ef] p-6 rounded-none">
+                      <div className="mb-4">
+                        <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">
+                          Perfil não reivindicado
+                        </p>
+                        <p className="text-sm font-medium text-gray-900 mb-1">
+                          É você este autor?
+                        </p>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          Reivindique este perfil para gerir as suas informações públicas.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setIsClaimModalOpen(true)}
+                        className="w-full px-4 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-none hover:bg-gray-800 transition-colors"
+                      >
+                        Reivindicar Este Perfil
+                      </button>
+                    </div>
+                  )}
+
+                  {alreadyClaimed && author?.claim_status === 'pending' && (
+                    <div className="border border-amber-200 bg-[#fafafa] p-6 rounded-none">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-amber-600 mb-2">
+                          Reivindicação Pendente
+                        </p>
+                        <p className="text-sm font-medium text-gray-900 mb-1">
+                          Em análise
+                        </p>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          A sua reivindicação está a aguardar aprovação de um administrador.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {alreadyClaimed && author?.claim_status === 'approved' && (
+                    <div className="border border-emerald-200 bg-[#fafafa] p-6 rounded-none">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-emerald-600 mb-2">
+                          Perfil Vinculado
+                        </p>
+                        <p className="text-sm font-medium text-gray-900 mb-1">
+                          Este é o seu perfil de autor
+                        </p>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          Gerir em{' '}
+                          <a
+                            href="/author/profile"
+                            className="underline hover:text-gray-900 font-medium"
+                          >
+                            Meu Perfil
+                          </a>
+                          .
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {socialLinks.length > 0 && (
                     <div className="border border-gray-200 bg-white p-6 rounded-none">
@@ -415,6 +631,17 @@ function AuthorPublicPage() {
             </div>
           </main>
         </>
+      )}
+
+      {/* Claim Author Modal */}
+      {author && (
+        <ClaimAuthorModal
+          isOpen={isClaimModalOpen}
+          onClose={() => setIsClaimModalOpen(false)}
+          authorId={author.id}
+          authorName={author.name}
+          onSubmit={handleClaimModalSubmit}
+        />
       )}
     </div>
   )

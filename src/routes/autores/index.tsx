@@ -29,6 +29,31 @@ type AuthorData = {
   social_links?: SocialLinks | null
   residence_city?: string | null
   province?: string | null
+  claim_status?: 'unclaimed' | 'pending' | 'approved' | 'rejected'
+  profile_id?: string | null
+  profile?: {
+    id: string
+    name: string
+    photo_url?: string | null
+    photo_path?: string | null
+    bio?: string | null
+    social_links?: SocialLinks | null
+  } | null
+}
+
+// Helper function to merge profile data when claim is approved
+const getMergedAuthorData = (author: AuthorData): AuthorData => {
+  if (author.claim_status === 'approved' && author.profile) {
+    return {
+      ...author,
+      name: author.profile.name || author.name,
+      photo_url: author.profile.photo_url || author.photo_url,
+      photo_path: author.profile.photo_path || author.photo_path,
+      bio: author.profile.bio || author.bio,
+      social_links: author.profile.social_links || author.social_links,
+    }
+  }
+  return author
 }
 
 // Helper function to resolve author photo URL
@@ -80,7 +105,8 @@ function AutoresListingPage() {
       const { data, error } = await supabase
         .from('authors')
         .select(
-          'id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, residence_city, province',
+          `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id,
+          profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, bio, social_links)`,
         )
         .eq('featured', true)
 
@@ -89,7 +115,8 @@ function AutoresListingPage() {
 
       // Randomly select one featured author for spotlight
       const randomIndex = Math.floor(Math.random() * data.length)
-      return data[randomIndex] as AuthorData
+      const author = data[randomIndex] as AuthorData
+      return getMergedAuthorData(author)
     },
     staleTime: 60_000,
   })
@@ -101,7 +128,8 @@ function AutoresListingPage() {
       let query = supabase
         .from('authors')
         .select(
-          'id, wp_slug, name, author_type, photo_url, photo_path, social_links, residence_city, province',
+          `id, wp_slug, name, author_type, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id,
+          profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, bio, social_links)`,
         )
         .order('name', { ascending: true })
 
@@ -118,7 +146,7 @@ function AutoresListingPage() {
       if (error) throw error
 
       return {
-        authors: (data ?? []) as AuthorData[],
+        authors: ((data ?? []) as AuthorData[]).map(getMergedAuthorData),
         hasMore: data?.length === 12,
       }
     },

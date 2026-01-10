@@ -11,6 +11,29 @@ type FeaturedAuthor = {
   photo_url: string | null
   photo_path: string | null
   social_links?: SocialLinks | null
+  claim_status?: 'unclaimed' | 'pending' | 'approved' | 'rejected'
+  profile_id?: string | null
+  profile?: {
+    id: string
+    name: string
+    photo_url?: string | null
+    photo_path?: string | null
+    social_links?: SocialLinks | null
+  } | null
+}
+
+// Helper to merge profile data when claim is approved
+const getMergedAuthorData = (author: FeaturedAuthor): FeaturedAuthor => {
+  if (author.claim_status === 'approved' && author.profile) {
+    return {
+      ...author,
+      name: author.profile.name || author.name,
+      photo_url: author.profile.photo_url || author.photo_url,
+      photo_path: author.profile.photo_path || author.photo_path,
+      social_links: author.profile.social_links || author.social_links,
+    }
+  }
+  return author
 }
 
 const photoUrlFor = (author: FeaturedAuthor) => {
@@ -24,8 +47,10 @@ const photoUrlFor = (author: FeaturedAuthor) => {
 
 const fetchAuthors = async (useFeatured: boolean) => {
   const selectFields = useFeatured
-    ? 'id, wp_slug, name, author_type, photo_url, photo_path, social_links, featured'
-    : 'id, wp_slug, name, author_type, photo_url, photo_path, social_links'
+    ? `id, wp_slug, name, author_type, photo_url, photo_path, social_links, featured, claim_status, profile_id,
+       profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, social_links)`
+    : `id, wp_slug, name, author_type, photo_url, photo_path, social_links, claim_status, profile_id,
+       profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, social_links)`
   let query = supabase
     .from('authors')
     .select(selectFields)
@@ -38,7 +63,7 @@ const fetchAuthors = async (useFeatured: boolean) => {
 
   const { data, error } = await query
   if (error) throw error
-  return (data ?? []) as FeaturedAuthor[]
+  return ((data ?? []) as FeaturedAuthor[]).map(getMergedAuthorData)
 }
 
 const getSocialLinks = (author: FeaturedAuthor) => {
