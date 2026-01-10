@@ -5,14 +5,42 @@ import { useAuth } from '../contexts/AuthProvider'
 import { CartButton } from './shop/CartButton'
 import { FloatingSearch } from './search/FloatingSearch'
 
-const navItems = [
-  { label: 'Inicio', href: '/', spa: true },
+type NavChild = {
+  label: string
+  href: string
+}
+
+type NavItem = {
+  label: string
+  href: string
+  spa?: boolean
+  children?: NavChild[]
+}
+
+const navItems: NavItem[] = [
   { label: 'Autores', href: '/autores' },
+  { label: 'Editora', href: '/loja' },
   { label: 'Noticias', href: '/noticias' },
-  { label: 'Eventos', href: '/eventos' },
-  { label: 'Loja', href: '/loja' },
+  {
+    label: 'Mapa Literario',
+    href: 'https://www.calameo.com/read/0075442149b5bd3a18181',
+  },
+  {
+    label: 'Projectos',
+    href: '/projectos',
+    children: [
+      {
+        label: 'Prémio Literário Carlos Morgado',
+        href: '/projectos#premio-literario-carlos-morgado',
+      },
+      { label: 'Anonimus Podcast', href: '/projectos#anonimus-podcast' },
+      { label: 'Oficinas Criativas', href: '/projectos#oficinas-criativas' },
+    ],
+  },
+  { label: 'Produção', href: '/producao' },
+  { label: 'Galeria', href: '/galeria' },
   { label: 'Sobre', href: '/sobre' },
-] as const
+]
 
 export default function Header() {
   const { session, profile, signOut } = useAuth()
@@ -99,6 +127,34 @@ export default function Header() {
           {navItems.map((item) => {
             const className =
               "relative text-xl font-medium text-[color:var(--header-ink)] transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-[color:var(--header-accent)] after:transition-transform after:duration-300 after:content-[''] hover:text-[color:var(--header-accent)] hover:after:scale-x-100"
+
+            if (item.children && item.children.length > 0) {
+              return (
+                <div key={item.label} className="relative group">
+                  <a
+                    href={item.href}
+                    className={className}
+                    aria-haspopup="true"
+                  >
+                    {item.label}
+                  </a>
+                  <div className="pointer-events-none absolute left-0 top-full pt-3 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                    <div className="min-w-[280px] border border-gray-200 bg-white py-3 shadow-lg">
+                      {item.children.map((child) => (
+                        <a
+                          key={child.href}
+                          href={child.href}
+                          className="block px-5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-[#f4efe9] hover:text-[color:var(--header-accent)]"
+                        >
+                          {child.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+
             if (item.spa) {
               return (
                 <Link key={item.label} to="/" className={className}>

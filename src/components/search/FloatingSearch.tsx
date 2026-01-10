@@ -102,7 +102,7 @@ export function FloatingSearch() {
                   value={value}
                   onChange={(event) => setValue(event.target.value)}
                   placeholder="Pesquise por autor, livro ou noticia"
-                  className="h-14 w-full rounded-full border border-gray-200 bg-white px-14 text-sm text-gray-900 shadow-lg outline-none transition focus:border-[color:var(--brand)]"
+                  className="h-14 w-full border border-gray-200 bg-white px-14 text-sm text-gray-900 shadow-lg outline-none transition focus:border-[color:var(--brand)]"
                 />
               </label>
             </form>

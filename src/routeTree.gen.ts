@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SobreIndexRouteImport } from './routes/sobre/index'
+import { Route as ProjectosIndexRouteImport } from './routes/projectos/index'
 import { Route as PesquisaIndexRouteImport } from './routes/pesquisa/index'
 import { Route as NoticiasIndexRouteImport } from './routes/noticias/index'
 import { Route as MeusPedidosIndexRouteImport } from './routes/meus-pedidos/index'
@@ -49,6 +51,16 @@ import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ss
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SobreIndexRoute = SobreIndexRouteImport.update({
+  id: '/sobre/',
+  path: '/sobre/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectosIndexRoute = ProjectosIndexRouteImport.update({
+  id: '/projectos/',
+  path: '/projectos/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PesquisaIndexRoute = PesquisaIndexRouteImport.update({
@@ -254,6 +266,8 @@ export interface FileRoutesByFullPath {
   '/meus-pedidos': typeof MeusPedidosIndexRoute
   '/noticias': typeof NoticiasIndexRoute
   '/pesquisa': typeof PesquisaIndexRoute
+  '/projectos': typeof ProjectosIndexRoute
+  '/sobre': typeof SobreIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
   '/admin/content/services': typeof AdminContentServicesRoute
@@ -292,6 +306,8 @@ export interface FileRoutesByTo {
   '/meus-pedidos': typeof MeusPedidosIndexRoute
   '/noticias': typeof NoticiasIndexRoute
   '/pesquisa': typeof PesquisaIndexRoute
+  '/projectos': typeof ProjectosIndexRoute
+  '/sobre': typeof SobreIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
   '/admin/content/services': typeof AdminContentServicesRoute
@@ -331,6 +347,8 @@ export interface FileRoutesById {
   '/meus-pedidos/': typeof MeusPedidosIndexRoute
   '/noticias/': typeof NoticiasIndexRoute
   '/pesquisa/': typeof PesquisaIndexRoute
+  '/projectos/': typeof ProjectosIndexRoute
+  '/sobre/': typeof SobreIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
   '/admin/content/services': typeof AdminContentServicesRoute
@@ -371,6 +389,8 @@ export interface FileRouteTypes {
     | '/meus-pedidos'
     | '/noticias'
     | '/pesquisa'
+    | '/projectos'
+    | '/sobre'
     | '/admin/content/partners'
     | '/admin/content/projects'
     | '/admin/content/services'
@@ -409,6 +429,8 @@ export interface FileRouteTypes {
     | '/meus-pedidos'
     | '/noticias'
     | '/pesquisa'
+    | '/projectos'
+    | '/sobre'
     | '/admin/content/partners'
     | '/admin/content/projects'
     | '/admin/content/services'
@@ -447,6 +469,8 @@ export interface FileRouteTypes {
     | '/meus-pedidos/'
     | '/noticias/'
     | '/pesquisa/'
+    | '/projectos/'
+    | '/sobre/'
     | '/admin/content/partners'
     | '/admin/content/projects'
     | '/admin/content/services'
@@ -486,6 +510,8 @@ export interface RootRouteChildren {
   MeusPedidosIndexRoute: typeof MeusPedidosIndexRoute
   NoticiasIndexRoute: typeof NoticiasIndexRoute
   PesquisaIndexRoute: typeof PesquisaIndexRoute
+  ProjectosIndexRoute: typeof ProjectosIndexRoute
+  SobreIndexRoute: typeof SobreIndexRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
   DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
@@ -502,6 +528,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sobre/': {
+      id: '/sobre/'
+      path: '/sobre'
+      fullPath: '/sobre'
+      preLoaderRoute: typeof SobreIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projectos/': {
+      id: '/projectos/'
+      path: '/projectos'
+      fullPath: '/projectos'
+      preLoaderRoute: typeof ProjectosIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pesquisa/': {
@@ -795,6 +835,8 @@ const rootRouteChildren: RootRouteChildren = {
   MeusPedidosIndexRoute: MeusPedidosIndexRoute,
   NoticiasIndexRoute: NoticiasIndexRoute,
   PesquisaIndexRoute: PesquisaIndexRoute,
+  ProjectosIndexRoute: ProjectosIndexRoute,
+  SobreIndexRoute: SobreIndexRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
   DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,

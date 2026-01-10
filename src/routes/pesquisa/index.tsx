@@ -126,6 +126,56 @@ function SearchResultsPage() {
   const authors = resultsQuery.data?.authors ?? []
   const posts = resultsQuery.data?.posts ?? []
   const totalResults = books.length + authors.length + posts.length
+  const sections = [
+    {
+      key: 'books',
+      title: 'Livros',
+      count: books.length,
+      content: books.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {books.map((book) => (
+            <BookResultCard key={book.id} book={book} />
+          ))}
+        </div>
+      ) : (
+        <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
+          Nenhum livro encontrado.
+        </div>
+      ),
+    },
+    {
+      key: 'authors',
+      title: 'Autores',
+      count: authors.length,
+      content: authors.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {authors.map((author) => (
+            <AuthorResultCard key={author.id} author={author} />
+          ))}
+        </div>
+      ) : (
+        <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
+          Nenhum autor encontrado.
+        </div>
+      ),
+    },
+    {
+      key: 'posts',
+      title: 'Noticias',
+      count: posts.length,
+      content: posts.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {posts.map((post) => (
+            <PostResultCard key={post.id} post={post} />
+          ))}
+        </div>
+      ) : (
+        <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
+          Nenhum post encontrado.
+        </div>
+      ),
+    },
+  ]
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -172,65 +222,22 @@ function SearchResultsPage() {
 
           {query && !resultsQuery.isLoading && !resultsQuery.isError && (
             <>
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold text-gray-900">Livros</h2>
-                  <span className="text-sm text-gray-500">
-                    {books.length} resultados
-                  </span>
-                </div>
-                {books.length > 0 ? (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                    {books.map((book) => (
-                      <BookResultCard key={book.id} book={book} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
-                    Nenhum livro encontrado.
-                  </div>
-                )}
-              </section>
-
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold text-gray-900">Autores</h2>
-                  <span className="text-sm text-gray-500">
-                    {authors.length} resultados
-                  </span>
-                </div>
-                {authors.length > 0 ? (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                    {authors.map((author) => (
-                      <AuthorResultCard key={author.id} author={author} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
-                    Nenhum autor encontrado.
-                  </div>
-                )}
-              </section>
-
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold text-gray-900">Noticias</h2>
-                  <span className="text-sm text-gray-500">
-                    {posts.length} resultados
-                  </span>
-                </div>
-                {posts.length > 0 ? (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {posts.map((post) => (
-                      <PostResultCard key={post.id} post={post} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
-                    Nenhum post encontrado.
-                  </div>
-                )}
-              </section>
+              {sections
+                .slice()
+                .sort((a, b) => Number(b.count > 0) - Number(a.count > 0))
+                .map((section) => (
+                  <section key={section.key} className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-semibold text-gray-900">
+                        {section.title}
+                      </h2>
+                      <span className="text-sm text-gray-500">
+                        {section.count} resultados
+                      </span>
+                    </div>
+                    {section.content}
+                  </section>
+                ))}
             </>
           )}
         </div>
