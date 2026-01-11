@@ -240,7 +240,7 @@ export function HeroSlideForm({
         )}
       </div>
 
-      {values.content_type === 'author' && (
+      {(values.content_type === 'author' || values.content_type === 'book') && (
         <div className="space-y-2">
           <Label htmlFor="accent_color">Accent Color</Label>
           <div className="flex items-center gap-3">
@@ -259,7 +259,7 @@ export function HeroSlideForm({
             />
           </div>
           <p className="text-xs text-gray-500">
-            Used as the background for Author Highlight slides.
+            Used as the background for Author and Book Highlight slides.
           </p>
         </div>
       )}
@@ -274,7 +274,7 @@ export function HeroSlideForm({
             const newType = e.target.value as ContentType
             handleChange('content_type', newType)
             handleChange('content_id', null)
-            if (newType !== 'author') {
+            if (newType !== 'author' && newType !== 'book') {
               handleChange('accent_color', '')
             }
           }}

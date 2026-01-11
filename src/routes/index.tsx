@@ -30,19 +30,38 @@ function Home() {
             .map((slide) => slide.content_id as string),
         ),
       )
+      const bookIds = Array.from(
+        new Set(
+          slides
+            .filter((slide) => slide.content_type === 'book' && slide.content_id)
+            .map((slide) => slide.content_id as string),
+        ),
+      )
 
-      if (authorIds.length === 0) {
+      if (authorIds.length === 0 && bookIds.length === 0) {
         return slides as HeroSlideWithContent[]
       }
 
-      const { data: authors, error: authorsError } = await supabase
-        .from('authors')
-        .select('id, name, photo_url, photo_path')
-        .in('id', authorIds)
-      if (authorsError) throw authorsError
+      const [authorsResult, booksResult] = await Promise.all([
+        authorIds.length
+          ? supabase
+              .from('authors')
+              .select('id, name, photo_url, photo_path')
+              .in('id', authorIds)
+          : Promise.resolve({ data: [], error: null }),
+        bookIds.length
+          ? supabase
+              .from('books')
+              .select('id, title, cover_url, cover_path')
+              .in('id', bookIds)
+          : Promise.resolve({ data: [], error: null }),
+      ])
+
+      if (authorsResult.error) throw authorsResult.error
+      if (booksResult.error) throw booksResult.error
 
       const authorMap = new Map(
-        (authors ?? []).map((author) => {
+        (authorsResult.data ?? []).map((author) => {
           const resolvedPhotoUrl =
             author.photo_url ||
             (author.photo_path
@@ -53,14 +72,32 @@ function Home() {
         }),
       )
 
+      const bookMap = new Map(
+        (booksResult.data ?? []).map((book) => {
+          const resolvedCoverUrl =
+            book.cover_url ||
+            (book.cover_path
+              ? supabase.storage.from('covers').getPublicUrl(book.cover_path).data
+                .publicUrl
+              : null)
+          return [book.id, { ...book, cover_url: resolvedCoverUrl }]
+        }),
+      )
+
       return slides.map((slide) => {
-        if (slide.content_type !== 'author' || !slide.content_id) {
-          return slide
+        if (slide.content_type === 'author' && slide.content_id) {
+          return {
+            ...slide,
+            linked_content: authorMap.get(slide.content_id) ?? null,
+          }
         }
-        return {
-          ...slide,
-          linked_content: authorMap.get(slide.content_id) ?? null,
+        if (slide.content_type === 'book' && slide.content_id) {
+          return {
+            ...slide,
+            linked_content: bookMap.get(slide.content_id) ?? null,
+          }
         }
+        return slide
       }) as HeroSlideWithContent[]
     },
     staleTime: 60_000,

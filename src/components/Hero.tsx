@@ -73,9 +73,19 @@ export function Hero({ slides }: HeroProps) {
       {slides.map((slide, index) => {
         const isActive = index === activeIndex
         const isAuthorSlide = slide.content_type === 'author'
+        const isBookSlide = slide.content_type === 'book'
+        const isVisualSlide = isAuthorSlide || isBookSlide
         const accentColor = slide.accent_color || '#5b6168'
-        const authorImageUrl = slide.linked_content?.photo_url || null
-        const authorName = slide.linked_content?.name || slide.title
+        const visualImageUrl = isAuthorSlide
+          ? slide.linked_content?.photo_url || null
+          : isBookSlide
+            ? slide.linked_content?.cover_url || null
+            : null
+        const visualName = isAuthorSlide
+          ? slide.linked_content?.name || slide.title
+          : isBookSlide
+            ? slide.linked_content?.title || slide.title
+            : slide.title
         return (
           <div
             key={slide.id}
@@ -86,7 +96,7 @@ export function Hero({ slides }: HeroProps) {
           >
             {/* Background Image with Gradient Overlay */}
             <div className="absolute inset-0">
-              {isAuthorSlide ? (
+              {isVisualSlide ? (
                 <div
                   className="absolute inset-0"
                   style={{ backgroundColor: accentColor }}
@@ -110,12 +120,12 @@ export function Hero({ slides }: HeroProps) {
               <div className="container mx-auto px-4 lg:px-[60px]">
                 <div
                   className={`flex flex-col gap-10 lg:flex-row lg:items-center ${
-                    isAuthorSlide ? 'lg:justify-between' : ''
+                    isVisualSlide ? 'lg:justify-between' : ''
                   }`}
                 >
                   <div
                     className={`space-y-6 text-white ${
-                      isAuthorSlide ? 'max-w-xl' : 'max-w-2xl'
+                      isVisualSlide ? 'max-w-xl' : 'max-w-2xl'
                     }`}
                   >
                     {/* Eyebrow */}
@@ -155,21 +165,21 @@ export function Hero({ slides }: HeroProps) {
                     )}
                   </div>
 
-                  {isAuthorSlide && (
+                  {isVisualSlide && (
                     <div className="flex-1 flex justify-center lg:justify-end">
                       <div className="relative w-full max-w-md">
                         <div className="absolute -inset-4 border border-white/20" />
                         <div className="relative aspect-[4/5] w-full overflow-hidden border border-white/20 bg-white/10">
-                          {authorImageUrl ? (
+                          {visualImageUrl ? (
                             <img
-                              src={authorImageUrl}
-                              alt={authorName}
+                              src={visualImageUrl}
+                              alt={visualName}
                               className="h-full w-full object-cover"
                               loading="lazy"
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-5xl font-semibold text-white/70">
-                              {(authorName || 'A').charAt(0).toUpperCase()}
+                              {(visualName || 'A').charAt(0).toUpperCase()}
                             </div>
                           )}
                         </div>
