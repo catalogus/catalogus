@@ -168,7 +168,7 @@ export default function FeaturedBooksSection() {
               const priceLabel = formatPrice(book.price_mzn)
               return (
                 <div key={book.id} className="group space-y-4">
-                  <div className="relative bg-[#e6e0db] p-10 rounded-none">
+                  <div className="relative bg-[#e6e0db] rounded-none">
                     <div className="aspect-[3/4] w-full overflow-hidden bg-white/60 rounded-none">
                       {coverUrl ? (
                         <img
