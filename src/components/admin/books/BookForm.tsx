@@ -72,6 +72,8 @@ export function BookForm({
   const [localAuthors, setLocalAuthors] = useState<AuthorOption[]>(authors)
   const [newAuthorName, setNewAuthorName] = useState('')
   const [addingAuthor, setAddingAuthor] = useState(false)
+  const [authorSearch, setAuthorSearch] = useState('')
+  const [authorPickerOpen, setAuthorPickerOpen] = useState(false)
 
   useEffect(() => {
     setLocalAuthors(authors)
@@ -99,6 +101,14 @@ export function BookForm({
     onSubmit({ ...values, slug }, file)
   }
 
+  const toggleAuthor = (authorId: string) => {
+    const isSelected = values.author_ids.includes(authorId)
+    const next = isSelected
+      ? values.author_ids.filter((id) => id !== authorId)
+      : [...values.author_ids, authorId]
+    handleChange('author_ids', next)
+  }
+
   const addAuthor = async () => {
     if (!onCreateAuthor) return
     const name = newAuthorName.trim()
@@ -114,6 +124,16 @@ export function BookForm({
     }
   }
 
+  const normalizedSearch = authorSearch.trim().toLowerCase()
+  const filteredAuthors = normalizedSearch
+    ? localAuthors.filter((author) =>
+        author.name.toLowerCase().includes(normalizedSearch),
+      )
+    : localAuthors
+  const selectedAuthors = localAuthors.filter((author) =>
+    values.author_ids.includes(author.id),
+  )
+
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="space-y-2">
@@ -127,37 +147,80 @@ export function BookForm({
       </div>
 
       <div className="space-y-2">
-        <Label>Authors</Label>
+        <div className="flex items-center justify-between">
+          <Label>Authors</Label>
+          <button
+            type="button"
+            onClick={() => setAuthorPickerOpen((prev) => !prev)}
+            className="text-xs font-semibold text-gray-900 hover:text-gray-700"
+          >
+            {authorPickerOpen ? 'Hide list' : 'Select authors'}
+          </button>
+        </div>
         <p className="text-xs text-gray-500">
           Select from the catalog or add a new author.
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {localAuthors.map((author) => {
-            const checked = values.author_ids.includes(author.id)
-            return (
-              <label
+        {selectedAuthors.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {selectedAuthors.map((author) => (
+              <span
                 key={author.id}
-                className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+                className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-700"
               >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={(e) => {
-                    const next = e.target.checked
-                      ? [...values.author_ids, author.id]
-                      : values.author_ids.filter((id) => id !== author.id)
-                    handleChange('author_ids', next)
-                  }}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <span className="text-gray-900">{author.name}</span>
-              </label>
-            )
-          })}
-          {localAuthors.length === 0 && (
-            <p className="text-xs text-gray-500">No authors yet.</p>
-          )}
-        </div>
+                {author.name}
+                <button
+                  type="button"
+                  onClick={() => toggleAuthor(author.id)}
+                  className="text-gray-400 hover:text-gray-600"
+                  aria-label={`Remove ${author.name}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-gray-500">No authors selected yet.</p>
+        )}
+        {authorPickerOpen && (
+          <div className="rounded-lg border border-gray-200 bg-white">
+            <div className="border-b border-gray-200 p-2">
+              <Input
+                placeholder="Search authors..."
+                value={authorSearch}
+                onChange={(e) => setAuthorSearch(e.target.value)}
+              />
+            </div>
+            <div className="max-h-56 overflow-y-auto">
+              {filteredAuthors.map((author) => {
+                const selected = values.author_ids.includes(author.id)
+                return (
+                  <button
+                    key={author.id}
+                    type="button"
+                    onClick={() => toggleAuthor(author.id)}
+                    className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  >
+                    <span className="text-gray-900">{author.name}</span>
+                    <span className="text-xs text-gray-500">
+                      {selected ? 'Selected' : 'Add'}
+                    </span>
+                  </button>
+                )
+              })}
+              {localAuthors.length === 0 && (
+                <p className="px-3 py-3 text-xs text-gray-500">
+                  No authors yet.
+                </p>
+              )}
+              {localAuthors.length > 0 && filteredAuthors.length === 0 && (
+                <p className="px-3 py-3 text-xs text-gray-500">
+                  No authors match that search.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
         {onCreateAuthor && (
           <div className="flex items-center gap-2 pt-2">
             <Input

@@ -115,6 +115,7 @@ function AdminBooksPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'books'] })
+      queryClient.invalidateQueries({ queryKey: ['home', 'featured-books'] })
       toast.success('Status updated')
     },
     onError: (err) => toast.error(err.message ?? 'Failed to update status'),
@@ -128,8 +129,14 @@ function AdminBooksPage() {
         .eq('id', payload.id)
       if (error) throw error
     },
-    onSuccess: () => {
+    onSuccess: (_data, payload) => {
+      setDetailBook((current) =>
+        current?.id === payload.id
+          ? { ...current, featured: payload.featured }
+          : current,
+      )
       queryClient.invalidateQueries({ queryKey: ['admin', 'books'] })
+      queryClient.invalidateQueries({ queryKey: ['home', 'featured-books'] })
       toast.success('Featured updated')
     },
     onError: (err) => toast.error(err.message ?? 'Failed to update featured'),
@@ -249,6 +256,7 @@ function AdminBooksPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'books'] })
+      queryClient.invalidateQueries({ queryKey: ['home', 'featured-books'] })
       setShowForm(false)
       setEditingBook(null)
       toast.success('Book saved')
@@ -263,6 +271,7 @@ function AdminBooksPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'books'] })
+      queryClient.invalidateQueries({ queryKey: ['home', 'featured-books'] })
       toast.success('Book deleted')
     },
     onError: (err) => toast.error(err.message ?? 'Failed to delete book'),
