@@ -23,7 +23,7 @@ type CustomerFormState = {
 
 function CheckoutPage() {
   const navigate = useNavigate()
-  const { session, profile } = useAuth()
+  const { session, profile, loading } = useAuth()
   const { items, total, clearCart } = useCart()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formState, setFormState] = useState<CustomerFormState>({
@@ -42,6 +42,7 @@ function CheckoutPage() {
   }, [profile, session])
 
   const isCartEmpty = items.length === 0
+  const isAuthenticated = !!session?.user?.id
 
   const orderItems = useMemo(
     () =>
@@ -77,43 +78,70 @@ function CheckoutPage() {
       return
     }
 
+    if (!isAuthenticated) {
+      toast.error('Faça login para finalizar a compra')
+      navigate({ to: '/auth/sign-in' })
+      return
+    }
+
     if (!validateForm()) return
 
     try {
       setIsSubmitting(true)
 
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          customer_id: session?.user?.id ?? null,
-          customer_name: formState.name.trim(),
-          customer_email: formState.email.trim().toLowerCase(),
-          customer_phone: formState.phone.trim(),
-          total,
-          status: 'pending',
-        })
-        .select()
-        .single()
+      // Create order atomically (order + items + stock decrement in single transaction)
+      const { data: result, error: orderError } = await supabase.rpc(
+        'create_order_atomic',
+        {
+          p_customer_id: session?.user?.id ?? null,
+          p_customer_name: formState.name.trim(),
+          p_customer_email: formState.email.trim().toLowerCase(),
+          p_customer_phone: formState.phone.trim(),
+          p_total: total,
+          p_items: orderItems,
+        },
+      )
 
       if (orderError) throw orderError
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems.map((item) => ({ ...item, order_id: order.id })))
-
-      if (itemsError) throw itemsError
-
-      for (const item of orderItems) {
-        const { error: stockError } = await supabase.rpc('decrement_book_stock', {
-          book_id: item.book_id,
-          quantity: item.quantity,
-        })
-        if (stockError) throw stockError
+      if (!result?.success) {
+        throw new Error(result?.error || 'Failed to create order')
       }
 
-      clearCart()
-      toast.success('Pedido criado com sucesso')
-      navigate({ to: `/pedido/${order.id}` })
+      const orderId = result.order_id
+      const orderNumber = result.order_number
+
+      console.log('Order created atomically:', {
+        orderId,
+        orderNumber,
+      })
+
+      // Initiate M-Pesa payment
+      try {
+        const { initiateMpesaPayment } = await import('../../lib/mpesa')
+
+        console.log('About to initiate payment with:', {
+          orderId,
+          orderIdType: typeof orderId,
+          customerPhone: formState.phone.trim(),
+        })
+
+        const paymentResult = await initiateMpesaPayment(
+          orderId,
+          formState.phone.trim()
+        )
+
+        clearCart()
+        toast.success(paymentResult.message)
+        navigate({ to: `/pedido/${orderId}` })
+      } catch (paymentError) {
+        console.error('Payment initiation error:', paymentError)
+        // Order is created but payment failed to initiate
+        toast.error(
+          'Pedido criado mas falha ao iniciar pagamento. Visite a página do pedido para tentar novamente.'
+        )
+        navigate({ to: `/pedido/${orderId}` })
+      }
     } catch (error) {
       console.error('Checkout error:', error)
       toast.error('Falha ao criar o pedido. Tente novamente.')
@@ -121,6 +149,51 @@ function CheckoutPage() {
       setIsSubmitting(false)
     }
   }
+
+  const orderSummary = (
+    <aside className="h-fit border border-gray-200 bg-white p-6">
+      <h2 className="text-xl font-semibold text-gray-900">Resumo do pedido</h2>
+      <div className="mt-4 space-y-4">
+        {items.map((item) => (
+          <div key={item.id} className="flex items-start gap-3">
+            <div className="h-16 w-12 flex-shrink-0 bg-gray-100">
+              {item.cover_url ? (
+                <img
+                  src={item.cover_url}
+                  alt={item.title}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-gray-300">
+                  {item.title.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-900">
+                {item.title}
+              </p>
+              <p className="text-xs text-gray-600">
+                {item.quantity} x {formatPrice(item.price)}
+              </p>
+            </div>
+            <span className="text-sm font-semibold text-gray-900">
+              {formatPrice(item.price * item.quantity)}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-6 border-t border-gray-200 pt-4">
+        <div className="flex items-center justify-between text-sm text-gray-600">
+          <span>Total</span>
+          <span className="text-lg font-semibold text-gray-900">
+            {formatPrice(total)}
+          </span>
+        </div>
+      </div>
+    </aside>
+  )
 
   return (
     <div className="min-h-screen bg-[#f8f4ef] text-gray-900">
@@ -143,6 +216,36 @@ function CheckoutPage() {
             >
               Ir para a loja
             </Link>
+          </div>
+        ) : loading ? (
+          <div className="mt-8 border border-gray-200 bg-white p-8 text-center text-sm text-gray-600">
+            A carregar sessao...
+          </div>
+        ) : !isAuthenticated ? (
+          <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
+            <div className="border border-gray-200 bg-white p-8 text-center">
+              <p className="text-lg font-semibold text-gray-900">
+                Faça login para finalizar a compra
+              </p>
+              <p className="mt-2 text-sm text-gray-600">
+                Precisa de uma conta? Crie uma para continuar.
+              </p>
+              <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                <Link
+                  to="/auth/sign-in"
+                  className="inline-flex w-full items-center justify-center bg-[color:var(--brand)] px-6 py-2.5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-[#a25a2c] sm:w-auto"
+                >
+                  Entrar
+                </Link>
+                <Link
+                  to="/auth/sign-up"
+                  className="inline-flex w-full items-center justify-center border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400 sm:w-auto"
+                >
+                  Criar conta
+                </Link>
+              </div>
+            </div>
+            {orderSummary}
           </div>
         ) : (
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
@@ -240,48 +343,7 @@ function CheckoutPage() {
               </button>
             </form>
 
-            <aside className="h-fit border border-gray-200 bg-white p-6">
-              <h2 className="text-xl font-semibold text-gray-900">Resumo do pedido</h2>
-              <div className="mt-4 space-y-4">
-                {items.map((item) => (
-                  <div key={item.id} className="flex items-start gap-3">
-                    <div className="h-16 w-12 flex-shrink-0 bg-gray-100">
-                      {item.cover_url ? (
-                        <img
-                          src={item.cover_url}
-                          alt={item.title}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-gray-300">
-                          {item.title.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">
-                        {item.title}
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        {item.quantity} x {formatPrice(item.price)}
-                      </p>
-                    </div>
-                    <span className="text-sm font-semibold text-gray-900">
-                      {formatPrice(item.price * item.quantity)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 border-t border-gray-200 pt-4">
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span>Total</span>
-                  <span className="text-lg font-semibold text-gray-900">
-                    {formatPrice(total)}
-                  </span>
-                </div>
-              </div>
-            </aside>
+            {orderSummary}
           </div>
         )}
       </main>

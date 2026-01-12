@@ -1,22 +1,91 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
 import Header from '../../components/Header'
 import { FilterSidebar } from '../../components/shop/FilterSidebar'
 import { ProductCard, type ProductCardBook } from '../../components/shop/ProductCard'
 import { supabase } from '../../lib/supabaseClient'
+import { useShopMetadata, shopKeys, type PriceRange } from '../../lib/queries/shopQueries'
 
 export const Route = createFileRoute('/loja/')({
   component: ShopListingPage,
+  beforeLoad: async ({ context }) => {
+    const queryClient = context.queryClient
+
+    // Prefetch shop metadata using query factory
+    queryClient.prefetchQuery({
+      queryKey: shopKeys.metadata(),
+      queryFn: async () => {
+        const { data, error } = await supabase.rpc('get_shop_metadata')
+        if (error) throw error
+        return {
+          categories: (data?.categories || []) as string[],
+          priceRange: (data?.priceRange || { min: 0, max: 10000 }) as PriceRange,
+        }
+      },
+      staleTime: 300_000,
+    })
+
+    // Prefetch first page of books
+    queryClient.prefetchInfiniteQuery({
+      queryKey: [
+        'books',
+        'shop',
+        {
+          search: '',
+          selectedCategories: [],
+          language: null,
+          selectedPrice: { min: 0, max: 0 },
+          sortBy: 'newest',
+        },
+      ],
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from('books')
+          .select(
+            `
+            id,
+            title,
+            slug,
+            price_mzn,
+            stock,
+            description,
+            seo_description,
+            cover_url,
+            cover_path,
+            category,
+            language,
+            authors:authors_books(author:authors(id, name, wp_slug))
+          `,
+          )
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .range(0, 11)
+
+        if (error) throw error
+
+        const books =
+          data?.map((entry: any) => ({
+            ...entry,
+            authors:
+              entry.authors?.map((a: any) => ({
+                author: a.author,
+              })) ?? [],
+          })) ?? []
+
+        return {
+          books,
+          hasMore: books.length === 12,
+        }
+      },
+      initialPageParam: 1,
+      staleTime: 60_000,
+    })
+  },
 })
 
 type SortOption = 'newest' | 'oldest' | 'price-asc' | 'price-desc' | 'title'
-
-type PriceRange = {
-  min: number
-  max: number
-}
 
 const DEFAULT_PRICE_RANGE: PriceRange = { min: 0, max: 10000 }
 
@@ -29,46 +98,10 @@ function ShopListingPage() {
   const [showFilters, setShowFilters] = useState(false)
   const priceRangeRef = useRef<PriceRange>(DEFAULT_PRICE_RANGE)
 
-  const categoriesQuery = useQuery({
-    queryKey: ['shop-categories'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('books')
-        .select('category')
-        .eq('is_active', true)
-        .not('category', 'is', null)
-
-      if (error) throw error
-
-      const categories = Array.from(
-        new Set(data?.map((b) => b.category).filter(Boolean)),
-      ).sort()
-
-      return categories as string[]
-    },
-    staleTime: 300_000,
-  })
-
-  const priceRangeQuery = useQuery({
-    queryKey: ['shop-price-range'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('books')
-        .select('price_mzn')
-        .eq('is_active', true)
-        .not('price_mzn', 'is', null)
-        .order('price_mzn', { ascending: false })
-        .limit(1)
-
-      if (error) throw error
-
-      const maxPrice = data?.[0]?.price_mzn ?? DEFAULT_PRICE_RANGE.max
-      return { min: 0, max: Math.ceil(maxPrice / 100) * 100 }
-    },
-    staleTime: 300_000,
-  })
-
-  const priceRange = priceRangeQuery.data ?? DEFAULT_PRICE_RANGE
+  // Use query factory hook
+  const metadataQuery = useShopMetadata()
+  const categories = metadataQuery.data?.categories ?? []
+  const priceRange = metadataQuery.data?.priceRange ?? DEFAULT_PRICE_RANGE
 
   useEffect(() => {
     const prevRange = priceRangeRef.current
@@ -184,7 +217,6 @@ function ShopListingPage() {
   })
 
   const allBooks = booksQuery.data?.pages.flatMap((page) => page.books) ?? []
-  const categories = categoriesQuery.data ?? []
 
   const handleClearFilters = () => {
     setSearch('')
@@ -231,7 +263,7 @@ function ShopListingPage() {
                   selectedPrice={selectedPrice}
                   onPriceChange={setSelectedPrice}
                   onClearFilters={handleClearFilters}
-                  isLoading={categoriesQuery.isLoading || priceRangeQuery.isLoading}
+                  isLoading={metadataQuery.isLoading}
                 />
               </div>
             </aside>
@@ -266,7 +298,7 @@ function ShopListingPage() {
                     selectedPrice={selectedPrice}
                     onPriceChange={setSelectedPrice}
                     onClearFilters={handleClearFilters}
-                    isLoading={categoriesQuery.isLoading || priceRangeQuery.isLoading}
+                    isLoading={metadataQuery.isLoading}
                   />
                   <button
                     type="button"

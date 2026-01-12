@@ -1,10 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { ShoppingCart } from 'lucide-react'
 import { toast } from 'sonner'
 import Header from '../../components/Header'
-import { ProductCard, type ProductCardBook } from '../../components/shop/ProductCard'
+import { ProductCard } from '../../components/shop/ProductCard'
 import { QuantitySelector } from '../../components/shop/QuantitySelector'
 import { useCart } from '../../lib/useCart'
 import {
@@ -16,35 +15,48 @@ import {
   truncateText,
 } from '../../lib/shopHelpers'
 import { supabase } from '../../lib/supabaseClient'
+import { useBook, useRelatedBooks, bookKeys, type BookDetail } from '../../lib/queries/bookQueries'
 
 export const Route = createFileRoute('/livro/$bookId')({
   component: BookDetailPage,
+  beforeLoad: async ({ params, context }) => {
+    const { bookId } = params
+    const queryClient = context.queryClient
+
+    // Prefetch book data using query factory
+    const selectFields =
+      'id, title, slug, price_mzn, stock, description, seo_description, cover_url, cover_path, isbn, publisher, category, language, authors:authors_books(author:authors(id, name, wp_slug))'
+
+    queryClient.prefetchQuery({
+      queryKey: bookKeys.detail(bookId),
+      queryFn: async () => {
+        const { data: bySlug, error: slugError } = await supabase
+          .from('books')
+          .select(selectFields)
+          .eq('slug', bookId)
+          .eq('is_active', true)
+          .maybeSingle()
+
+        if (slugError) throw slugError
+        if (bySlug) return bySlug
+
+        const { data: byId, error: idError } = await supabase
+          .from('books')
+          .select(selectFields)
+          .eq('id', bookId)
+          .eq('is_active', true)
+          .maybeSingle()
+
+        if (idError) throw idError
+        return byId ?? null
+      },
+      staleTime: 60_000,
+    })
+  },
 })
 
-type BookDetail = {
-  id: string
-  title: string
-  slug: string | null
-  price_mzn: number | null
-  stock: number | null
-  description: string | null
-  seo_description: string | null
-  cover_url: string | null
-  cover_path: string | null
-  isbn: string | null
-  publisher: string | null
-  category: string | null
-  language: string | null
-  authors?: Array<{
-    author: {
-      id: string
-      name: string
-      wp_slug: string | null
-    } | null
-  }> | null
-}
-
-const resolveCoverUrl = (book: BookDetail) => {
+const resolveCoverUrl = (book: BookDetail | null) => {
+  if (!book) return null
   if (book.cover_url) return book.cover_url
   if (book.cover_path) {
     return supabase.storage.from('covers').getPublicUrl(book.cover_path).data
@@ -59,37 +71,12 @@ function BookDetailPage() {
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description')
 
-  const bookQuery = useQuery({
-    queryKey: ['book', bookId],
-    queryFn: async () => {
-      const selectFields =
-        'id, title, slug, price_mzn, stock, description, seo_description, cover_url, cover_path, isbn, publisher, category, language, authors:authors_books(author:authors(id, name, wp_slug))'
-
-      const { data: bySlug, error: slugError } = await supabase
-        .from('books')
-        .select(selectFields)
-        .eq('slug', bookId)
-        .eq('is_active', true)
-        .maybeSingle()
-
-      if (slugError) throw slugError
-      if (bySlug) return bySlug as BookDetail
-
-      const { data: byId, error: idError } = await supabase
-        .from('books')
-        .select(selectFields)
-        .eq('id', bookId)
-        .eq('is_active', true)
-        .maybeSingle()
-
-      if (idError) throw idError
-      return (byId as BookDetail | null) ?? null
-    },
-    staleTime: 60_000,
-  })
-
+  // Use query factory hooks
+  const bookQuery = useBook(bookId)
   const book = bookQuery.data ?? null
-  const coverUrl = book ? resolveCoverUrl(book) : null
+  const relatedBooksQuery = useRelatedBooks(bookId, book?.category)
+
+  const coverUrl = resolveCoverUrl(book)
   const stock = book?.stock ?? 0
   const maxQuantity = getMaxQuantity(stock)
   const inStock = isInStock(stock)
@@ -104,49 +91,6 @@ function BookDetailPage() {
     }
     setQuantity((prev) => Math.min(Math.max(prev, 1), maxQuantity || 1))
   }, [book, inStock, maxQuantity])
-
-  const relatedBooksQuery = useQuery({
-    queryKey: ['related-books', book?.id, book?.category],
-    queryFn: async () => {
-      if (!book?.category) return []
-      const { data, error } = await supabase
-        .from('books')
-        .select(
-          `
-          id,
-          title,
-          slug,
-          price_mzn,
-          stock,
-          description,
-          seo_description,
-          cover_url,
-          cover_path,
-          category,
-          language,
-          authors:authors_books(author:authors(id, name, wp_slug))
-        `,
-        )
-        .eq('is_active', true)
-        .eq('category', book.category)
-        .neq('id', book.id)
-        .limit(4)
-
-      if (error) throw error
-
-      return (
-        data?.map((entry: any) => ({
-          ...entry,
-          authors:
-            entry.authors?.map((a: any) => ({
-              author: a.author,
-            })) ?? [],
-        })) ?? []
-      ) as ProductCardBook[]
-    },
-    enabled: !!book,
-    staleTime: 60_000,
-  })
 
   const authorLinks =
     book?.authors

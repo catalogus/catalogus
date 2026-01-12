@@ -58,14 +58,22 @@ function AdminAuthorsPage() {
         const { data, error } = await supabase
           .from('authors')
           .select(`
-            id, name, wp_id, wp_slug, bio, photo_url, photo_path, phone,
-            social_links, featured, birth_date, residence_city, province,
-            published_works, author_gallery, featured_video, author_type,
-            claim_status, profile_id, claimed_at,
-            profile:profiles!authors_profile_id_fkey(id, name, email, status),
-            created_at, updated_at
+            id,
+            name,
+            wp_slug,
+            photo_url,
+            phone,
+            author_type,
+            claim_status,
+            profile_id,
+            featured,
+            profile:profiles!authors_profile_id_fkey(
+              id,
+              name,
+              email
+            )
           `)
-          .order('created_at', { ascending: false })
+          .order('name', { ascending: true })
         if (error) {
           console.error('Authors query error:', error)
           throw error

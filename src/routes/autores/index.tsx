@@ -125,23 +125,20 @@ function AutoresListingPage() {
   const authorsQuery = useInfiniteQuery({
     queryKey: ['authors', 'listing', featuredAuthorQuery.data?.id],
     queryFn: async ({ pageParam = 1 }) => {
-      let query = supabase
+      // Pagination: 12 authors per page
+      const from = (pageParam - 1) * 12
+      const to = from + 11
+
+      const { data, error } = await supabase
         .from('authors')
         .select(
           `id, wp_slug, name, author_type, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id,
           profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, bio, social_links)`,
         )
         .order('name', { ascending: true })
-
-      // Exclude hero author to avoid duplication
-      if (featuredAuthorQuery.data?.id) {
-        query = query.neq('id', featuredAuthorQuery.data.id)
-      }
-
-      // Pagination: 12 authors per page
-      const from = (pageParam - 1) * 12
-      const to = from + 11
-      const { data, error } = await query.range(from, to)
+        // Exclude hero author to avoid duplication - use fallback to prevent no match
+        .neq('id', featuredAuthorQuery.data?.id || '00000000-0000-0000-0000-000000000000')
+        .range(from, to)
 
       if (error) throw error
 
@@ -155,7 +152,7 @@ function AutoresListingPage() {
     },
     initialPageParam: 1,
     staleTime: 60_000,
-    enabled: featuredAuthorQuery.isSuccess, // Wait for featured query
+    // Remove enabled restriction - query starts immediately and refetches when featured ID available
   })
 
   const featuredAuthor = featuredAuthorQuery.data

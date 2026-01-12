@@ -138,9 +138,29 @@ function AdminPostsPage() {
       .from('posts')
       .select(
         `
-          *,
-          categories:post_categories_map(category:post_categories(*)),
-          tags:post_tags_map(tag:post_tags(*))
+          id,
+          title,
+          slug,
+          excerpt,
+          body,
+          featured_image_url,
+          featured_image_path,
+          author_id,
+          status,
+          published_at,
+          created_at,
+          updated_at,
+          featured,
+          language,
+          previous_status,
+          author:profiles!posts_author_id_fkey(
+            id,
+            name,
+            email,
+            photo_url
+          ),
+          categories:post_categories_map(category:post_categories(id, name, slug)),
+          tags:post_tags_map(tag:post_tags(id, name, slug))
         `,
         { count: 'exact' },
       )
@@ -183,28 +203,8 @@ function AdminPostsPage() {
     )
     if (error) throw error
 
-    const authorIds = [
-      ...new Set(data?.map((p: any) => p.author_id).filter(Boolean)),
-    ]
-
-    let authorsMap: Record<string, any> = {}
-    if (authorIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, name, email, photo_url')
-        .in('id', authorIds)
-
-      if (profiles) {
-        authorsMap = profiles.reduce((acc: Record<string, any>, profile: any) => {
-          acc[profile.id] = profile
-          return acc
-        }, {})
-      }
-    }
-
     const posts = (data ?? []).map((post: any) => ({
       ...post,
-      author: post.author_id ? authorsMap[post.author_id] || null : null,
       categories:
         post.categories?.map((c: any) => c.category).filter(Boolean) ?? [],
       tags: post.tags?.map((t: any) => t.tag).filter(Boolean) ?? [],

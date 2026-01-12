@@ -26,6 +26,33 @@ const config = defineConfig({
   optimizeDeps: {
     exclude: ['@supabase/supabase-js'],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split admin routes into separate chunk
+          admin: [
+            './src/routes/admin/dashboard',
+            './src/routes/admin/orders',
+            './src/routes/admin/books',
+            './src/routes/admin/authors',
+            './src/routes/admin/posts',
+            './src/routes/admin/users',
+            './src/routes/admin/hero-slides',
+            './src/routes/admin/author-claims',
+            './src/components/admin/layout',
+          ],
+          // Split heavy UI libraries
+          'ui-components': [
+            './src/components/ui/sheet',
+            './src/components/ui/dialog',
+            './src/components/ui/dropdown-menu',
+            './src/components/ui/button',
+          ],
+        },
+      },
+    },
+  },
 })
 
 export default config

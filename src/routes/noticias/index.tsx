@@ -75,21 +75,27 @@ function NewsListingPage() {
   const postsQuery = useInfiniteQuery({
     queryKey: ['news-posts', 'listing', q, categoria, tag, featuredPostQuery.data?.id],
     queryFn: async ({ pageParam = 1 }) => {
+      // Build select with conditional inner joins for filters
+      let selectQuery = `
+        id,
+        title,
+        slug,
+        excerpt,
+        body,
+        featured_image_url,
+        published_at,
+        created_at,
+        categories:post_categories_map${categoria ? '!inner' : ''}(category:post_categories${categoria ? '!inner' : ''}(name, slug))
+      `
+
+      // If tag filter is active, add tags with inner join
+      if (tag) {
+        selectQuery += `,tags:post_tags_map!inner(tag:post_tags!inner(name, slug))`
+      }
+
       let query = supabase
         .from('posts')
-        .select(
-          `
-          id,
-          title,
-          slug,
-          excerpt,
-          body,
-          featured_image_url,
-          published_at,
-          created_at,
-          categories:post_categories_map(category:post_categories(name, slug))
-        `,
-        )
+        .select(selectQuery)
         .eq('status', 'published')
         .order('published_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
@@ -104,54 +110,14 @@ function NewsListingPage() {
         query = query.or(`title.ilike.%${q}%,excerpt.ilike.%${q}%`)
       }
 
-      // Apply category filter
+      // Apply category filter using nested relationship
       if (categoria) {
-        const { data: categoryData } = await supabase
-          .from('post_categories')
-          .select('id')
-          .eq('slug', categoria)
-          .maybeSingle()
-
-        if (categoryData) {
-          const { data: postIds } = await supabase
-            .from('post_categories_map')
-            .select('post_id')
-            .eq('category_id', categoryData.id)
-
-          const ids = postIds?.map((p) => p.post_id) ?? []
-          if (ids.length > 0) {
-            query = query.in('id', ids)
-          } else {
-            return { posts: [], hasMore: false }
-          }
-        } else {
-          return { posts: [], hasMore: false }
-        }
+        query = query.eq('categories.category.slug', categoria)
       }
 
-      // Apply tag filter
+      // Apply tag filter using nested relationship
       if (tag) {
-        const { data: tagData } = await supabase
-          .from('post_tags')
-          .select('id')
-          .eq('slug', tag)
-          .maybeSingle()
-
-        if (tagData) {
-          const { data: postIds } = await supabase
-            .from('post_tags_map')
-            .select('post_id')
-            .eq('tag_id', tagData.id)
-
-          const ids = postIds?.map((p) => p.post_id) ?? []
-          if (ids.length > 0) {
-            query = query.in('id', ids)
-          } else {
-            return { posts: [], hasMore: false }
-          }
-        } else {
-          return { posts: [], hasMore: false }
-        }
+        query = query.eq('tags.tag.slug', tag)
       }
 
       // Pagination
