@@ -88,6 +88,7 @@ export const Route = createFileRoute('/loja/')({
 type SortOption = 'newest' | 'oldest' | 'price-asc' | 'price-desc' | 'title'
 
 const DEFAULT_PRICE_RANGE: PriceRange = { min: 0, max: 10000 }
+const PAGE_SIZE = 12
 
 function ShopListingPage() {
   const [search, setSearch] = useState('')
@@ -146,6 +147,7 @@ function ShopListingPage() {
           language,
           authors:authors_books(author:authors(id, name, wp_slug))
         `,
+          { count: 'exact' },
         )
         .eq('is_active', true)
 
@@ -190,9 +192,9 @@ function ShopListingPage() {
           break
       }
 
-      const from = (pageParam - 1) * 12
-      const to = from + 11
-      const { data, error } = await query.range(from, to)
+      const from = (pageParam - 1) * PAGE_SIZE
+      const to = from + PAGE_SIZE - 1
+      const { data, error, count } = await query.range(from, to)
 
       if (error) throw error
 
@@ -205,9 +207,12 @@ function ShopListingPage() {
             })) ?? [],
         })) ?? []
 
+      const loaded = from + books.length
+      const hasMore = count === null ? books.length === PAGE_SIZE : loaded < count
+
       return {
         books,
-        hasMore: books.length === 12,
+        hasMore,
       }
     },
     getNextPageParam: (lastPage, allPages) =>
