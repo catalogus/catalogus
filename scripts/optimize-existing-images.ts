@@ -17,15 +17,20 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import imageCompression from 'browser-image-compression'
 import { OPTIMIZATION_PRESETS } from '../src/lib/imageOptimization'
 
-// Polyfill for Node.js environment
-if (typeof window === 'undefined') {
-  // @ts-ignore
-  global.window = { URL: { createObjectURL: () => '', revokeObjectURL: () => {} } }
-  // @ts-ignore
-  global.document = { createElement: () => ({ getContext: () => null }) }
+let sharpImport: Promise<typeof import('sharp').default> | null = null
+
+async function loadSharp() {
+  if (!sharpImport) {
+    sharpImport = import('sharp').then(module => module.default)
+  }
+
+  try {
+    return await sharpImport
+  } catch {
+    throw new Error('Missing dependency "sharp". Install with `pnpm add -D sharp`.')
+  }
 }
 
 const SUPABASE_URL = process.env.SUPABASE_URL
@@ -78,35 +83,33 @@ const MIGRATIONS: BucketMigration[] = [
   },
 ]
 
-async function optimizeImageFromUrl(
-  imageUrl: string,
+async function optimizeImageBlob(
+  fileData: Blob,
   preset: keyof typeof OPTIMIZATION_PRESETS,
-): Promise<Blob> {
+): Promise<Buffer> {
   const options = OPTIMIZATION_PRESETS[preset]
-
-  // Fetch image
-  const response = await fetch(imageUrl)
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image: ${response.statusText}`)
-  }
-
-  const arrayBuffer = await response.arrayBuffer()
-  const blob = new Blob([arrayBuffer])
-  const contentType = response.headers.get('content-type') || 'image/jpeg'
-
-  // Convert to File
-  const file = new File([blob], 'image.jpg', { type: contentType })
-
-  // Optimize
-  const optimized = await imageCompression(file, {
-    maxSizeMB: options.maxSizeMB,
-    maxWidthOrHeight: options.maxWidthOrHeight,
-    useWebWorker: false, // Node environment
-    fileType: 'image/webp',
-    quality: options.quality,
+  const sharp = await loadSharp()
+  const inputBuffer = Buffer.from(await fileData.arrayBuffer())
+  const maxBytes = options.maxSizeMB * 1024 * 1024
+  const base = sharp(inputBuffer).rotate().resize({
+    width: options.maxWidthOrHeight,
+    height: options.maxWidthOrHeight,
+    fit: 'inside',
+    withoutEnlargement: true,
   })
 
-  return optimized
+  const minQuality = 45
+  let quality = Math.round(options.quality * 100)
+  let optimizedBuffer = await base.clone().webp({ quality }).toBuffer()
+  let attempts = 0
+
+  while (optimizedBuffer.length > maxBytes && quality > minQuality && attempts < 6) {
+    quality = Math.max(minQuality, quality - 10)
+    optimizedBuffer = await base.clone().webp({ quality }).toBuffer()
+    attempts++
+  }
+
+  return optimizedBuffer
 }
 
 async function migrateBucket(migration: BucketMigration, dryRun: boolean = false) {
@@ -120,7 +123,7 @@ async function migrateBucket(migration: BucketMigration, dryRun: boolean = false
   // Fetch all records with images
   const { data: records, error } = await supabase
     .from(migration.tableName)
-    .select(`id, ${migration.pathColumn}, ${migration.urlColumn}`)
+    .select(`id, ${migration.pathColumn}`)
     .not(migration.pathColumn, 'is', null)
 
   if (error) {
@@ -138,7 +141,6 @@ async function migrateBucket(migration: BucketMigration, dryRun: boolean = false
   for (let i = 0; i < records.length; i++) {
     const record = records[i]
     const oldPath = record[migration.pathColumn]
-    const oldUrl = record[migration.urlColumn]
 
     console.log(`[${i + 1}/${records.length}] Processing: ${oldPath}`)
 
@@ -172,8 +174,8 @@ async function migrateBucket(migration: BucketMigration, dryRun: boolean = false
       }
 
       // Optimize image
-      const optimizedBlob = await optimizeImageFromUrl(oldUrl, migration.preset)
-      const newSizeMB = optimizedBlob.size / 1024 / 1024
+      const optimizedBuffer = await optimizeImageBlob(fileData, migration.preset)
+      const newSizeMB = optimizedBuffer.length / 1024 / 1024
 
       // Generate new path with optimized/ prefix
       const fileExt = 'webp'
@@ -182,7 +184,7 @@ async function migrateBucket(migration: BucketMigration, dryRun: boolean = false
       // Upload optimized version
       const { error: uploadError } = await supabase.storage
         .from(migration.bucketName)
-        .upload(newPath, optimizedBlob, {
+        .upload(newPath, optimizedBuffer, {
           contentType: 'image/webp',
           cacheControl: '31536000',
           upsert: false,
