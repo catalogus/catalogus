@@ -1,24 +1,15 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 
 import { AuthProvider } from '../contexts/AuthProvider'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import { CartProvider } from '../lib/useCart'
+import { queryClient } from '../lib/queryClient'
 
 import appCss from '../styles.css?url'
-
-// Create QueryClient outside of component to persist across navigations
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,
-      retry: 1,
-    },
-  },
-})
 
 export const Route = createRootRoute({
   head: () => ({
