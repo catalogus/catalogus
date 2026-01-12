@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { randomUUID } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
-import { basename } from 'node:path'
+import { basename, extname } from 'node:path'
+import sharp from 'sharp'
 
 const args = process.argv.slice(2)
 const limitArg = args.find((arg) => arg.startsWith('--limit='))
@@ -85,6 +86,29 @@ const sbHeaders = {
   Authorization: `Bearer ${supabaseServiceKey}`,
   'Content-Type': 'application/json',
 }
+
+const WEBP_QUALITY = 85
+
+const extensionFromContentType = (contentType) => {
+  const normalized = (contentType || '').toLowerCase()
+  if (normalized.includes('jpeg')) return 'jpg'
+  if (normalized.includes('png')) return 'png'
+  if (normalized.includes('webp')) return 'webp'
+  if (normalized.includes('gif')) return 'gif'
+  if (normalized.includes('svg')) return 'svg'
+  return 'bin'
+}
+
+const shouldConvertToWebp = (contentType, filename) => {
+  const normalized = (contentType || '').toLowerCase()
+  if (normalized.includes('svg') || normalized.includes('gif')) return false
+  const ext = extname(filename).toLowerCase()
+  if (ext === '.svg' || ext === '.gif') return false
+  return normalized.startsWith('image/') || ext.length > 0
+}
+
+const convertToWebp = async (buffer) =>
+  sharp(buffer).rotate().webp({ quality: WEBP_QUALITY }).toBuffer()
 
 const stripHtml = (html = '') =>
   html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
@@ -241,7 +265,24 @@ const uploadImage = async (postId, imageUrl) => {
   const arrayBuffer = await response.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
   const contentType = response.headers.get('content-type') || 'application/octet-stream'
-  const filename = basename(new URL(imageUrl).pathname) || `image-${Date.now()}`
+  const sourceName = basename(new URL(imageUrl).pathname) || `image-${Date.now()}`
+  const baseName = sourceName.replace(/\.[^.]+$/, '') || 'image'
+
+  let uploadBuffer = buffer
+  let uploadContentType = contentType
+  let extension = extname(sourceName).slice(1) || extensionFromContentType(contentType)
+
+  if (shouldConvertToWebp(contentType, sourceName)) {
+    try {
+      uploadBuffer = await convertToWebp(buffer)
+      uploadContentType = 'image/webp'
+      extension = 'webp'
+    } catch (error) {
+      console.warn(`WebP conversion failed, keeping original bytes: ${error}`)
+    }
+  }
+
+  const filename = `${Date.now()}-${baseName}.${extension}`
   const path = `post-images/${postId}/${filename}`
   const encodedPath = path.split('/').map(encodeURIComponent).join('/')
 
@@ -251,10 +292,10 @@ const uploadImage = async (postId, imageUrl) => {
     headers: {
       apikey: supabaseServiceKey,
       Authorization: `Bearer ${supabaseServiceKey}`,
-      'Content-Type': contentType,
+      'Content-Type': uploadContentType,
       'x-upsert': 'true',
     },
-    body: buffer,
+    body: uploadBuffer,
   })
 
   if (!uploadResponse.ok) {
