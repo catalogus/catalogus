@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { useCart } from '../../lib/useCart'
 import { isInStock, truncateText } from '../../lib/shopHelpers'
 import { supabase } from '../../lib/supabaseClient'
+import { BookCover } from '../OptimizedImage'
 
 export type ProductCardBook = {
   id: string
@@ -131,12 +132,12 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
     <div className={`group ${compact ? 'space-y-3' : 'space-y-4'}`}>
       <div className="relative bg-[#e6e0db] rounded-none">
         <div className="aspect-[3/4] w-full overflow-hidden bg-white/60 rounded-none">
-          {coverUrl ? (
-            <img
-              src={coverUrl}
-              alt={book.title}
+          {book.cover_path || coverUrl ? (
+            <BookCover
+              src={book.cover_path || coverUrl}
+              title={book.title}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              loading="lazy"
+              priority={false}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-[0.3em] text-gray-400">

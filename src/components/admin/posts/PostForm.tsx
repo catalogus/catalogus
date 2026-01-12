@@ -5,6 +5,7 @@ import { Button } from '../../ui/button'
 import { TipTapEditor } from './TipTapEditor'
 import type { PostFormValues, Category, Tag, PostStatus } from '../../../types/post'
 import { toast } from 'sonner'
+import { validateAndOptimizeImage } from '../../../lib/imageOptimization'
 
 type CategoryOption = Category
 type TagOption = Tag
@@ -63,6 +64,11 @@ export function PostForm({
   const [localTags, setLocalTags] = useState<TagOption[]>(tags)
   const [newTagName, setNewTagName] = useState('')
   const [addingTag, setAddingTag] = useState(false)
+  const [isOptimizingImage, setIsOptimizingImage] = useState(false)
+  const [optimizationStats, setOptimizationStats] = useState<{
+    originalSizeMB: string
+    optimizedSizeMB: string
+  } | null>(null)
 
   useEffect(() => {
     setLocalTags(tags)
@@ -211,25 +217,58 @@ export function PostForm({
               id="featured-image"
               type="file"
               accept="image/*"
-              onChange={(e) => {
+              onChange={async (e) => {
                 const selected = e.target.files?.[0] ?? null
-                if (selected && selected.size > maxFeaturedImageSize) {
-                  toast.error('Featured image must be 5MB or less.')
-                  e.currentTarget.value = ''
+                if (!selected) {
+                  setFile(null)
+                  setImagePreview(null)
+                  setOptimizationStats(null)
                   return
                 }
-                setFile(selected)
-                if (selected) {
-                  setImagePreview(URL.createObjectURL(selected))
+
+                setIsOptimizingImage(true)
+                setOptimizationStats(null)
+
+                try {
+                  const originalSizeMB = (selected.size / 1024 / 1024).toFixed(2)
+
+                  // Optimize image before upload
+                  const optimizedFile = await validateAndOptimizeImage(selected, 'postFeaturedImage')
+
+                  const optimizedSizeMB = (optimizedFile.size / 1024 / 1024).toFixed(2)
+
+                  setFile(optimizedFile)
+                  setImagePreview(URL.createObjectURL(optimizedFile))
+                  setOptimizationStats({ originalSizeMB, optimizedSizeMB })
+
+                  toast.success(`Image optimized: ${originalSizeMB}MB → ${optimizedSizeMB}MB`)
+                } catch (error) {
+                  console.error('Image optimization error:', error)
+                  toast.error(error instanceof Error ? error.message : 'Failed to optimize image')
+                  // Reset file input
+                  e.target.value = ''
+                } finally {
+                  setIsOptimizingImage(false)
                 }
               }}
               className="hidden"
+              disabled={isOptimizingImage}
             />
             <div className="flex flex-col text-sm text-gray-600">
               <span className="font-medium">
-                {file?.name ?? imagePreview ? 'Preview loaded' : 'No file chosen'}
+                {isOptimizingImage
+                  ? 'Optimizing image...'
+                  : file?.name ?? imagePreview
+                    ? 'Preview loaded'
+                    : 'No file chosen'}
               </span>
-              <span className="text-xs text-gray-500">JPG/PNG, up to 5MB</span>
+              {optimizationStats ? (
+                <span className="text-xs text-green-600">
+                  Optimized: {optimizationStats.originalSizeMB}MB → {optimizationStats.optimizedSizeMB}MB
+                </span>
+              ) : (
+                <span className="text-xs text-gray-500">JPG/PNG, up to 50MB</span>
+              )}
             </div>
             {imagePreview && (
               <img

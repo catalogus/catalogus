@@ -6,6 +6,7 @@ import Header from '../../components/Header'
 import { ProductCard } from '../../components/shop/ProductCard'
 import { QuantitySelector } from '../../components/shop/QuantitySelector'
 import { useCart } from '../../lib/useCart'
+import { BookCover } from '../../components/OptimizedImage'
 import {
   formatPrice,
   getMaxQuantity,
@@ -193,11 +194,12 @@ function BookDetailPage() {
             <div className="grid gap-10 lg:grid-cols-[minmax(0,420px)_1fr]">
               <div className="bg-[#f2eee9] p-10 shadow-sm">
                 <div className="aspect-[3/4] w-full overflow-hidden bg-white">
-                  {coverUrl ? (
-                    <img
-                      src={coverUrl}
-                      alt={book.title}
+                  {book.cover_path || coverUrl ? (
+                    <BookCover
+                      src={book.cover_path || coverUrl}
+                      title={book.title}
                       className="h-full w-full object-cover"
+                      priority={true}
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-4xl font-semibold text-gray-300">

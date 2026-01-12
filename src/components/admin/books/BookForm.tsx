@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
 import { Button } from '../../ui/button'
+import { validateAndOptimizeImage } from '../../../lib/imageOptimization'
 
 type AuthorOption = { id: string; name: string }
 
@@ -74,6 +75,11 @@ export function BookForm({
   const [addingAuthor, setAddingAuthor] = useState(false)
   const [authorSearch, setAuthorSearch] = useState('')
   const [authorPickerOpen, setAuthorPickerOpen] = useState(false)
+  const [isOptimizingImage, setIsOptimizingImage] = useState(false)
+  const [optimizationStats, setOptimizationStats] = useState<{
+    originalSizeMB: string
+    optimizedSizeMB: string
+  } | null>(null)
 
   useEffect(() => {
     setLocalAuthors(authors)
@@ -255,20 +261,56 @@ export function BookForm({
               id="cover"
               type="file"
               accept="image/*"
-              onChange={(e) => {
+              onChange={async (e) => {
                 const selected = e.target.files?.[0] ?? null
-                setFile(selected)
-                if (selected) {
-                  setCoverPreview(URL.createObjectURL(selected))
+                if (!selected) {
+                  setFile(null)
+                  setCoverPreview(null)
+                  setOptimizationStats(null)
+                  return
+                }
+
+                setIsOptimizingImage(true)
+                setOptimizationStats(null)
+
+                try {
+                  const originalSizeMB = (selected.size / 1024 / 1024).toFixed(2)
+
+                  // Optimize image before upload
+                  const optimizedFile = await validateAndOptimizeImage(selected, 'bookCover')
+
+                  const optimizedSizeMB = (optimizedFile.size / 1024 / 1024).toFixed(2)
+
+                  setFile(optimizedFile)
+                  setCoverPreview(URL.createObjectURL(optimizedFile))
+                  setOptimizationStats({ originalSizeMB, optimizedSizeMB })
+                } catch (error) {
+                  console.error('Image optimization error:', error)
+                  alert(error instanceof Error ? error.message : 'Failed to optimize image')
+                  // Reset file input
+                  e.target.value = ''
+                } finally {
+                  setIsOptimizingImage(false)
                 }
               }}
               className="hidden"
+              disabled={isOptimizingImage}
             />
             <div className="flex flex-col text-sm text-gray-600">
               <span className="font-medium">
-                {file?.name ?? coverPreview ? 'Preview loaded' : 'No file chosen'}
+                {isOptimizingImage
+                  ? 'Optimizing image...'
+                  : file?.name ?? coverPreview
+                    ? 'Preview loaded'
+                    : 'No file chosen'}
               </span>
-              <span className="text-xs text-gray-500">JPG/PNG, up to 5MB</span>
+              {optimizationStats ? (
+                <span className="text-xs text-green-600">
+                  Optimized: {optimizationStats.originalSizeMB}MB → {optimizationStats.optimizedSizeMB}MB
+                </span>
+              ) : (
+                <span className="text-xs text-gray-500">JPG/PNG, up to 50MB</span>
+              )}
             </div>
             {coverPreview && (
               <img

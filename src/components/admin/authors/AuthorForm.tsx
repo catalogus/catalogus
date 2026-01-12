@@ -3,6 +3,7 @@ import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
 import { Button } from '../../ui/button'
 import type { AuthorFormValues, SocialLinks } from '../../../types/author'
+import { validateAndOptimizeImage } from '../../../lib/imageOptimization'
 
 type AuthorFormProps = {
   initial?: Partial<AuthorFormValues>
@@ -46,6 +47,11 @@ export function AuthorForm({
     initial?.photo_url ?? null,
   )
   const [file, setFile] = useState<File | null>(null)
+  const [isOptimizingImage, setIsOptimizingImage] = useState(false)
+  const [optimizationStats, setOptimizationStats] = useState<{
+    originalSizeMB: string
+    optimizedSizeMB: string
+  } | null>(null)
 
   const handleChange = (key: keyof AuthorFormValues, value: string) => {
     setValues((prev) => ({
@@ -67,11 +73,36 @@ export function AuthorForm({
     }))
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] ?? null
-    setFile(selected)
-    if (selected) {
-      setPhotoPreview(URL.createObjectURL(selected))
+    if (!selected) {
+      setFile(null)
+      setPhotoPreview(null)
+      setOptimizationStats(null)
+      return
+    }
+
+    setIsOptimizingImage(true)
+    setOptimizationStats(null)
+
+    try {
+      const originalSizeMB = (selected.size / 1024 / 1024).toFixed(2)
+
+      // Optimize image before upload
+      const optimizedFile = await validateAndOptimizeImage(selected, 'authorPhoto')
+
+      const optimizedSizeMB = (optimizedFile.size / 1024 / 1024).toFixed(2)
+
+      setFile(optimizedFile)
+      setPhotoPreview(URL.createObjectURL(optimizedFile))
+      setOptimizationStats({ originalSizeMB, optimizedSizeMB })
+    } catch (error) {
+      console.error('Image optimization error:', error)
+      alert(error instanceof Error ? error.message : 'Failed to optimize image')
+      // Reset file input
+      e.target.value = ''
+    } finally {
+      setIsOptimizingImage(false)
     }
   }
 
@@ -243,10 +274,19 @@ export function AuthorForm({
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif"
             onChange={handleFileChange}
+            disabled={isOptimizingImage}
           />
-          <p className="text-xs text-gray-500">
-            Max 5MB. Supported formats: JPG, PNG, WEBP, GIF
-          </p>
+          {isOptimizingImage ? (
+            <p className="text-xs text-blue-600">Optimizing image...</p>
+          ) : optimizationStats ? (
+            <p className="text-xs text-green-600">
+              Optimized: {optimizationStats.originalSizeMB}MB → {optimizationStats.optimizedSizeMB}MB
+            </p>
+          ) : (
+            <p className="text-xs text-gray-500">
+              Max 50MB. Supported formats: JPG, PNG, WEBP, GIF
+            </p>
+          )}
         </div>
 
         {/* Birth Date */}
