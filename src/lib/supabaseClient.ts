@@ -1,33 +1,29 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Support both Vite (VITE_ prefix) and Nitro/runtime (no prefix) environments
-// In browser: use import.meta.env
-// In server (SSR): use process.env
-const getEnvVar = (name: string) => {
-  if (typeof import.meta.env[name] !== 'undefined') {
-    return import.meta.env[name]
-  }
-  if (typeof process !== 'undefined' && process.env && process.env[name]) {
-    return process.env[name]
-  }
-  return undefined
-}
+// Environment variables for Vite SSR:
+// - Client-side: VITE_* variables are replaced at build time by Vite
+// - Server-side: Can access both import.meta.env and process.env at runtime
+const isServer = typeof window === 'undefined'
 
-const supabaseUrl =
-  getEnvVar('VITE_SUPABASE_URL') ||
-  getEnvVar('SUPABASE_URL')
+// For client-side (browser), these are statically replaced by Vite at build time
+const supabaseUrl = isServer
+  ? (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL)
+  : import.meta.env.VITE_SUPABASE_URL
 
-const supabaseAnonKey =
-  getEnvVar('VITE_SUPABASE_ANON_KEY') ||
-  getEnvVar('SUPABASE_ANON_KEY')
+const supabaseAnonKey = isServer
+  ? (process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY)
+  : import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error(
-    'Missing Supabase env vars. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY',
+    'Missing Supabase environment variables',
     {
       supabaseUrl: supabaseUrl ? 'present' : 'missing',
       supabaseAnonKey: supabaseAnonKey ? 'present' : 'missing',
-      isServer: typeof window === 'undefined'
+      isServer,
+      hint: isServer
+        ? 'Set VITE_SUPABASE_URL/SUPABASE_URL and VITE_SUPABASE_ANON_KEY/SUPABASE_ANON_KEY in your environment'
+        : 'Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set during build time'
     }
   )
 }
