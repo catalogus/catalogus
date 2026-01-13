@@ -194,6 +194,49 @@ function AdminUsersPage() {
     onError: (err: any) => toast.error(err.message ?? 'Failed to create user'),
   })
 
+  const ensureAuthorRecord = async (profileId: string) => {
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select(
+        'id, name, bio, photo_url, photo_path, social_links, phone, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type',
+      )
+      .eq('id', profileId)
+      .maybeSingle()
+
+    if (profileError) throw profileError
+    if (!profileData) return
+
+    const { data: existingAuthor, error: existingAuthorError } = await supabase
+      .from('authors')
+      .select('id')
+      .eq('profile_id', profileId)
+      .maybeSingle()
+
+    if (existingAuthorError) throw existingAuthorError
+    if (existingAuthor) return
+
+    const { error: insertError } = await supabase.from('authors').insert({
+      name: profileData.name || 'Autor',
+      bio: profileData.bio ?? null,
+      photo_url: profileData.photo_url ?? null,
+      photo_path: profileData.photo_path ?? null,
+      social_links: profileData.social_links ?? {},
+      phone: profileData.phone ?? null,
+      birth_date: profileData.birth_date ?? null,
+      residence_city: profileData.residence_city ?? null,
+      province: profileData.province ?? null,
+      published_works: profileData.published_works ?? [],
+      author_gallery: profileData.author_gallery ?? [],
+      featured_video: profileData.featured_video ?? null,
+      author_type: profileData.author_type ?? 'Autor Registrado',
+      profile_id: profileData.id,
+      claim_status: 'approved',
+      claimed_at: new Date().toISOString(),
+    })
+
+    if (insertError) throw insertError
+  }
+
   const updateUser = useMutation({
     mutationFn: async (payload: { id: string; role: UserRole; status: AuthorStatus }) => {
       const { error } = await supabase
@@ -201,10 +244,17 @@ function AdminUsersPage() {
         .update({ role: payload.role, status: payload.status })
         .eq('id', payload.id)
       if (error) throw error
+
+      if (payload.role === 'author' && payload.status === 'approved') {
+        await ensureAuthorRecord(payload.id)
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'users', 'admin-count'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'authors'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'authors', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'authors-for-hero'] })
       toast.success('User updated')
     },
     onError: (err: any) => toast.error(err.message ?? 'Failed to update user'),
