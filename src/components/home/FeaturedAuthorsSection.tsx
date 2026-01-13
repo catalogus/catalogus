@@ -199,6 +199,34 @@ export default function FeaturedAuthorsSection() {
               </div>
             )}
         </div>
+
+        <div className="mt-16">
+          <div
+            className="relative overflow-hidden border border-white/10 text-white"
+            style={{
+              backgroundImage: "url('/capulana-bg.jpg')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),transparent_60%)]" />
+            <div className="absolute inset-0 bg-black/55" />
+            <div className="relative z-10 flex flex-col items-center gap-4 px-6 py-14 text-center md:px-10 lg:px-20">
+              <h3 className="text-3xl font-semibold leading-tight md:text-4xl lg:text-5xl">
+                Fazer parte do catalogus agora é gratuito
+              </h3>
+              <p className="max-w-2xl text-sm text-white/85 md:text-base">
+                Regista-te no mais completo portfólio de autores moçambicanos.
+              </p>
+              <a
+                href="/autor/criar-conta"
+                className="mt-2 inline-flex items-center justify-center bg-[color:var(--brand)] px-8 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#a25a2c]"
+              >
+                Registar-me
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   )

@@ -43,13 +43,13 @@ function AuthorSignUpPage() {
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match')
+      toast.error('As senhas não coincidem')
       return
     }
 
     // Validate password length
     if (formData.password.length < 8) {
-      toast.error('Password must be at least 8 characters')
+      toast.error('A senha deve ter pelo menos 8 caracteres')
       return
     }
 
@@ -66,16 +66,16 @@ function AuthorSignUpPage() {
       )
 
       if (error) {
-        toast.error(error.message || 'Failed to sign up')
+        toast.error(error.message || 'Falha ao criar conta')
         return
       }
 
       toast.success(
-        'Account created successfully! Awaiting admin approval. You can now sign in.',
+        'Conta criada com sucesso! Aguarde a aprovação do administrador. Já pode iniciar sessão.',
       )
       navigate({ to: '/author/sign-in' })
     } catch (err: any) {
-      toast.error(err.message || 'An unexpected error occurred')
+      toast.error(err.message || 'Ocorreu um erro inesperado')
     } finally {
       setSubmitting(false)
     }
@@ -85,9 +85,9 @@ function AuthorSignUpPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Author Sign Up</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Criar conta de autor</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Create your author account to start publishing
+            Crie a sua conta de autor para começar a publicar
           </p>
         </div>
 
@@ -95,7 +95,7 @@ function AuthorSignUpPage() {
           {/* Name */}
           <div className="space-y-2">
             <Label htmlFor="name">
-              Full Name <span className="text-red-500">*</span>
+              Nome completo <span className="text-red-500">*</span>
             </Label>
             <Input
               id="name"
@@ -105,7 +105,7 @@ function AuthorSignUpPage() {
               required
               minLength={2}
               maxLength={100}
-              placeholder="John Doe"
+              placeholder="Nome Apelido"
             />
           </div>
 
@@ -120,14 +120,14 @@ function AuthorSignUpPage() {
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
               required
-              placeholder="author@example.com"
+              placeholder="autor@exemplo.com"
             />
           </div>
 
           {/* Password */}
           <div className="space-y-2">
             <Label htmlFor="password">
-              Password <span className="text-red-500">*</span>
+              Senha <span className="text-red-500">*</span>
             </Label>
             <Input
               id="password"
@@ -136,14 +136,14 @@ function AuthorSignUpPage() {
               onChange={(e) => handleChange('password', e.target.value)}
               required
               minLength={8}
-              placeholder="Minimum 8 characters"
+              placeholder="Mínimo 8 caracteres"
             />
           </div>
 
           {/* Confirm Password */}
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">
-              Confirm Password <span className="text-red-500">*</span>
+              Confirmar senha <span className="text-red-500">*</span>
             </Label>
             <Input
               id="confirmPassword"
@@ -152,13 +152,13 @@ function AuthorSignUpPage() {
               onChange={(e) => handleChange('confirmPassword', e.target.value)}
               required
               minLength={8}
-              placeholder="Re-enter password"
+              placeholder="Digite novamente a senha"
             />
           </div>
 
           {/* Phone */}
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone (optional)</Label>
+            <Label htmlFor="phone">Telefone (opcional)</Label>
             <Input
               id="phone"
               type="tel"
@@ -170,24 +170,24 @@ function AuthorSignUpPage() {
 
           {/* Bio */}
           <div className="space-y-2">
-            <Label htmlFor="bio">Bio (optional)</Label>
+            <Label htmlFor="bio">Biografia (opcional)</Label>
             <textarea
               id="bio"
               value={formData.bio}
               onChange={(e) => handleChange('bio', e.target.value)}
               maxLength={500}
               rows={3}
-              placeholder="Tell us about yourself (max 500 characters)"
+              placeholder="Fale sobre si (máximo 500 caracteres)"
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
             />
             <p className="text-xs text-gray-500">
-              {formData.bio.length}/500 characters
+              {formData.bio.length}/500 caracteres
             </p>
           </div>
 
           {/* Photo */}
           <div className="space-y-2">
-            <Label htmlFor="photo">Profile Photo (optional)</Label>
+            <Label htmlFor="photo">Foto de perfil (opcional)</Label>
             {photoPreview && (
               <div className="mb-2">
                 <img
@@ -204,23 +204,23 @@ function AuthorSignUpPage() {
               onChange={handleFileChange}
             />
             <p className="text-xs text-gray-500">
-              Max 5MB. Supported formats: JPG, PNG, WEBP, GIF
+              Máximo 5MB. Formatos suportados: JPG, PNG, WEBP, GIF
             </p>
           </div>
 
           {/* Submit */}
           <Button type="submit" disabled={submitting} className="w-full">
-            {submitting ? 'Creating Account...' : 'Sign Up'}
+            {submitting ? 'A criar conta...' : 'Criar conta'}
           </Button>
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-600">
-          Already have an account?{' '}
+          Já tem uma conta?{' '}
           <a
             href="/author/sign-in"
             className="font-semibold text-gray-900 hover:underline"
           >
-            Sign in
+            Iniciar sessão
           </a>
         </div>
       </div>

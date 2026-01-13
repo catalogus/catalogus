@@ -117,7 +117,7 @@ function AuthorSignInPage() {
         <div className="mt-6 text-center text-sm text-gray-600">
           Don't have an account?{' '}
           <a
-            href="/author/sign-up"
+            href="/autor/criar-conta"
             className="font-semibold text-gray-900 hover:underline"
           >
             Sign up

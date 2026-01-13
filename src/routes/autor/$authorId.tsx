@@ -311,7 +311,7 @@ function AuthorPublicPage() {
       localStorage.setItem('pendingAuthorClaim', JSON.stringify(data))
       setIsClaimModalOpen(false)
       toast.info('Por favor, crie uma conta para completar a reivindicação.')
-      navigate({ to: '/author/sign-up' })
+      navigate({ to: '/autor/criar-conta' })
     }
   }
 
