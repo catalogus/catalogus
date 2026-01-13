@@ -29,26 +29,21 @@ const config = defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Split admin routes into separate chunk
-          admin: [
-            './src/routes/admin/dashboard',
-            './src/routes/admin/orders',
-            './src/routes/admin/books',
-            './src/routes/admin/authors',
-            './src/routes/admin/posts',
-            './src/routes/admin/users',
-            './src/routes/admin/hero-slides',
-            './src/routes/admin/author-claims',
-            './src/components/admin/layout',
-          ],
-          // Split heavy UI libraries
-          'ui-components': [
-            './src/components/ui/sheet',
-            './src/components/ui/dialog',
-            './src/components/ui/dropdown-menu',
-            './src/components/ui/button',
-          ],
+        manualChunks(id) {
+          // Let Vite handle chunking automatically, but provide hints
+          if (id.includes('node_modules')) {
+            // Split vendor code by package
+            if (id.includes('@tanstack')) {
+              return 'tanstack'
+            }
+            if (id.includes('@radix-ui')) {
+              return 'radix'
+            }
+            if (id.includes('@supabase')) {
+              return 'supabase'
+            }
+          }
+          // Let Vite automatically handle application code chunking
         },
       },
     },
