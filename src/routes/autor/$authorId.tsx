@@ -17,7 +17,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthProvider'
 import { toast } from 'sonner'
 import { ClaimAuthorModal } from '../../components/author/ClaimAuthorModal'
-import type { AuthorRow, GalleryImage, PublishedWork } from '../../types/author'
+import type { AuthorRow, GalleryImage, PublishedWork, SocialLinks } from '../../types/author'
 
 export const Route = createFileRoute('/autor/$authorId')({
   component: AuthorPublicPage,
@@ -103,6 +103,68 @@ const getSocialLinks = (author: AuthorRow | null) => {
   ].filter((item) => item.href)
 }
 
+const isUuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+
+type ProfileAuthor = {
+  id: string
+  name: string | null
+  bio?: string | null
+  photo_url?: string | null
+  photo_path?: string | null
+  social_links?: SocialLinks | null
+  birth_date?: string | null
+  residence_city?: string | null
+  province?: string | null
+  published_works?: PublishedWork[] | null
+  author_gallery?: GalleryImage[] | null
+  featured_video?: string | null
+  author_type?: string | null
+  status?: string | null
+  role?: 'admin' | 'author' | 'customer' | null
+}
+
+const mapProfileToAuthor = (profile: ProfileAuthor): AuthorRow => ({
+  id: profile.id,
+  wp_slug: null,
+  name: profile.name || 'Autor',
+  bio: profile.bio ?? null,
+  photo_url: profile.photo_url ?? null,
+  photo_path: profile.photo_path ?? null,
+  social_links: profile.social_links ?? null,
+  birth_date: profile.birth_date ?? null,
+  residence_city: profile.residence_city ?? null,
+  province: profile.province ?? null,
+  published_works: profile.published_works ?? null,
+  author_gallery: profile.author_gallery ?? null,
+  featured_video: profile.featured_video ?? null,
+  author_type: profile.author_type ?? 'Autor Registrado',
+  profile_id: profile.id,
+  claim_status: profile.status === 'approved' ? 'approved' : 'pending',
+  profile: {
+    id: profile.id,
+    name: profile.name || 'Autor',
+    bio: profile.bio ?? null,
+    photo_url: profile.photo_url ?? null,
+    photo_path: profile.photo_path ?? null,
+    social_links: profile.social_links ?? null,
+    birth_date: profile.birth_date ?? null,
+    residence_city: profile.residence_city ?? null,
+    province: profile.province ?? null,
+    published_works: profile.published_works ?? null,
+    author_gallery: profile.author_gallery ?? null,
+    featured_video: profile.featured_video ?? null,
+    author_type: profile.author_type ?? null,
+    status: (profile.status as 'pending' | 'approved' | 'rejected' | null) ?? null,
+    role: profile.role ?? null,
+  },
+})
+
+type AuthorResult = {
+  author: AuthorRow | null
+  isProfileOnly: boolean
+}
+
 function AuthorPublicPage() {
   const { authorId } = Route.useParams()
   const { profile, session } = useAuth()
@@ -110,7 +172,7 @@ function AuthorPublicPage() {
   const navigate = useNavigate()
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
 
-  const authorQuery = useQuery({
+  const authorQuery = useQuery<AuthorResult>({
     queryKey: ['author', authorId],
     queryFn: async () => {
       const selectFields =
@@ -128,39 +190,60 @@ function AuthorPublicPage() {
         // Merge profile data if claim is approved
         if (author.claim_status === 'approved' && author.profile) {
           return {
-            ...author,
-            name: author.profile.name || author.name,
-            bio: author.profile.bio || author.bio,
-            photo_url: author.profile.photo_url || author.photo_url,
-            photo_path: author.profile.photo_path || author.photo_path,
-            social_links: author.profile.social_links || author.social_links,
+            author: {
+              ...author,
+              name: author.profile.name || author.name,
+              bio: author.profile.bio || author.bio,
+              photo_url: author.profile.photo_url || author.photo_url,
+              photo_path: author.profile.photo_path || author.photo_path,
+              social_links: author.profile.social_links || author.social_links,
+            },
+            isProfileOnly: false,
           }
         }
-        return author
+        return { author, isProfileOnly: false }
       }
 
-      const { data: byId, error: idError } = await supabase
-        .from('authors')
-        .select(selectFields)
-        .eq('id', authorId)
-        .maybeSingle()
-      if (idError) throw idError
-      if (byId) {
-        const author = byId as AuthorRow
-        // Merge profile data if claim is approved
-        if (author.claim_status === 'approved' && author.profile) {
-          return {
-            ...author,
-            name: author.profile.name || author.name,
-            bio: author.profile.bio || author.bio,
-            photo_url: author.profile.photo_url || author.photo_url,
-            photo_path: author.profile.photo_path || author.photo_path,
-            social_links: author.profile.social_links || author.social_links,
+      if (isUuid(authorId)) {
+        const { data: byId, error: idError } = await supabase
+          .from('authors')
+          .select(selectFields)
+          .eq('id', authorId)
+          .maybeSingle()
+        if (idError) throw idError
+        if (byId) {
+          const author = byId as AuthorRow
+          // Merge profile data if claim is approved
+          if (author.claim_status === 'approved' && author.profile) {
+            return {
+              author: {
+                ...author,
+                name: author.profile.name || author.name,
+                bio: author.profile.bio || author.bio,
+                photo_url: author.profile.photo_url || author.photo_url,
+                photo_path: author.profile.photo_path || author.photo_path,
+                social_links: author.profile.social_links || author.social_links,
+              },
+              isProfileOnly: false,
+            }
           }
+          return { author, isProfileOnly: false }
         }
-        return author
+
+        const { data: profileMatch, error: profileError } = await supabase
+          .from('profiles')
+          .select(
+            'id, name, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type, status, role',
+          )
+          .eq('id', authorId)
+          .eq('role', 'author')
+          .maybeSingle()
+        if (profileError) throw profileError
+        if (profileMatch) {
+          return { author: mapProfileToAuthor(profileMatch), isProfileOnly: true }
+        }
       }
-      return null
+      return { author: null, isProfileOnly: false }
     },
     staleTime: 60_000,
   })
@@ -269,7 +352,8 @@ function AuthorPublicPage() {
     }
   }
 
-  const author = authorQuery.data ?? null
+  const author = authorQuery.data?.author ?? null
+  const isProfileOnly = authorQuery.data?.isProfileOnly ?? false
   const heroPhoto = resolvePhotoUrl(author?.photo_url, author?.photo_path)
   const socialLinks = getSocialLinks(author)
   const birthDateLabel = formatDate(author?.birth_date)
@@ -279,12 +363,14 @@ function AuthorPublicPage() {
   // - Author is unclaimed or rejected
   // - NOT already claimed by someone else
   const canClaim =
+    !isProfileOnly &&
     author &&
     (author.claim_status === 'unclaimed' || author.claim_status === 'rejected') &&
     (!author.profile_id || author.profile_id === session?.user?.id)
 
-  const alreadyClaimed = author?.profile_id === session?.user?.id
-  const claimedByOther = author?.profile_id && author.profile_id !== session?.user?.id
+  const alreadyClaimed = !isProfileOnly && author?.profile_id === session?.user?.id
+  const claimedByOther =
+    !isProfileOnly && author?.profile_id && author.profile_id !== session?.user?.id
 
   return (
     <div className="min-h-screen bg-white text-gray-900">

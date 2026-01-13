@@ -21,6 +21,7 @@ import { Route as CheckoutIndexRouteImport } from './routes/checkout/index'
 import { Route as CarrinhoIndexRouteImport } from './routes/carrinho/index'
 import { Route as AutoresIndexRouteImport } from './routes/autores/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as PedidoOrderIdRouteImport } from './routes/pedido/$orderId'
 import { Route as NoticiasSlugRouteImport } from './routes/noticias/$slug'
 import { Route as LivroBookIdRouteImport } from './routes/livro/$bookId'
@@ -34,12 +35,14 @@ import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminPostsRouteImport } from './routes/admin/posts'
 import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
+import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminHeroSlidesRouteImport } from './routes/admin/hero-slides'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminContentRouteImport } from './routes/admin/content'
 import { Route as AdminBooksRouteImport } from './routes/admin/books'
 import { Route as AdminAuthorsRouteImport } from './routes/admin/authors'
 import { Route as AdminAuthorClaimsRouteImport } from './routes/admin/author-claims'
+import { Route as AccountProfileRouteImport } from './routes/account/profile'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
@@ -111,6 +114,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountIndexRoute = AccountIndexRouteImport.update({
+  id: '/account/',
+  path: '/account/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PedidoOrderIdRoute = PedidoOrderIdRouteImport.update({
   id: '/pedido/$orderId',
   path: '/pedido/$orderId',
@@ -176,6 +184,11 @@ const AdminOrdersRoute = AdminOrdersRouteImport.update({
   path: '/admin/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminHeroSlidesRoute = AdminHeroSlidesRouteImport.update({
   id: '/admin/hero-slides',
   path: '/admin/hero-slides',
@@ -204,6 +217,11 @@ const AdminAuthorsRoute = AdminAuthorsRouteImport.update({
 const AdminAuthorClaimsRoute = AdminAuthorClaimsRouteImport.update({
   id: '/admin/author-claims',
   path: '/admin/author-claims',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountProfileRoute = AccountProfileRouteImport.update({
+  id: '/account/profile',
+  path: '/account/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
@@ -259,12 +277,14 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account/profile': typeof AccountProfileRoute
   '/admin/author-claims': typeof AdminAuthorClaimsRoute
   '/admin/authors': typeof AdminAuthorsRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/hero-slides': typeof AdminHeroSlidesRoute
+  '/admin/login': typeof AdminLoginRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -278,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/livro/$bookId': typeof LivroBookIdRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
+  '/account': typeof AccountIndexRoute
   '/admin': typeof AdminIndexRoute
   '/autores': typeof AutoresIndexRoute
   '/carrinho': typeof CarrinhoIndexRoute
@@ -302,12 +323,14 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account/profile': typeof AccountProfileRoute
   '/admin/author-claims': typeof AdminAuthorClaimsRoute
   '/admin/authors': typeof AdminAuthorsRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/hero-slides': typeof AdminHeroSlidesRoute
+  '/admin/login': typeof AdminLoginRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -321,6 +344,7 @@ export interface FileRoutesByTo {
   '/livro/$bookId': typeof LivroBookIdRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
+  '/account': typeof AccountIndexRoute
   '/admin': typeof AdminIndexRoute
   '/autores': typeof AutoresIndexRoute
   '/carrinho': typeof CarrinhoIndexRoute
@@ -346,12 +370,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account/profile': typeof AccountProfileRoute
   '/admin/author-claims': typeof AdminAuthorClaimsRoute
   '/admin/authors': typeof AdminAuthorsRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/hero-slides': typeof AdminHeroSlidesRoute
+  '/admin/login': typeof AdminLoginRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -365,6 +391,7 @@ export interface FileRoutesById {
   '/livro/$bookId': typeof LivroBookIdRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
+  '/account/': typeof AccountIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/autores/': typeof AutoresIndexRoute
   '/carrinho/': typeof CarrinhoIndexRoute
@@ -391,12 +418,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/account/profile'
     | '/admin/author-claims'
     | '/admin/authors'
     | '/admin/books'
     | '/admin/content'
     | '/admin/dashboard'
     | '/admin/hero-slides'
+    | '/admin/login'
     | '/admin/orders'
     | '/admin/posts'
     | '/admin/users'
@@ -410,6 +439,7 @@ export interface FileRouteTypes {
     | '/livro/$bookId'
     | '/noticias/$slug'
     | '/pedido/$orderId'
+    | '/account'
     | '/admin'
     | '/autores'
     | '/carrinho'
@@ -434,12 +464,14 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/account/profile'
     | '/admin/author-claims'
     | '/admin/authors'
     | '/admin/books'
     | '/admin/content'
     | '/admin/dashboard'
     | '/admin/hero-slides'
+    | '/admin/login'
     | '/admin/orders'
     | '/admin/posts'
     | '/admin/users'
@@ -453,6 +485,7 @@ export interface FileRouteTypes {
     | '/livro/$bookId'
     | '/noticias/$slug'
     | '/pedido/$orderId'
+    | '/account'
     | '/admin'
     | '/autores'
     | '/carrinho'
@@ -477,12 +510,14 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/account/profile'
     | '/admin/author-claims'
     | '/admin/authors'
     | '/admin/books'
     | '/admin/content'
     | '/admin/dashboard'
     | '/admin/hero-slides'
+    | '/admin/login'
     | '/admin/orders'
     | '/admin/posts'
     | '/admin/users'
@@ -496,6 +531,7 @@ export interface FileRouteTypes {
     | '/livro/$bookId'
     | '/noticias/$slug'
     | '/pedido/$orderId'
+    | '/account/'
     | '/admin/'
     | '/autores/'
     | '/carrinho/'
@@ -521,12 +557,14 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountProfileRoute: typeof AccountProfileRoute
   AdminAuthorClaimsRoute: typeof AdminAuthorClaimsRoute
   AdminAuthorsRoute: typeof AdminAuthorsRoute
   AdminBooksRoute: typeof AdminBooksRoute
   AdminContentRoute: typeof AdminContentRouteWithChildren
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminHeroSlidesRoute: typeof AdminHeroSlidesRoute
+  AdminLoginRoute: typeof AdminLoginRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
   AdminPostsRoute: typeof AdminPostsRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -540,6 +578,7 @@ export interface RootRouteChildren {
   LivroBookIdRoute: typeof LivroBookIdRoute
   NoticiasSlugRoute: typeof NoticiasSlugRoute
   PedidoOrderIdRoute: typeof PedidoOrderIdRoute
+  AccountIndexRoute: typeof AccountIndexRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AutoresIndexRoute: typeof AutoresIndexRoute
   CarrinhoIndexRoute: typeof CarrinhoIndexRoute
@@ -646,6 +685,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account/': {
+      id: '/account/'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pedido/$orderId': {
       id: '/pedido/$orderId'
       path: '/pedido/$orderId'
@@ -737,6 +783,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/hero-slides': {
       id: '/admin/hero-slides'
       path: '/admin/hero-slides'
@@ -777,6 +830,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/author-claims'
       fullPath: '/admin/author-claims'
       preLoaderRoute: typeof AdminAuthorClaimsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/profile': {
+      id: '/account/profile'
+      path: '/account/profile'
+      fullPath: '/account/profile'
+      preLoaderRoute: typeof AccountProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/start/server-funcs': {
@@ -870,12 +930,14 @@ const AdminContentRouteWithChildren = AdminContentRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountProfileRoute: AccountProfileRoute,
   AdminAuthorClaimsRoute: AdminAuthorClaimsRoute,
   AdminAuthorsRoute: AdminAuthorsRoute,
   AdminBooksRoute: AdminBooksRoute,
   AdminContentRoute: AdminContentRouteWithChildren,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminHeroSlidesRoute: AdminHeroSlidesRoute,
+  AdminLoginRoute: AdminLoginRoute,
   AdminOrdersRoute: AdminOrdersRoute,
   AdminPostsRoute: AdminPostsRoute,
   AdminUsersRoute: AdminUsersRoute,
@@ -889,6 +951,7 @@ const rootRouteChildren: RootRouteChildren = {
   LivroBookIdRoute: LivroBookIdRoute,
   NoticiasSlugRoute: NoticiasSlugRoute,
   PedidoOrderIdRoute: PedidoOrderIdRoute,
+  AccountIndexRoute: AccountIndexRoute,
   AdminIndexRoute: AdminIndexRoute,
   AutoresIndexRoute: AutoresIndexRoute,
   CarrinhoIndexRoute: CarrinhoIndexRoute,

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../../contexts/AuthProvider'
 
@@ -10,7 +10,7 @@ export const Route = createFileRoute('/auth/sign-in')({
 })
 
 function SignInPage() {
-  const { signIn, loading } = useAuth()
+  const { signIn, signOut, profile, loading } = useAuth()
   const navigate = useNavigate()
   const { redirect } = Route.useSearch()
   const [email, setEmail] = useState('')
@@ -22,14 +22,38 @@ function SignInPage() {
     event.preventDefault()
     setSubmitting(true)
     setError(null)
-    const { error } = await signIn(email, password)
-    setSubmitting(false)
-    if (error) {
-      setError(error.message)
+
+    const { error: signInError } = await signIn(email, password)
+
+    if (signInError) {
+      setError(signInError.message)
+      setSubmitting(false)
       return
     }
-    navigate({ to: redirect ?? '/admin/dashboard' })
+
+    // Profile will load via React Query after signIn
+    // We'll handle redirect in useEffect below
   }
+
+  // Handle role-based redirect after profile loads
+  useEffect(() => {
+    if (submitting && profile && !loading) {
+      if (profile.role === 'customer') {
+        navigate({ to: redirect ?? '/account/profile' })
+      } else if (profile.role === 'author') {
+        navigate({ to: redirect ?? '/author/profile' })
+      } else if (profile.role === 'admin') {
+        // Admins shouldn't use public login
+        signOut()
+        setError('Administrators must use the admin login portal.')
+        setSubmitting(false)
+      } else {
+        // Unknown role
+        setError('Unable to determine account type. Please contact support.')
+        setSubmitting(false)
+      }
+    }
+  }, [profile, loading, submitting, navigate, redirect, signOut])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 px-6">
@@ -39,10 +63,10 @@ function SignInPage() {
             C
           </div>
           <h1 className="mt-4 text-2xl font-semibold text-gray-900">
-            Sign in to Catalogus
+            Sign in to your account
           </h1>
           <p className="text-sm text-gray-500">
-            Access the admin dashboard and manage content.
+            Access your account to browse books and manage orders.
           </p>
         </div>
 

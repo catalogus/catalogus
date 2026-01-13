@@ -227,7 +227,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         let photo_path = null
         let photo_url = null
         if (photoFile) {
-          const path = `author-photos/${data.user.id}/${Date.now()}-${photoFile.name}`
+          // Path should NOT include bucket name - bucket is specified in .from()
+          const path = `${data.user.id}/${Date.now()}-${photoFile.name}`
           const { error: uploadError } = await supabase.storage
             .from('author-photos')
             .upload(path, photoFile, { upsert: true })

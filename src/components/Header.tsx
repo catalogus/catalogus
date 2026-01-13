@@ -199,7 +199,7 @@ export default function Header() {
                     onClick={() => setUserMenuOpen(false)}
                   />
                   <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 shadow-lg z-50">
-                    {(profile.role === 'admin' || profile.role === 'author') && (
+                    {profile.role === 'admin' && (
                       <Link
                         to="/admin/dashboard"
                         className="flex items-center gap-2 px-4 py-3 text-sm text-gray-900 hover:bg-gray-100 transition-colors"
@@ -207,6 +207,26 @@ export default function Header() {
                       >
                         <LayoutDashboard className="h-4 w-4" />
                         Painel Admin
+                      </Link>
+                    )}
+                    {profile.role === 'author' && (
+                      <Link
+                        to="/author/profile"
+                        className="flex items-center gap-2 px-4 py-3 text-sm text-gray-900 hover:bg-gray-100 transition-colors"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <User className="h-4 w-4" />
+                        Meu Perfil
+                      </Link>
+                    )}
+                    {profile.role === 'customer' && (
+                      <Link
+                        to="/account/profile"
+                        className="flex items-center gap-2 px-4 py-3 text-sm text-gray-900 hover:bg-gray-100 transition-colors"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <User className="h-4 w-4" />
+                        Minha Conta
                       </Link>
                     )}
                     <button
@@ -346,7 +366,7 @@ export default function Header() {
                 </div>
               </div>
 
-              {(profile.role === 'admin' || profile.role === 'author') && (
+              {profile.role === 'admin' && (
                 <Link
                   to="/admin/dashboard"
                   className="flex items-center gap-2 bg-white/10 px-4 py-3 text-sm font-semibold text-white border border-white/20 hover:bg-white/20 transition-colors"
@@ -354,6 +374,28 @@ export default function Header() {
                 >
                   <LayoutDashboard className="h-4 w-4" />
                   Painel Admin
+                </Link>
+              )}
+
+              {profile.role === 'author' && (
+                <Link
+                  to="/author/profile"
+                  className="flex items-center gap-2 bg-white/10 px-4 py-3 text-sm font-semibold text-white border border-white/20 hover:bg-white/20 transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <User className="h-4 w-4" />
+                  Meu Perfil
+                </Link>
+              )}
+
+              {profile.role === 'customer' && (
+                <Link
+                  to="/account/profile"
+                  className="flex items-center gap-2 bg-white/10 px-4 py-3 text-sm font-semibold text-white border border-white/20 hover:bg-white/20 transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <User className="h-4 w-4" />
+                  Minha Conta
                 </Link>
               )}
 

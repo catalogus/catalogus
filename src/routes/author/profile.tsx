@@ -80,7 +80,8 @@ function AuthorProfilePage() {
   }, [session?.user?.id, queryClient, profile?.id])
 
   const uploadPhoto = async (file: File, userId: string) => {
-    const path = `author-photos/${userId}/${Date.now()}-${file.name}`
+    // Path should NOT include bucket name - bucket is specified in .from()
+    const path = `${userId}/${Date.now()}-${file.name}`
     const { error: uploadError } = await supabase.storage
       .from('author-photos')
       .upload(path, file, { upsert: true })
@@ -292,7 +293,7 @@ function AuthorProfilePage() {
             </div>
           )}
 
-          {!linkedAuthorQuery.data && (
+          {!linkedAuthorQuery.data && profile.status === 'pending' && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <div className="flex items-start justify-between">
                 <div className="flex items-start flex-1">

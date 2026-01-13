@@ -2,20 +2,20 @@ import { useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../../contexts/AuthProvider'
 
-type AdminGuardProps = {
+type CustomerGuardProps = {
   children: React.ReactNode
 }
 
-export function AdminGuard({ children }: AdminGuardProps) {
+export function CustomerGuard({ children }: CustomerGuardProps) {
   const { session, profile, loading } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
     if (loading) return
-    if (!session || profile?.role !== 'admin') {
+    if (!session || profile?.role !== 'customer') {
       navigate({
-        to: '/admin/login',
-        search: { redirect: '/admin/dashboard' },
+        to: '/auth/sign-in',
+        search: { redirect: '/account/profile' },
         replace: true,
       })
     }
@@ -32,7 +32,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
     )
   }
 
-  if (!session || profile?.role !== 'admin') {
+  if (!session || profile?.role !== 'customer') {
     return null
   }
 
