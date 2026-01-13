@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as HealthCheckRouteImport } from './routes/health-check'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SobreIndexRouteImport } from './routes/sobre/index'
 import { Route as ProjectosIndexRouteImport } from './routes/projectos/index'
@@ -52,11 +51,6 @@ import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
 
-const HealthCheckRoute = HealthCheckRouteImport.update({
-  id: '/health-check',
-  path: '/health-check',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -265,7 +259,6 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/health-check': typeof HealthCheckRoute
   '/admin/author-claims': typeof AdminAuthorClaimsRoute
   '/admin/authors': typeof AdminAuthorsRoute
   '/admin/books': typeof AdminBooksRoute
@@ -309,7 +302,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/health-check': typeof HealthCheckRoute
   '/admin/author-claims': typeof AdminAuthorClaimsRoute
   '/admin/authors': typeof AdminAuthorsRoute
   '/admin/books': typeof AdminBooksRoute
@@ -354,7 +346,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/health-check': typeof HealthCheckRoute
   '/admin/author-claims': typeof AdminAuthorClaimsRoute
   '/admin/authors': typeof AdminAuthorsRoute
   '/admin/books': typeof AdminBooksRoute
@@ -400,7 +391,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/health-check'
     | '/admin/author-claims'
     | '/admin/authors'
     | '/admin/books'
@@ -444,7 +434,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/health-check'
     | '/admin/author-claims'
     | '/admin/authors'
     | '/admin/books'
@@ -488,7 +477,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/health-check'
     | '/admin/author-claims'
     | '/admin/authors'
     | '/admin/books'
@@ -533,7 +521,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  HealthCheckRoute: typeof HealthCheckRoute
   AdminAuthorClaimsRoute: typeof AdminAuthorClaimsRoute
   AdminAuthorsRoute: typeof AdminAuthorsRoute
   AdminBooksRoute: typeof AdminBooksRoute
@@ -575,13 +562,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/health-check': {
-      id: '/health-check'
-      path: '/health-check'
-      fullPath: '/health-check'
-      preLoaderRoute: typeof HealthCheckRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -890,7 +870,6 @@ const AdminContentRouteWithChildren = AdminContentRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  HealthCheckRoute: HealthCheckRoute,
   AdminAuthorClaimsRoute: AdminAuthorClaimsRoute,
   AdminAuthorsRoute: AdminAuthorsRoute,
   AdminBooksRoute: AdminBooksRoute,
