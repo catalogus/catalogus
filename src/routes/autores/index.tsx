@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { useState, useMemo } from 'react'
 import Header from '../../components/Header'
+import Footer from '../../components/Footer'
 import { AuthorCard } from '../../components/author/AuthorCard'
 import { supabase } from '../../lib/supabaseClient'
 import {
@@ -447,6 +448,7 @@ function AutoresListingPage() {
             )}
         </div>
       </main>
+      <Footer />
     </div>
   )
 }

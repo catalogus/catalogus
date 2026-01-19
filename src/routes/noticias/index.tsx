@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import Header from '../../components/Header'
+import Footer from '../../components/Footer'
 import { supabase } from '../../lib/supabaseClient'
 import {
   formatPostDate,
@@ -353,6 +354,7 @@ function NewsListingPage() {
             )}
         </div>
       </main>
+      <Footer />
     </div>
   )
 }

@@ -219,7 +219,7 @@ export default function FeaturedAuthorsSection() {
                 Regista-te no mais completo portfólio de autores moçambicanos.
               </p>
               <a
-                href="/autor/criar-conta"
+                href="/author/sign-up"
                 className="mt-2 inline-flex items-center justify-center bg-[color:var(--brand)] px-8 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#a25a2c]"
               >
                 Registar-me

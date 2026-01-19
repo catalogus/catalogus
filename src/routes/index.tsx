@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import Header from '../components/Header'
+import Footer from '../components/Footer'
 import { Hero } from '../components/Hero'
 import AboutSection from '../components/home/AboutSection'
 import FeaturedBooksSection from '../components/home/FeaturedBooksSection'
@@ -137,13 +138,14 @@ function Home() {
         </section>
       )}
       {heroSlides.length > 0 && <Hero slides={heroSlides} />}
-      <main className="pb-16">
+      <main>
         <AboutSection />
         <NewsSection />
         <FeaturedBooksSection />
         <FeaturedAuthorsSection />
         <PartnersSection />
       </main>
+      <Footer />
     </div>
   )
 }

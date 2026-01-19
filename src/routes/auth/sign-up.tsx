@@ -12,11 +12,24 @@ export const Route = createFileRoute('/auth/sign-up')({
 
 type AccountType = 'customer' | 'author' | null
 
+function HomeLink() {
+  return (
+    <div className="mb-6 flex justify-center">
+      <Link
+        to="/"
+        className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-gray-900"
+      >
+        <img src="/logo.svg" alt="Catalogus" className="h-4 w-auto" />
+      </Link>
+    </div>
+  )
+}
+
 function SignUpPage() {
   const [accountType, setAccountType] = useState<AccountType>(null)
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 px-6 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--brand)] px-6 py-12">
       <div className="w-full max-w-2xl">
         {accountType === null ? (
           <AccountTypeSelection onSelect={setAccountType} />
@@ -32,16 +45,14 @@ function SignUpPage() {
 
 function AccountTypeSelection({ onSelect }: { onSelect: (type: AccountType) => void }) {
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
+    <div className="bg-white backdrop-blur-sm  shadow-xl p-8">
+      <HomeLink />
       <div className="text-center mb-8">
-        <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white font-semibold">
-          C
-        </div>
         <h1 className="mt-4 text-3xl font-semibold text-gray-900">
-          Create your account
+          Crie a sua conta
         </h1>
         <p className="mt-2 text-gray-600">
-          Choose the type of account you want to create
+          Escolha o tipo de conta que pretende criar
         </p>
       </div>
 
@@ -49,18 +60,18 @@ function AccountTypeSelection({ onSelect }: { onSelect: (type: AccountType) => v
         <button
           type="button"
           onClick={() => onSelect('customer')}
-          className="group relative overflow-hidden rounded-2xl border-2 border-gray-200 bg-white p-6 text-left transition-all hover:border-blue-500 hover:shadow-lg"
+          className="group relative overflow-hidden border-2 border-gray-200 bg-white p-6 text-left transition-all hover:border-blue-500 hover:shadow-lg"
         >
           <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50 rounded-bl-full transition-all group-hover:w-full group-hover:h-full" />
           <div className="relative">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 mb-4">
+            <div className="inline-flex h-12 w-12 items-center justify-center  bg-blue-100 text-blue-600 mb-4">
               <User className="h-6 w-6" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Customer Account
+              Conta de cliente
             </h3>
             <p className="text-sm text-gray-600">
-              Browse and purchase books, manage orders, and explore our catalog
+              Explore e compre livros, gere pedidos e descubra o nosso catalogo
             </p>
           </div>
         </button>
@@ -68,27 +79,27 @@ function AccountTypeSelection({ onSelect }: { onSelect: (type: AccountType) => v
         <button
           type="button"
           onClick={() => onSelect('author')}
-          className="group relative overflow-hidden rounded-2xl border-2 border-gray-200 bg-white p-6 text-left transition-all hover:border-green-500 hover:shadow-lg"
+          className="group relative overflow-hidden border-2 border-gray-200 bg-white p-6 text-left transition-all hover:border-green-500 hover:shadow-lg"
         >
           <div className="absolute top-0 right-0 w-20 h-20 bg-green-50 rounded-bl-full transition-all group-hover:w-full group-hover:h-full" />
           <div className="relative">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-green-600 mb-4">
+            <div className="inline-flex h-12 w-12 items-center justify-center bg-green-100 text-green-600 mb-4">
               <BookOpen className="h-6 w-6" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Author Account
+              Conta de autor
             </h3>
             <p className="text-sm text-gray-600">
-              Publish content, manage your author profile, and connect with readers
+              Publique conteudo, gira o seu perfil de autor e conecte-se com leitores
             </p>
           </div>
         </button>
       </div>
 
       <p className="mt-6 text-center text-sm text-gray-500">
-        Already have an account?{' '}
+        Ja tem uma conta?{' '}
         <Link to="/auth/sign-in" className="font-semibold text-gray-900 underline">
-          Sign in
+          Entrar
         </Link>
       </p>
     </div>
@@ -112,13 +123,13 @@ function CustomerSignUpForm({ onBack }: { onBack: () => void }) {
 
     // Validate passwords match
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      setError('As senhas nao coincidem')
       return
     }
 
     // Validate password length
     if (password.length < 8) {
-      setError('Password must be at least 8 characters')
+      setError('A senha deve ter pelo menos 8 caracteres')
       return
     }
 
@@ -145,13 +156,14 @@ function CustomerSignUpForm({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
+      <HomeLink />
       <button
         type="button"
         onClick={onBack}
         className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to account type selection
+        Voltar a selecao de conta
       </button>
 
       <div className="text-center mb-6">
@@ -159,17 +171,17 @@ function CustomerSignUpForm({ onBack }: { onBack: () => void }) {
           <User className="h-6 w-6" />
         </div>
         <h1 className="text-2xl font-semibold text-gray-900">
-          Create customer account
+          Criar conta de cliente
         </h1>
         <p className="text-sm text-gray-600 mt-2">
-          Start browsing and purchasing books from Catalogus
+          Comece a explorar e comprar livros na Catalogus
         </p>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Full name <span className="text-red-500">*</span>
+            Nome completo <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -177,7 +189,7 @@ function CustomerSignUpForm({ onBack }: { onBack: () => void }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            placeholder="Your name"
+            placeholder="Seu nome"
           />
         </div>
 
@@ -191,13 +203,13 @@ function CustomerSignUpForm({ onBack }: { onBack: () => void }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            placeholder="you@example.com"
+            placeholder="voce@exemplo.com"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Password <span className="text-red-500">*</span>
+            Senha <span className="text-red-500">*</span>
           </label>
           <input
             type="password"
@@ -206,13 +218,13 @@ function CustomerSignUpForm({ onBack }: { onBack: () => void }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            placeholder="Minimum 8 characters"
+            placeholder="Minimo 8 caracteres"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Confirm password <span className="text-red-500">*</span>
+            Confirmar senha <span className="text-red-500">*</span>
           </label>
           <input
             type="password"
@@ -220,7 +232,7 @@ function CustomerSignUpForm({ onBack }: { onBack: () => void }) {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            placeholder="Re-enter your password"
+            placeholder="Digite novamente a senha"
           />
         </div>
 
@@ -235,14 +247,14 @@ function CustomerSignUpForm({ onBack }: { onBack: () => void }) {
           disabled={loading || submitting}
           className="w-full rounded-xl bg-blue-600 text-white py-3 text-sm font-semibold hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
         >
-          {submitting ? 'Creating account...' : 'Create customer account'}
+          {submitting ? 'A criar conta...' : 'Criar conta de cliente'}
         </button>
       </form>
 
       <p className="mt-4 text-center text-sm text-gray-500">
-        Already have an account?{' '}
+        Ja tem uma conta?{' '}
         <Link to="/auth/sign-in" className="font-semibold text-gray-900 underline">
-          Sign in
+          Entrar
         </Link>
       </p>
     </div>
@@ -272,7 +284,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null
     if (file && file.size > 5 * 1024 * 1024) {
-      setError('Photo size must be less than 5MB')
+      setError('A foto deve ter menos de 5MB')
       return
     }
     setPhotoFile(file)
@@ -289,13 +301,13 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
+      setError('As senhas nao coincidem')
       return
     }
 
     // Validate password length
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters')
+      setError('A senha deve ter pelo menos 8 caracteres')
       return
     }
 
@@ -312,7 +324,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
       )
 
       if (signUpError) {
-        setError(signUpError.message || 'Failed to create author account')
+        setError(signUpError.message || 'Falha ao criar conta de autor')
         setSubmitting(false)
         return
       }
@@ -320,10 +332,10 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
       // Redirect to author sign-in with success message
       navigate({
         to: '/author/sign-in',
-        search: { message: 'Account created! Awaiting admin approval.' },
+        search: { message: 'Conta criada! Aguarde a aprovacao do admin.' },
       })
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred')
+      setError(err.message || 'Ocorreu um erro inesperado')
       setSubmitting(false)
     }
   }
@@ -333,13 +345,14 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
+      <HomeLink />
       <button
         type="button"
         onClick={onBack}
         className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to account type selection
+        Voltar a selecao de conta
       </button>
 
       <div className="text-center mb-6">
@@ -347,10 +360,10 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
           <BookOpen className="h-6 w-6" />
         </div>
         <h1 className="text-2xl font-semibold text-gray-900">
-          Create author account
+          Criar conta de autor
         </h1>
         <p className="text-sm text-gray-600 mt-2">
-          Your account will be reviewed by our team before approval
+          A sua conta sera revista pela nossa equipa antes da aprovacao
         </p>
       </div>
 
@@ -358,7 +371,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Full name <span className="text-red-500">*</span>
+              Nome completo <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -368,7 +381,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
               className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-              placeholder="John Doe"
+              placeholder="Nome Apelido"
             />
           </div>
 
@@ -379,10 +392,10 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
             <input
               type="email"
               required
-              value={formData.email}
-              onChange={(e) => handleChange('email', e.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-              placeholder="author@example.com"
+            value={formData.email}
+            onChange={(e) => handleChange('email', e.target.value)}
+            className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+            placeholder="autor@exemplo.com"
             />
           </div>
         </div>
@@ -390,7 +403,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password <span className="text-red-500">*</span>
+              Senha <span className="text-red-500">*</span>
             </label>
             <input
               type="password"
@@ -399,13 +412,13 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
               value={formData.password}
               onChange={(e) => handleChange('password', e.target.value)}
               className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-              placeholder="Minimum 8 characters"
+              placeholder="Minimo 8 caracteres"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm password <span className="text-red-500">*</span>
+              Confirmar senha <span className="text-red-500">*</span>
             </label>
             <input
               type="password"
@@ -413,14 +426,14 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
               value={formData.confirmPassword}
               onChange={(e) => handleChange('confirmPassword', e.target.value)}
               className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-              placeholder="Re-enter password"
+              placeholder="Digite novamente a senha"
             />
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Phone number
+            Telefone
           </label>
           <input
             type="tel"
@@ -433,7 +446,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Bio
+            Biografia
           </label>
           <textarea
             value={formData.bio}
@@ -441,7 +454,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
             maxLength={bioMaxLength}
             rows={4}
             className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-            placeholder="Tell us about yourself and your work..."
+            placeholder="Fale sobre si e o seu trabalho..."
           />
           <p className="text-xs text-gray-500 mt-1">
             {bioLength}/{bioMaxLength} characters
@@ -450,7 +463,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Profile photo
+            Foto de perfil
           </label>
           <div className="flex items-start gap-4">
             {photoPreview && (
@@ -468,7 +481,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
                 className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Max file size: 5MB. Supported formats: JPG, PNG, WebP
+                Tamanho maximo do ficheiro: 5MB. Formatos suportados: JPG, PNG, WebP
               </p>
             </div>
           </div>
@@ -482,8 +495,8 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
 
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
           <p className="text-sm text-blue-900">
-            <strong>Note:</strong> Author accounts require admin approval. You'll receive an email
-            once your account is reviewed.
+            <strong>Nota:</strong> As contas de autor exigem aprovacao do admin. Vai receber um
+            email quando a conta for revista.
           </p>
         </div>
 
@@ -492,14 +505,14 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
           disabled={submitting}
           className="w-full rounded-xl bg-green-600 text-white py-3 text-sm font-semibold hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
         >
-          {submitting ? 'Creating account...' : 'Create author account'}
+          {submitting ? 'A criar conta...' : 'Criar conta de autor'}
         </button>
       </form>
 
       <p className="mt-4 text-center text-sm text-gray-500">
-        Already have an account?{' '}
+        Ja tem uma conta?{' '}
         <Link to="/auth/sign-in" className="font-semibold text-gray-900 underline">
-          Sign in
+          Entrar
         </Link>
       </p>
     </div>

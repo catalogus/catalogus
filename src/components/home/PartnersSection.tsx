@@ -1,3 +1,5 @@
+import { cn } from '@/lib/utils'
+
 const partners = [
   { name: 'Camões', logo: '/partners/camoes.png', className: 'scale-125' },
   { name: 'Carlos Morgado', logo: '/partners/carlos_morgado.png' },
@@ -27,14 +29,15 @@ export default function PartnersSection() {
           {partners.map((partner) => (
             <div
               key={partner.name}
-              className="flex min-h-[140px] items-center justify-center rounded-[32px] bg-white/80 p-8 shadow-sm"
+              className="flex min-h-35 items-center justify-center bg-white/80 p-8"
             >
               <img
                 src={partner.logo}
                 alt={partner.name}
-                className={`h-12 w-[180px] object-contain opacity-70 grayscale md:h-14 md:w-[200px] ${
-                  partner.className ?? ''
-                }`}
+                className={cn(
+                  'h-12 w-45 object-contain opacity-70 grayscale md:h-14 md:w-50s',
+                  partner.className
+                )}
                 loading="lazy"
               />
             </div>

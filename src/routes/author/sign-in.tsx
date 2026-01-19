@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../../contexts/AuthProvider'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
@@ -32,7 +32,7 @@ function AuthorSignInPage() {
       const { error } = await signIn(formData.email, formData.password)
 
       if (error) {
-        toast.error(error.message || 'Failed to sign in')
+        toast.error(error.message || 'Falha ao iniciar sessao')
         return
       }
 
@@ -41,7 +41,7 @@ function AuthorSignInPage() {
 
       // Redirect based on role will be handled by effect below
     } catch (err: any) {
-      toast.error(err.message || 'An unexpected error occurred')
+      toast.error(err.message || 'Ocorreu um erro inesperado')
     } finally {
       setSubmitting(false)
     }
@@ -51,9 +51,9 @@ function AuthorSignInPage() {
   if (!loading && profile) {
     if (profile.role === 'author') {
       if (profile.status === 'pending') {
-        toast.info('Your account is pending admin approval')
+        toast.info('A sua conta aguarda aprovacao do admin')
       } else if (profile.status === 'rejected') {
-        toast.error('Your account has been rejected. Please contact admin.')
+        toast.error('A sua conta foi rejeitada. Contacte o admin.')
       }
       navigate({ to: '/author/profile' })
     } else if (profile.role === 'admin') {
@@ -66,10 +66,18 @@ function AuthorSignInPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+        <div className="mb-4 flex justify-center">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-gray-900"
+          >
+            <img src="/logo.svg" alt="Catalogus" className="h-4 w-auto" />
+          </Link>
+        </div>
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Author Sign In</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Entrar como autor</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Sign in to manage your author profile
+            Entre para gerir o seu perfil de autor
           </p>
         </div>
 
@@ -85,14 +93,14 @@ function AuthorSignInPage() {
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
               required
-              placeholder="author@example.com"
+              placeholder="autor@exemplo.com"
             />
           </div>
 
           {/* Password */}
           <div className="space-y-2">
             <Label htmlFor="password">
-              Password <span className="text-red-500">*</span>
+              Senha <span className="text-red-500">*</span>
             </Label>
             <Input
               id="password"
@@ -100,7 +108,7 @@ function AuthorSignInPage() {
               value={formData.password}
               onChange={(e) => handleChange('password', e.target.value)}
               required
-              placeholder="Enter your password"
+              placeholder="Digite a sua senha"
             />
           </div>
 
@@ -110,17 +118,17 @@ function AuthorSignInPage() {
             disabled={submitting || loading}
             className="w-full"
           >
-            {submitting || loading ? 'Signing In...' : 'Sign In'}
+            {submitting || loading ? 'A entrar...' : 'Entrar'}
           </Button>
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-600">
-          Don't have an account?{' '}
+          Nao tem conta?{' '}
           <a
-            href="/autor/criar-conta"
+            href="/author/sign-up"
             className="font-semibold text-gray-900 hover:underline"
           >
-            Sign up
+            Criar conta
           </a>
         </div>
       </div>

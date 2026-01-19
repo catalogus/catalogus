@@ -3,6 +3,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
 import Header from '../../components/Header'
+import Footer from '../../components/Footer'
 import { FilterSidebar } from '../../components/shop/FilterSidebar'
 import { ProductCard, type ProductCardBook } from '../../components/shop/ProductCard'
 import { supabase } from '../../lib/supabaseClient'
@@ -436,6 +437,7 @@ function ShopListingPage() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   )
 }

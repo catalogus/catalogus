@@ -45,28 +45,31 @@ function SignInPage() {
       } else if (profile.role === 'admin') {
         // Admins shouldn't use public login
         signOut()
-        setError('Administrators must use the admin login portal.')
+        setError('Administradores devem usar o portal de admin.')
         setSubmitting(false)
       } else {
         // Unknown role
-        setError('Unable to determine account type. Please contact support.')
+        setError('Nao foi possivel determinar o tipo de conta. Contacte o suporte.')
         setSubmitting(false)
       }
     }
   }, [profile, loading, submitting, navigate, redirect, signOut])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 px-6">
-      <div className="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--brand)] px-6">
+      <div className="w-full max-w-md bg-white backdrop-blur-sm shadow-xl p-8">
         <div className="mb-6 text-center">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white font-semibold">
-            C
-          </div>
+          <Link
+            to="/"
+            className="mx-auto inline-flex h-8 w-auto items-center justify-center"
+          >
+            <img src="/logo.svg" alt="Catalogus" className="h-6 w-auto" />
+          </Link>
           <h1 className="mt-4 text-2xl font-semibold text-gray-900">
-            Sign in to your account
+            Entrar na sua conta
           </h1>
           <p className="text-sm text-gray-500">
-            Access your account to browse books and manage orders.
+            Aceda a sua conta para ver livros e gerir pedidos.
           </p>
         </div>
 
@@ -80,14 +83,14 @@ function SignInPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-black focus:outline-none"
-              placeholder="you@example.com"
+            className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-black focus:outline-none"
+            placeholder="voce@exemplo.com"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
+              Senha
             </label>
             <input
               type="password"
@@ -110,14 +113,14 @@ function SignInPage() {
             disabled={loading || submitting}
             className="w-full rounded-xl bg-black text-white py-3 text-sm font-semibold hover:bg-gray-900 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {submitting ? 'Signing in...' : 'Sign in'}
+            {submitting ? 'A entrar...' : 'Entrar'}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-500">
-          Need an account?{' '}
+          Precisa de uma conta?{' '}
           <Link to="/auth/sign-up" className="font-semibold text-gray-900 underline">
-            Sign up
+            Criar conta
           </Link>
         </p>
       </div>

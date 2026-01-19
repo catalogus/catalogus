@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../../contexts/AuthProvider'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
@@ -84,6 +84,15 @@ function AuthorSignUpPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+        <div className="mb-4 flex justify-center">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-gray-900"
+          >
+            <img src="/logo.svg" alt="Catalogus" className="h-4 w-auto" />
+            Pagina inicial
+          </Link>
+        </div>
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Criar conta de autor</h1>
           <p className="mt-2 text-sm text-gray-600">

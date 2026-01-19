@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import Header from '../../components/Header'
+import Footer from '../../components/Footer'
 
 export const Route = createFileRoute('/sobre/')({
   component: AboutPage,
@@ -117,6 +118,7 @@ function AboutPage() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   )
 }
