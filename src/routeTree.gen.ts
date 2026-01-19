@@ -17,6 +17,7 @@ import { Route as PesquisaIndexRouteImport } from './routes/pesquisa/index'
 import { Route as NoticiasIndexRouteImport } from './routes/noticias/index'
 import { Route as MeusPedidosIndexRouteImport } from './routes/meus-pedidos/index'
 import { Route as LojaIndexRouteImport } from './routes/loja/index'
+import { Route as ContactosIndexRouteImport } from './routes/contactos/index'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout/index'
 import { Route as CarrinhoIndexRouteImport } from './routes/carrinho/index'
 import { Route as AutoresIndexRouteImport } from './routes/autores/index'
@@ -92,6 +93,11 @@ const MeusPedidosIndexRoute = MeusPedidosIndexRouteImport.update({
 const LojaIndexRoute = LojaIndexRouteImport.update({
   id: '/loja/',
   path: '/loja/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactosIndexRoute = ContactosIndexRouteImport.update({
+  id: '/contactos/',
+  path: '/contactos/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
@@ -303,6 +309,7 @@ export interface FileRoutesByFullPath {
   '/autores': typeof AutoresIndexRoute
   '/carrinho': typeof CarrinhoIndexRoute
   '/checkout': typeof CheckoutIndexRoute
+  '/contactos': typeof ContactosIndexRoute
   '/loja': typeof LojaIndexRoute
   '/meus-pedidos': typeof MeusPedidosIndexRoute
   '/noticias': typeof NoticiasIndexRoute
@@ -349,6 +356,7 @@ export interface FileRoutesByTo {
   '/autores': typeof AutoresIndexRoute
   '/carrinho': typeof CarrinhoIndexRoute
   '/checkout': typeof CheckoutIndexRoute
+  '/contactos': typeof ContactosIndexRoute
   '/loja': typeof LojaIndexRoute
   '/meus-pedidos': typeof MeusPedidosIndexRoute
   '/noticias': typeof NoticiasIndexRoute
@@ -396,6 +404,7 @@ export interface FileRoutesById {
   '/autores/': typeof AutoresIndexRoute
   '/carrinho/': typeof CarrinhoIndexRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/contactos/': typeof ContactosIndexRoute
   '/loja/': typeof LojaIndexRoute
   '/meus-pedidos/': typeof MeusPedidosIndexRoute
   '/noticias/': typeof NoticiasIndexRoute
@@ -444,6 +453,7 @@ export interface FileRouteTypes {
     | '/autores'
     | '/carrinho'
     | '/checkout'
+    | '/contactos'
     | '/loja'
     | '/meus-pedidos'
     | '/noticias'
@@ -490,6 +500,7 @@ export interface FileRouteTypes {
     | '/autores'
     | '/carrinho'
     | '/checkout'
+    | '/contactos'
     | '/loja'
     | '/meus-pedidos'
     | '/noticias'
@@ -536,6 +547,7 @@ export interface FileRouteTypes {
     | '/autores/'
     | '/carrinho/'
     | '/checkout/'
+    | '/contactos/'
     | '/loja/'
     | '/meus-pedidos/'
     | '/noticias/'
@@ -583,6 +595,7 @@ export interface RootRouteChildren {
   AutoresIndexRoute: typeof AutoresIndexRoute
   CarrinhoIndexRoute: typeof CarrinhoIndexRoute
   CheckoutIndexRoute: typeof CheckoutIndexRoute
+  ContactosIndexRoute: typeof ContactosIndexRoute
   LojaIndexRoute: typeof LojaIndexRoute
   MeusPedidosIndexRoute: typeof MeusPedidosIndexRoute
   NoticiasIndexRoute: typeof NoticiasIndexRoute
@@ -655,6 +668,13 @@ declare module '@tanstack/react-router' {
       path: '/loja'
       fullPath: '/loja'
       preLoaderRoute: typeof LojaIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contactos/': {
+      id: '/contactos/'
+      path: '/contactos'
+      fullPath: '/contactos'
+      preLoaderRoute: typeof ContactosIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout/': {
@@ -956,6 +976,7 @@ const rootRouteChildren: RootRouteChildren = {
   AutoresIndexRoute: AutoresIndexRoute,
   CarrinhoIndexRoute: CarrinhoIndexRoute,
   CheckoutIndexRoute: CheckoutIndexRoute,
+  ContactosIndexRoute: ContactosIndexRoute,
   LojaIndexRoute: LojaIndexRoute,
   MeusPedidosIndexRoute: MeusPedidosIndexRoute,
   NoticiasIndexRoute: NoticiasIndexRoute,

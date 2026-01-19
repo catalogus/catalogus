@@ -39,6 +39,7 @@ const navItems: NavItem[] = [
   },
   { label: 'Produção', href: '/producao' },
   { label: 'Sobre', href: '/sobre' },
+  { label: 'Contactos', href: '/contactos' },
 ]
 
 export default function Header() {

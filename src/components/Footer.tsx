@@ -39,7 +39,7 @@ const footerColumns: FooterColumn[] = [
     title: 'Plataforma',
     links: [
       { label: 'Sobre nós', href: '/sobre' },
-      { label: 'Contacto', href: '/sobre#contacto' },
+      { label: 'Contactos', href: '/contactos' },
       { label: 'Mapa Literario', href: 'https://www.calameo.com/read/0075442149b5bd3a18181', external: true },
     ],
   },
