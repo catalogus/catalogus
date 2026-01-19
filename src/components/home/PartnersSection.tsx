@@ -13,7 +13,7 @@ const partners = [
 
 export default function PartnersSection() {
   return (
-    <section className="bg-[#f7f4ef] text-gray-900">
+    <section className="text-gray-900">
       <div className="container mx-auto px-4 py-24 lg:px-15">
         <div className="space-y-5">
           <p className="text-xs uppercase tracking-[0.35em] text-gray-500">

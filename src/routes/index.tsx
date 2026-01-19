@@ -2,6 +2,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import { NewsletterModal } from '../components/NewsletterModal'
+import { NewsletterSection } from '../components/NewsletterSection'
 import { Hero } from '../components/Hero'
 import AboutSection from '../components/home/AboutSection'
 import FeaturedBooksSection from '../components/home/FeaturedBooksSection'
@@ -145,7 +147,9 @@ function Home() {
         <FeaturedAuthorsSection />
         <PartnersSection />
       </main>
+      <NewsletterSection />
       <Footer />
+      <NewsletterModal />
     </div>
   )
 }
