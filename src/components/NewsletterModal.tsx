@@ -55,7 +55,7 @@ export function NewsletterModal() {
         {/* Image Side */}
         <div className="hidden lg:block">
           <img
-            src="/newsletter-bg.jpg"
+            src="/catalogos-1024x555.webp"
             alt=""
             className="h-full w-full object-cover"
             onError={(e) => {
