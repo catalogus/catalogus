@@ -1,15 +1,11 @@
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 const STORAGE_KEY = 'catalogus_newsletter_dismissed'
 const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 
 export function NewsletterModal() {
   const [isOpen, setIsOpen] = useState(false)
-  const [email, setEmail] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
 
   useEffect(() => {
     // Check if user has dismissed the modal recently
@@ -43,24 +39,6 @@ export function NewsletterModal() {
   const handleClose = () => {
     setIsOpen(false)
     localStorage.setItem(STORAGE_KEY, Date.now().toString())
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!email.trim()) return
-
-    setIsSubmitting(true)
-
-    // Simulate API call - will be replaced with Substack integration
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    setIsSubmitting(false)
-    setIsSuccess(true)
-
-    // Close modal after success
-    setTimeout(() => {
-      handleClose()
-    }, 2000)
   }
 
   if (!isOpen) return null
@@ -101,76 +79,24 @@ export function NewsletterModal() {
             <X className="h-5 w-5" />
           </button>
 
-          {isSuccess ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center bg-green-100">
-                <svg
-                  className="h-8 w-8 text-green-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900">
-                Subscrição confirmada!
-              </h3>
-              <p className="mt-2 text-sm text-gray-600">
-                Obrigado por se juntar à nossa comunidade.
-              </p>
-            </div>
-          ) : (
-            <>
-              <p className="text-xs uppercase tracking-[0.3em] text-[#9a8776]">
-                Newsletter
-              </p>
-              <h2 className="mt-3 text-2xl font-semibold text-gray-900 md:text-3xl">
-                Junte-se à nossa comunidade
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-gray-600 md:text-base">
-                Receba actualizações mensais sobre novos livros, eventos
-                culturais, autores em destaque e muito mais.
-              </p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#9a8776]">
+            Newsletter
+          </p>
+          <h2 className="mt-3 text-2xl font-semibold text-gray-900 md:text-3xl">
+            Junte-se à nossa comunidade
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-gray-600 md:text-base">
+            Receba actualizações mensais sobre novos livros, eventos culturais,
+            autores em destaque e muito mais.
+          </p>
 
-              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                <div>
-                  <label htmlFor="newsletter-email" className="sr-only">
-                    Email
-                  </label>
-                  <input
-                    id="newsletter-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="O seu email"
-                    required
-                    className="w-full border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className={cn(
-                    'w-full bg-[#1c1b1a] px-6 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-white transition-colors',
-                    'hover:bg-[#c07238] disabled:cursor-not-allowed disabled:opacity-50'
-                  )}
-                >
-                  {isSubmitting ? 'A subscrever...' : 'Subscrever'}
-                </button>
-              </form>
-
-              <p className="mt-4 text-center text-xs text-gray-500">
-                Pode cancelar a subscrição a qualquer momento.
-              </p>
-            </>
-          )}
+          <div className="mt-6">
+            <iframe
+              src="https://catalogusautores.substack.com/embed"
+              className="h-40 w-full border border-gray-200 bg-white"
+              title="Substack newsletter subscription"
+            />
+          </div>
         </div>
       </div>
     </div>
