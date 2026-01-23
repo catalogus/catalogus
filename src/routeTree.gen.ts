@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SobreIndexRouteImport } from './routes/sobre/index'
+import { Route as PublicacoesIndexRouteImport } from './routes/publicacoes/index'
 import { Route as ProjectosIndexRouteImport } from './routes/projectos/index'
 import { Route as ProducaoIndexRouteImport } from './routes/producao/index'
 import { Route as PesquisaIndexRouteImport } from './routes/pesquisa/index'
@@ -23,6 +24,7 @@ import { Route as CarrinhoIndexRouteImport } from './routes/carrinho/index'
 import { Route as AutoresIndexRouteImport } from './routes/autores/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
+import { Route as PublicacoesSlugRouteImport } from './routes/publicacoes/$slug'
 import { Route as PedidoOrderIdRouteImport } from './routes/pedido/$orderId'
 import { Route as NoticiasSlugRouteImport } from './routes/noticias/$slug'
 import { Route as LivroBookIdRouteImport } from './routes/livro/$bookId'
@@ -34,6 +36,7 @@ import { Route as AuthorClaimProfileRouteImport } from './routes/author/claim-pr
 import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminPublicationsRouteImport } from './routes/admin/publications'
 import { Route as AdminPostsRouteImport } from './routes/admin/posts'
 import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
@@ -63,6 +66,11 @@ const IndexRoute = IndexRouteImport.update({
 const SobreIndexRoute = SobreIndexRouteImport.update({
   id: '/sobre/',
   path: '/sobre/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicacoesIndexRoute = PublicacoesIndexRouteImport.update({
+  id: '/publicacoes/',
+  path: '/publicacoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectosIndexRoute = ProjectosIndexRouteImport.update({
@@ -125,6 +133,11 @@ const AccountIndexRoute = AccountIndexRouteImport.update({
   path: '/account/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PublicacoesSlugRoute = PublicacoesSlugRouteImport.update({
+  id: '/publicacoes/$slug',
+  path: '/publicacoes/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PedidoOrderIdRoute = PedidoOrderIdRouteImport.update({
   id: '/pedido/$orderId',
   path: '/pedido/$orderId',
@@ -178,6 +191,11 @@ const AuthSignInRoute = AuthSignInRouteImport.update({
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPublicationsRoute = AdminPublicationsRouteImport.update({
+  id: '/admin/publications',
+  path: '/admin/publications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminPostsRoute = AdminPostsRouteImport.update({
@@ -293,6 +311,7 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/posts': typeof AdminPostsRoute
+  '/admin/publications': typeof AdminPublicationsRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
@@ -304,6 +323,7 @@ export interface FileRoutesByFullPath {
   '/livro/$bookId': typeof LivroBookIdRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
+  '/publicacoes/$slug': typeof PublicacoesSlugRoute
   '/account': typeof AccountIndexRoute
   '/admin': typeof AdminIndexRoute
   '/autores': typeof AutoresIndexRoute
@@ -316,6 +336,7 @@ export interface FileRoutesByFullPath {
   '/pesquisa': typeof PesquisaIndexRoute
   '/producao': typeof ProducaoIndexRoute
   '/projectos': typeof ProjectosIndexRoute
+  '/publicacoes': typeof PublicacoesIndexRoute
   '/sobre': typeof SobreIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
@@ -340,6 +361,7 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/posts': typeof AdminPostsRoute
+  '/admin/publications': typeof AdminPublicationsRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
@@ -351,6 +373,7 @@ export interface FileRoutesByTo {
   '/livro/$bookId': typeof LivroBookIdRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
+  '/publicacoes/$slug': typeof PublicacoesSlugRoute
   '/account': typeof AccountIndexRoute
   '/admin': typeof AdminIndexRoute
   '/autores': typeof AutoresIndexRoute
@@ -363,6 +386,7 @@ export interface FileRoutesByTo {
   '/pesquisa': typeof PesquisaIndexRoute
   '/producao': typeof ProducaoIndexRoute
   '/projectos': typeof ProjectosIndexRoute
+  '/publicacoes': typeof PublicacoesIndexRoute
   '/sobre': typeof SobreIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
@@ -388,6 +412,7 @@ export interface FileRoutesById {
   '/admin/login': typeof AdminLoginRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/posts': typeof AdminPostsRoute
+  '/admin/publications': typeof AdminPublicationsRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
@@ -399,6 +424,7 @@ export interface FileRoutesById {
   '/livro/$bookId': typeof LivroBookIdRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
+  '/publicacoes/$slug': typeof PublicacoesSlugRoute
   '/account/': typeof AccountIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/autores/': typeof AutoresIndexRoute
@@ -411,6 +437,7 @@ export interface FileRoutesById {
   '/pesquisa/': typeof PesquisaIndexRoute
   '/producao/': typeof ProducaoIndexRoute
   '/projectos/': typeof ProjectosIndexRoute
+  '/publicacoes/': typeof PublicacoesIndexRoute
   '/sobre/': typeof SobreIndexRoute
   '/admin/content/partners': typeof AdminContentPartnersRoute
   '/admin/content/projects': typeof AdminContentProjectsRoute
@@ -437,6 +464,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/orders'
     | '/admin/posts'
+    | '/admin/publications'
     | '/admin/users'
     | '/auth/sign-in'
     | '/auth/sign-up'
@@ -448,6 +476,7 @@ export interface FileRouteTypes {
     | '/livro/$bookId'
     | '/noticias/$slug'
     | '/pedido/$orderId'
+    | '/publicacoes/$slug'
     | '/account'
     | '/admin'
     | '/autores'
@@ -460,6 +489,7 @@ export interface FileRouteTypes {
     | '/pesquisa'
     | '/producao'
     | '/projectos'
+    | '/publicacoes'
     | '/sobre'
     | '/admin/content/partners'
     | '/admin/content/projects'
@@ -484,6 +514,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/orders'
     | '/admin/posts'
+    | '/admin/publications'
     | '/admin/users'
     | '/auth/sign-in'
     | '/auth/sign-up'
@@ -495,6 +526,7 @@ export interface FileRouteTypes {
     | '/livro/$bookId'
     | '/noticias/$slug'
     | '/pedido/$orderId'
+    | '/publicacoes/$slug'
     | '/account'
     | '/admin'
     | '/autores'
@@ -507,6 +539,7 @@ export interface FileRouteTypes {
     | '/pesquisa'
     | '/producao'
     | '/projectos'
+    | '/publicacoes'
     | '/sobre'
     | '/admin/content/partners'
     | '/admin/content/projects'
@@ -531,6 +564,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/orders'
     | '/admin/posts'
+    | '/admin/publications'
     | '/admin/users'
     | '/auth/sign-in'
     | '/auth/sign-up'
@@ -542,6 +576,7 @@ export interface FileRouteTypes {
     | '/livro/$bookId'
     | '/noticias/$slug'
     | '/pedido/$orderId'
+    | '/publicacoes/$slug'
     | '/account/'
     | '/admin/'
     | '/autores/'
@@ -554,6 +589,7 @@ export interface FileRouteTypes {
     | '/pesquisa/'
     | '/producao/'
     | '/projectos/'
+    | '/publicacoes/'
     | '/sobre/'
     | '/admin/content/partners'
     | '/admin/content/projects'
@@ -579,6 +615,7 @@ export interface RootRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
   AdminPostsRoute: typeof AdminPostsRoute
+  AdminPublicationsRoute: typeof AdminPublicationsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AuthSignInRoute: typeof AuthSignInRoute
   AuthSignUpRoute: typeof AuthSignUpRoute
@@ -590,6 +627,7 @@ export interface RootRouteChildren {
   LivroBookIdRoute: typeof LivroBookIdRoute
   NoticiasSlugRoute: typeof NoticiasSlugRoute
   PedidoOrderIdRoute: typeof PedidoOrderIdRoute
+  PublicacoesSlugRoute: typeof PublicacoesSlugRoute
   AccountIndexRoute: typeof AccountIndexRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AutoresIndexRoute: typeof AutoresIndexRoute
@@ -602,6 +640,7 @@ export interface RootRouteChildren {
   PesquisaIndexRoute: typeof PesquisaIndexRoute
   ProducaoIndexRoute: typeof ProducaoIndexRoute
   ProjectosIndexRoute: typeof ProjectosIndexRoute
+  PublicacoesIndexRoute: typeof PublicacoesIndexRoute
   SobreIndexRoute: typeof SobreIndexRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
@@ -626,6 +665,13 @@ declare module '@tanstack/react-router' {
       path: '/sobre'
       fullPath: '/sobre'
       preLoaderRoute: typeof SobreIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/publicacoes/': {
+      id: '/publicacoes/'
+      path: '/publicacoes'
+      fullPath: '/publicacoes'
+      preLoaderRoute: typeof PublicacoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/projectos/': {
@@ -712,6 +758,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/publicacoes/$slug': {
+      id: '/publicacoes/$slug'
+      path: '/publicacoes/$slug'
+      fullPath: '/publicacoes/$slug'
+      preLoaderRoute: typeof PublicacoesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pedido/$orderId': {
       id: '/pedido/$orderId'
       path: '/pedido/$orderId'
@@ -787,6 +840,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/publications': {
+      id: '/admin/publications'
+      path: '/admin/publications'
+      fullPath: '/admin/publications'
+      preLoaderRoute: typeof AdminPublicationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/posts': {
@@ -960,6 +1020,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   AdminOrdersRoute: AdminOrdersRoute,
   AdminPostsRoute: AdminPostsRoute,
+  AdminPublicationsRoute: AdminPublicationsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AuthSignInRoute: AuthSignInRoute,
   AuthSignUpRoute: AuthSignUpRoute,
@@ -971,6 +1032,7 @@ const rootRouteChildren: RootRouteChildren = {
   LivroBookIdRoute: LivroBookIdRoute,
   NoticiasSlugRoute: NoticiasSlugRoute,
   PedidoOrderIdRoute: PedidoOrderIdRoute,
+  PublicacoesSlugRoute: PublicacoesSlugRoute,
   AccountIndexRoute: AccountIndexRoute,
   AdminIndexRoute: AdminIndexRoute,
   AutoresIndexRoute: AutoresIndexRoute,
@@ -983,6 +1045,7 @@ const rootRouteChildren: RootRouteChildren = {
   PesquisaIndexRoute: PesquisaIndexRoute,
   ProducaoIndexRoute: ProducaoIndexRoute,
   ProjectosIndexRoute: ProjectosIndexRoute,
+  PublicacoesIndexRoute: PublicacoesIndexRoute,
   SobreIndexRoute: SobreIndexRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
