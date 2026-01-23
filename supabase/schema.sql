@@ -2,14 +2,43 @@
 -- Run with: supabase db push -f supabase/schema.sql
 
 -- Enums
-create type public.user_role as enum ('admin', 'author', 'customer');
-create type public.author_status as enum ('pending', 'approved', 'rejected');
-create type public.order_status as enum ('pending', 'processing', 'paid', 'failed', 'cancelled');
-create type public.content_status as enum ('draft', 'published');
-create type public.language_code as enum ('pt', 'en');
+do $$
+begin
+  create type public.user_role as enum ('admin', 'author', 'customer');
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create type public.author_status as enum ('pending', 'approved', 'rejected');
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create type public.order_status as enum ('pending', 'processing', 'paid', 'failed', 'cancelled');
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create type public.content_status as enum ('draft', 'published');
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create type public.language_code as enum ('pt', 'en');
+exception
+  when duplicate_object then null;
+end $$;
 
 -- Tables
-create table public.profiles (
+create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   role user_role not null default 'customer',
   status author_status,
@@ -32,7 +61,7 @@ create table public.profiles (
   updated_at timestamptz not null default now()
 );
 
-create table public.books (
+create table if not exists public.books (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   slug text not null unique,
@@ -53,9 +82,9 @@ create table public.books (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index books_is_active_idx on public.books (is_active);
-create index books_category_idx on public.books (category);
-create index books_language_idx on public.books (language);
+create index if not exists books_is_active_idx on public.books (is_active);
+create index if not exists books_category_idx on public.books (category);
+create index if not exists books_language_idx on public.books (language);
 
 create table if not exists public.authors (
   id uuid primary key default gen_random_uuid(),
@@ -91,7 +120,7 @@ create table public.authors_books (
 
 create sequence if not exists public.order_number_seq;
 
-create table public.orders (
+create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
   order_number text not null unique default ('ORD-' || lpad(nextval('public.order_number_seq')::text, 8, '0')),
   customer_id uuid references auth.users (id) on delete set null,
@@ -104,20 +133,20 @@ create table public.orders (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index orders_customer_idx on public.orders (customer_id);
-create index orders_status_idx on public.orders (status);
-create index orders_created_idx on public.orders (created_at desc);
+create index if not exists orders_customer_idx on public.orders (customer_id);
+create index if not exists orders_status_idx on public.orders (status);
+create index if not exists orders_created_idx on public.orders (created_at desc);
 
-create table public.order_items (
+create table if not exists public.order_items (
   id bigserial primary key,
   order_id uuid not null references public.orders (id) on delete cascade,
   book_id uuid not null references public.books (id) on delete restrict,
   quantity integer not null check (quantity > 0),
   price numeric(12, 2) not null check (price >= 0)
 );
-create index order_items_order_idx on public.order_items (order_id);
+create index if not exists order_items_order_idx on public.order_items (order_id);
 
-create table public.posts (
+create table if not exists public.posts (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   slug text not null unique,
@@ -129,10 +158,10 @@ create table public.posts (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index posts_status_idx on public.posts (status);
-create index posts_language_idx on public.posts (language);
+create index if not exists posts_status_idx on public.posts (status);
+create index if not exists posts_language_idx on public.posts (language);
 
-create table public.partners (
+create table if not exists public.partners (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   logo_url text,
@@ -142,9 +171,9 @@ create table public.partners (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index partners_active_idx on public.partners (is_active);
+create index if not exists partners_active_idx on public.partners (is_active);
 
-create table public.services (
+create table if not exists public.services (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   description text,
@@ -153,9 +182,9 @@ create table public.services (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index services_active_idx on public.services (is_active);
+create index if not exists services_active_idx on public.services (is_active);
 
-create table public.projects (
+create table if not exists public.projects (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   summary text,
@@ -165,7 +194,7 @@ create table public.projects (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index projects_active_idx on public.projects (is_active);
+create index if not exists projects_active_idx on public.projects (is_active);
 
 -- Helper functions (after tables exist)
 create or replace function public.is_admin()
@@ -240,36 +269,46 @@ alter table public.authors
   add column if not exists featured_video text;
 
 -- Profiles policies
+drop policy if exists "Profiles: user can view own profile" on public.profiles;
 create policy "Profiles: user can view own profile" on public.profiles
   for select using (auth.uid() = id);
 
+drop policy if exists "Profiles: admins can view all" on public.profiles;
 create policy "Profiles: admins can view all" on public.profiles
   for select using (public.is_admin());
 
+drop policy if exists "Profiles: user can update own profile" on public.profiles;
 create policy "Profiles: user can update own profile" on public.profiles
   for update using (auth.uid() = id);
 
+drop policy if exists "Profiles: user can insert own profile (non-admin)" on public.profiles;
 create policy "Profiles: user can insert own profile (non-admin)" on public.profiles
   for insert with check (auth.uid() = id and role <> 'admin');
 
+drop policy if exists "Profiles: admins can upsert" on public.profiles;
 create policy "Profiles: admins can upsert" on public.profiles
   for all using (public.is_admin()) with check (true);
 
 -- Books policies
+drop policy if exists "Books: public can read active" on public.books;
 create policy "Books: public can read active" on public.books
   for select using (is_active);
 
+drop policy if exists "Books: admins full access" on public.books;
 create policy "Books: admins full access" on public.books
   for all using (public.is_admin()) with check (public.is_admin());
 
 -- Authors policies
+drop policy if exists "Authors: public can read" on public.authors;
 create policy "Authors: public can read" on public.authors
   for select using (true);
 
+drop policy if exists "Authors: admins full access" on public.authors;
 create policy "Authors: admins full access" on public.authors
   for all using (public.is_admin()) with check (public.is_admin());
 
 -- Authors_books policies
+drop policy if exists "AuthorsBooks: public can read active books" on public.authors_books;
 create policy "AuthorsBooks: public can read active books" on public.authors_books
   for select using (
     exists (
@@ -280,23 +319,29 @@ create policy "AuthorsBooks: public can read active books" on public.authors_boo
     )
   );
 
+drop policy if exists "AuthorsBooks: admins full access" on public.authors_books;
 create policy "AuthorsBooks: admins full access" on public.authors_books
   for all using (public.is_admin()) with check (public.is_admin());
 
 -- Orders policies
+drop policy if exists "Orders: customer can read own" on public.orders;
 create policy "Orders: customer can read own" on public.orders
   for select using (auth.uid() = customer_id);
 
+drop policy if exists "Orders: admins can read all" on public.orders;
 create policy "Orders: admins can read all" on public.orders
   for select using (public.is_admin());
 
+drop policy if exists "Orders: service/admin can insert" on public.orders;
 create policy "Orders: service/admin can insert" on public.orders
   for insert with check (public.is_admin() or public.is_service_role());
 
+drop policy if exists "Orders: service/admin can update" on public.orders;
 create policy "Orders: service/admin can update" on public.orders
   for update using (public.is_admin() or public.is_service_role());
 
 -- Order items policies
+drop policy if exists "OrderItems: customer can read own" on public.order_items;
 create policy "OrderItems: customer can read own" on public.order_items
   for select using (
     exists (
@@ -306,40 +351,51 @@ create policy "OrderItems: customer can read own" on public.order_items
     )
   );
 
+drop policy if exists "OrderItems: admins can read all" on public.order_items;
 create policy "OrderItems: admins can read all" on public.order_items
   for select using (public.is_admin());
 
+drop policy if exists "OrderItems: service/admin can insert" on public.order_items;
 create policy "OrderItems: service/admin can insert" on public.order_items
   for insert with check (public.is_admin() or public.is_service_role());
 
+drop policy if exists "OrderItems: service/admin can update" on public.order_items;
 create policy "OrderItems: service/admin can update" on public.order_items
   for update using (public.is_admin() or public.is_service_role());
 
 -- Posts policies
+drop policy if exists "Posts: public can read published" on public.posts;
 create policy "Posts: public can read published" on public.posts
   for select using (status = 'published');
 
+drop policy if exists "Posts: admins full access" on public.posts;
 create policy "Posts: admins full access" on public.posts
   for all using (public.is_admin()) with check (public.is_admin());
 
 -- Partners policies
+drop policy if exists "Partners: public can read active" on public.partners;
 create policy "Partners: public can read active" on public.partners
   for select using (is_active);
 
+drop policy if exists "Partners: admins full access" on public.partners;
 create policy "Partners: admins full access" on public.partners
   for all using (public.is_admin()) with check (public.is_admin());
 
 -- Services policies
+drop policy if exists "Services: public can read active" on public.services;
 create policy "Services: public can read active" on public.services
   for select using (is_active);
 
+drop policy if exists "Services: admins full access" on public.services;
 create policy "Services: admins full access" on public.services
   for all using (public.is_admin()) with check (public.is_admin());
 
 -- Projects policies
+drop policy if exists "Projects: public can read active" on public.projects;
 create policy "Projects: public can read active" on public.projects
   for select using (is_active);
 
+drop policy if exists "Projects: admins full access" on public.projects;
 create policy "Projects: admins full access" on public.projects
   for all using (public.is_admin()) with check (public.is_admin());
 
@@ -352,40 +408,155 @@ insert into storage.buckets (id, name, public) values
 on conflict (id) do nothing;
 
 -- Storage policies for public assets and admin uploads
-alter table storage.objects enable row level security;
+do $$
+begin
+  alter table storage.objects enable row level security;
 
-create policy "Storage: public can read covers/authors/partners/author-photos"
-  on storage.objects for select
-  using (bucket_id in ('covers','authors','partners','author-photos'));
+  drop policy if exists "Storage: public can read covers/authors/partners/author-photos" on storage.objects;
+  create policy "Storage: public can read covers/authors/partners/author-photos"
+    on storage.objects for select
+    using (bucket_id in ('covers','authors','partners','author-photos'));
 
-create policy "Storage: admin can manage covers/authors/partners"
-  on storage.objects for all
-  using (public.is_admin())
-  with check (public.is_admin());
+  drop policy if exists "Storage: admin can manage covers/authors/partners" on storage.objects;
+  create policy "Storage: admin can manage covers/authors/partners"
+    on storage.objects for all
+    using (public.is_admin())
+    with check (public.is_admin());
 
--- Author-photos storage policies (users can upload to their own folder)
-create policy "Storage: users can upload own author photos"
-  on storage.objects for insert
-  with check (
-    bucket_id = 'author-photos'
-    and (
-      (storage.foldername(name))[1] = auth.uid()::text
-      or public.is_admin()
-    )
-  );
+  -- Author-photos storage policies (users can upload to their own folder)
+  drop policy if exists "Storage: users can upload own author photos" on storage.objects;
+  create policy "Storage: users can upload own author photos"
+    on storage.objects for insert
+    with check (
+      bucket_id = 'author-photos'
+      and (
+        (storage.foldername(name))[1] = auth.uid()::text
+        or public.is_admin()
+      )
+    );
 
-create policy "Storage: users can delete own author photos"
-  on storage.objects for delete
-  using (
-    bucket_id = 'author-photos'
-    and (
-      (storage.foldername(name))[1] = auth.uid()::text
-      or public.is_admin()
-    )
-  );
+  drop policy if exists "Storage: users can delete own author photos" on storage.objects;
+  create policy "Storage: users can delete own author photos"
+    on storage.objects for delete
+    using (
+      bucket_id = 'author-photos'
+      and (
+        (storage.foldername(name))[1] = auth.uid()::text
+        or public.is_admin()
+      )
+    );
+exception
+  when insufficient_privilege then
+    raise notice 'Skipping storage.objects policies (insufficient privileges).';
+end $$;
 
 -- Simple published/active defaults
 update public.posts set status = 'published' where status is null;
 update public.partners set is_active = true where is_active is null;
 update public.services set is_active = true where is_active is null;
 update public.projects set is_active = true where is_active is null;
+
+-- Publications (PDF flipbook viewer)
+do $$
+begin
+  create type public.display_mode as enum ('single', 'double');
+exception
+  when duplicate_object then null;
+end $$;
+
+create table if not exists public.publications (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  slug text not null unique,
+  description text,
+  pdf_path text not null,
+  pdf_url text,
+  file_size_bytes bigint,
+  page_count integer,
+  cover_path text,
+  cover_url text,
+  table_of_contents jsonb default '[]'::jsonb,
+  display_mode display_mode not null default 'double',
+  page_width integer not null default 400,
+  page_height integer not null default 600,
+  is_active boolean not null default true,
+  is_featured boolean not null default false,
+  publish_date timestamptz,
+  seo_title text,
+  seo_description text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  created_by uuid references public.profiles(id)
+);
+
+create unique index if not exists publications_slug_idx on public.publications(slug);
+create index if not exists publications_active_idx on public.publications(is_active, publish_date desc);
+
+create table if not exists public.publication_pages (
+  id uuid primary key default gen_random_uuid(),
+  publication_id uuid not null references public.publications(id) on delete cascade,
+  page_number integer not null,
+  image_path text not null,
+  image_url text,
+  thumbnail_path text,
+  thumbnail_url text,
+  width integer,
+  height integer,
+  text_content text,
+  created_at timestamptz not null default now(),
+  unique(publication_id, page_number)
+);
+
+create index if not exists publication_pages_pub_idx on public.publication_pages(publication_id, page_number);
+
+-- Publications RLS
+alter table public.publications enable row level security;
+alter table public.publication_pages enable row level security;
+
+drop policy if exists "Publications: public can read active" on public.publications;
+create policy "Publications: public can read active" on public.publications
+  for select using (is_active = true);
+
+drop policy if exists "Publications: admins full access" on public.publications;
+create policy "Publications: admins full access" on public.publications
+  for all using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "PublicationPages: public can read pages of active publications" on public.publication_pages;
+create policy "PublicationPages: public can read pages of active publications" on public.publication_pages
+  for select using (
+    exists (
+      select 1 from public.publications
+      where publications.id = publication_pages.publication_id
+      and publications.is_active = true
+    )
+  );
+
+drop policy if exists "PublicationPages: admins full access" on public.publication_pages;
+create policy "PublicationPages: admins full access" on public.publication_pages
+  for all using (public.is_admin()) with check (public.is_admin());
+
+-- Publications storage bucket
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types) values
+  ('publications', 'publications', true, 52428800, array['application/pdf', 'image/png', 'image/jpeg', 'image/webp'])
+on conflict (id) do nothing;
+
+do $$
+begin
+  drop policy if exists "Storage: public can read publications" on storage.objects;
+  create policy "Storage: public can read publications"
+    on storage.objects for select
+    using (bucket_id = 'publications');
+
+  drop policy if exists "Storage: admin can manage publications" on storage.objects;
+  create policy "Storage: admin can manage publications"
+    on storage.objects for insert
+    with check (bucket_id = 'publications' and public.is_admin());
+
+  drop policy if exists "Storage: admin can delete publications" on storage.objects;
+  create policy "Storage: admin can delete publications"
+    on storage.objects for delete
+    using (bucket_id = 'publications' and public.is_admin());
+exception
+  when insufficient_privilege then
+    raise notice 'Skipping storage.objects policies for publications (insufficient privileges).';
+end $$;
