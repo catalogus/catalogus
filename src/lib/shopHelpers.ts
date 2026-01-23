@@ -5,10 +5,13 @@
  * Format price in Mozambican Metical (MZN)
  * Example: 1500.50 => "1.500,50 MZN"
  */
-export const formatPrice = (value: number | null | undefined): string => {
+export const formatPrice = (
+  value: number | null | undefined,
+  locale = 'pt-PT',
+): string => {
   if (value === null || value === undefined) return '0,00 MZN'
 
-  return new Intl.NumberFormat('pt-PT', {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'MZN',
     minimumFractionDigits: 2,
@@ -20,10 +23,13 @@ export const formatPrice = (value: number | null | undefined): string => {
  * Format compact price (without currency label)
  * Example: 1500.50 => "1.500,50"
  */
-export const formatPriceCompact = (value: number | null | undefined): string => {
+export const formatPriceCompact = (
+  value: number | null | undefined,
+  locale = 'pt-PT',
+): string => {
   if (value === null || value === undefined) return '0,00'
 
-  return new Intl.NumberFormat('pt-PT', {
+  return new Intl.NumberFormat(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value)

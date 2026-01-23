@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 
@@ -21,6 +22,14 @@ type Project = {
   gallery?: GalleryImage[]
 }
 
+type ProjectTranslation = {
+  id: string
+  title: string
+  description: string
+  meta: string[]
+  gallery?: 'cidade' | 'suhura'
+}
+
 const cidadeGalleryFiles = [
   'PAP_6350.jpg',
   'PAP_6377.jpg',
@@ -35,63 +44,11 @@ const cidadeGalleryFiles = [
   '_PAP5746.jpg',
 ]
 
-const cidadeGallery: GalleryImage[] = cidadeGalleryFiles.map((file, index) => ({
-  src: `/cidade_nas_maos/${file}`,
-  alt: `Cidade nas Mãos — fotografia ${index + 1}`,
-}))
-
 const suhuraGalleryFiles = [
   'P1100250.png',
   'P1100274.png',
   'P1100295.png',
   'P1100295n.png',
-]
-
-const suhuraGallery: GalleryImage[] = suhuraGalleryFiles.map((file, index) => ({
-  src: `/ninguem_matou_suhura/${file}`,
-  alt: `Ninguém Matou Suhura — fotografia ${index + 1}`,
-}))
-
-const projects: Project[] = [
-  {
-    id: 'cidade-nas-maos',
-    title: 'Cidade nas Mãos',
-    description:
-      'Festival cultural iniciado em 2025, baseado em Maputo, com o objectivo de usar a arte (performance, debates, música, dança, literatura) como ferramenta para repensar e humanizar o espaço urbano, promovendo o acesso à cultura e participação comunitária para uma cidade mais sustentável e inclusiva.',
-    meta: ['Festival cultural', 'Maputo', '2025'],
-    gallery: cidadeGallery,
-  },
-  {
-    id: 'anonimus-manifesto-literario',
-    title: 'Anonimus - Manifesto Literário',
-    description: 'Descrição, ano, fotografias/vídeo.',
-    meta: ['Em preparação'],
-  },
-  {
-    id: 'o-casal-palavrakis',
-    title: 'O Casal Palavrakis',
-    description: 'Descrição, ano, fotografias/vídeo.',
-    meta: ['Em preparação'],
-  },
-  {
-    id: 'como-uma-gota-de-sol',
-    title: 'Como uma gota de sol',
-    description: 'Descrição, ano, fotografias/vídeo.',
-    meta: ['Em preparação'],
-  },
-  {
-    id: 'coloquio-ninguem-matou-suhura',
-    title: 'Colóquio: Ninguém Matou Suhura',
-    description: 'Descrição, ano, fotografias/vídeo.',
-    meta: ['Em preparação'],
-    gallery: suhuraGallery,
-  },
-  {
-    id: 'encontro-com-livro',
-    title: 'Encontro com livro',
-    description: 'Descrição, ano, fotografias/vídeo.',
-    meta: ['Em preparação'],
-  },
 ]
 
 const tileLayouts = [
@@ -129,6 +86,37 @@ type LightboxState = {
 }
 
 function ProducaoPage() {
+  const { t, i18n } = useTranslation()
+  const cidadeGallery = useMemo(
+    () =>
+      cidadeGalleryFiles.map((file, index) => ({
+        src: `/cidade_nas_maos/${file}`,
+        alt: t('production.galleryAlt.cidade', { index: index + 1 }),
+      })),
+    [i18n.language, t],
+  )
+  const suhuraGallery = useMemo(
+    () =>
+      suhuraGalleryFiles.map((file, index) => ({
+        src: `/ninguem_matou_suhura/${file}`,
+        alt: t('production.galleryAlt.suhura', { index: index + 1 }),
+      })),
+    [i18n.language, t],
+  )
+  const projects = useMemo(() => {
+    const items = t('production.projects', {
+      returnObjects: true,
+    }) as ProjectTranslation[]
+    return items.map((project) => ({
+      ...project,
+      gallery:
+        project.gallery === 'cidade'
+          ? cidadeGallery
+          : project.gallery === 'suhura'
+            ? suhuraGallery
+            : undefined,
+    }))
+  }, [cidadeGallery, suhuraGallery, t])
   const [lightbox, setLightbox] = useState<LightboxState | null>(null)
 
   const activeImage = useMemo(() => {
@@ -194,14 +182,13 @@ function ProducaoPage() {
           <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-[#f3e2cf]/10 blur-3xl" />
           <div className="container relative mx-auto px-4 py-24 lg:px-15">
             <p className="text-xs uppercase tracking-[0.4em] text-white/70">
-              Festivais e feiras | espectáculos | cóloquios
+              {t('production.hero.eyebrow')}
             </p>
             <h1 className="mt-4 text-4xl font-semibold md:text-6xl">
-              Produção
+              {t('production.hero.title')}
             </h1>
             <p className="mt-5 max-w-2xl text-base text-white/80 md:text-lg">
-              Projectos culturais que ocupam a cidade, conectam pessoas e criam
-              novas formas de viver a literatura e as artes.
+              {t('production.hero.subtitle')}
             </p>
           </div>
         </section>
@@ -210,15 +197,13 @@ function ProducaoPage() {
           <div className="container mx-auto px-4 py-16 lg:px-15">
             <div className="max-w-3xl space-y-4">
               <p className="text-xs uppercase tracking-[0.35em] text-[#7f6f63]">
-                Projectos em destaque
+                {t('production.intro.label')}
               </p>
               <h2 className="text-3xl font-semibold md:text-4xl">
-                Cada produção é uma galeria viva
+                {t('production.intro.title')}
               </h2>
               <p className="text-sm text-[#5a514a] md:text-base">
-                Aqui reunimos processos, performances e encontros que fazem a
-                cultura respirar em Maputo e além. Cada projecto ganha um
-                arquivo visual próprio com fotografias e vídeos.
+                {t('production.intro.body')}
               </p>
             </div>
           </div>
@@ -256,7 +241,7 @@ function ProducaoPage() {
                         ? 'cursor-pointer hover:-translate-y-1'
                         : 'cursor-default'
                     }`}
-                    aria-label={`Abrir galeria de ${project.title}`}
+                    aria-label={t('production.gallery.open', { title: project.title })}
                   >
                     {coverImage ? (
                       <img
@@ -297,14 +282,16 @@ function ProducaoPage() {
                         })}
                         {!hasGallery && (
                           <span className="border border-white/30 bg-white/70 px-3 py-1 text-black">
-                            Em breve
+                            {t('production.gallery.comingSoon')}
                           </span>
                         )}
                       </div>
                     </div>
                     {hasGallery && (
                       <span className="absolute right-6 top-6 rounded-none bg-black/50 px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-white/80">
-                        {project.gallery?.length} imagens
+                        {t('production.gallery.images', {
+                          count: project.gallery?.length ?? 0,
+                        })}
                       </span>
                     )}
                   </button>
@@ -332,7 +319,7 @@ function ProducaoPage() {
               onClick={closeLightbox}
               className="absolute -top-10 right-0 flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/80 hover:text-white"
             >
-              Fechar
+              {t('production.lightbox.close')}
               <X className="h-4 w-4" />
             </button>
 
@@ -349,7 +336,7 @@ function ProducaoPage() {
                     type="button"
                     onClick={goPrevious}
                     className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center border border-white/40 bg-black/40 text-white transition hover:bg-black/60"
-                    aria-label="Imagem anterior"
+                    aria-label={t('production.lightbox.previous')}
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
@@ -357,7 +344,7 @@ function ProducaoPage() {
                     type="button"
                     onClick={goNext}
                     className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center border border-white/40 bg-black/40 text-white transition hover:bg-black/60"
-                    aria-label="Imagem seguinte"
+                    aria-label={t('production.lightbox.next')}
                   >
                     <ChevronRight className="h-5 w-5" />
                   </button>

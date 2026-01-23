@@ -20,6 +20,7 @@ export function FlipbookViewer({
 }: FlipbookViewerProps) {
   const bookRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const bookAreaRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 400, height: 600 })
 
   const {
@@ -36,6 +37,7 @@ export function FlipbookViewer({
     showToc,
     setShowToc,
   } = useFlipbook({ initialPage, publication })
+  const isZoomed = zoom > 1
 
   // Handle page flip events
   const onFlip = useCallback(
@@ -71,46 +73,76 @@ export function FlipbookViewer({
 
   // Calculate dimensions based on container size and zoom
   useEffect(() => {
-    const calculateDimensions = () => {
-      if (!containerRef.current) return
+    const container = bookAreaRef.current
+    if (!container) return
 
-      const container = containerRef.current
-      const containerWidth = container.clientWidth
-      const containerHeight = container.clientHeight
+    let frameId = 0
+    const schedule = () => {
+      if (frameId) cancelAnimationFrame(frameId)
+      frameId = requestAnimationFrame(() => {
+        const containerWidth = container.clientWidth
+        const containerHeight = container.clientHeight
+        if (!containerWidth || !containerHeight) return
 
-      // Account for sidebars
-      const sidebarWidth = (showThumbnails ? 192 : 0) + (showToc ? 256 : 0)
-      const availableWidth = containerWidth - sidebarWidth - 48 // padding
-      const availableHeight = containerHeight - 80 // controls height + padding
+        const styles = window.getComputedStyle(container)
+        const paddingX =
+          parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight)
+        const paddingY =
+          parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom)
 
-      // Calculate page dimensions maintaining aspect ratio
-      const aspectRatio = publication.page_height / publication.page_width
-      const pagesShown = displayMode === 'double' ? 2 : 1
+        const availableWidth = Math.max(containerWidth - paddingX, 0)
+        const availableHeight = Math.max(containerHeight - paddingY, 0)
 
-      let pageWidth = Math.min(
-        (availableWidth / pagesShown) * 0.9,
-        publication.page_width * zoom
-      )
-      let pageHeight = pageWidth * aspectRatio
+        // Calculate page dimensions maintaining aspect ratio
+        const aspectRatio = publication.page_height / publication.page_width
+        const pagesShown = displayMode === 'double' ? 2 : 1
 
-      // If height exceeds available, recalculate
-      if (pageHeight > availableHeight * 0.9) {
-        pageHeight = availableHeight * 0.9
-        pageWidth = pageHeight / aspectRatio
-      }
+        const maxWidth = availableWidth / pagesShown
+        const maxHeight = availableHeight
+        const fitWidth = Math.min(maxWidth, maxHeight / aspectRatio) * 0.98
+        const fitHeight = fitWidth * aspectRatio
 
-      setDimensions({
-        width: Math.round(pageWidth),
-        height: Math.round(pageHeight),
+        let pageWidth = fitWidth * zoom
+        let pageHeight = fitHeight * zoom
+
+        if (zoom <= 1) {
+          if (pageHeight > maxHeight) {
+            pageHeight = maxHeight
+            pageWidth = pageHeight / aspectRatio
+          }
+          if (pageWidth > maxWidth) {
+            pageWidth = maxWidth
+            pageHeight = pageWidth * aspectRatio
+          }
+        }
+
+        setDimensions({
+          width: Math.max(1, Math.round(pageWidth)),
+          height: Math.max(1, Math.round(pageHeight)),
+        })
       })
     }
 
-    calculateDimensions()
-    window.addEventListener('resize', calculateDimensions)
-    return () => window.removeEventListener('resize', calculateDimensions)
+    schedule()
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(schedule)
+      resizeObserver.observe(container)
+      return () => {
+        resizeObserver.disconnect()
+        if (frameId) cancelAnimationFrame(frameId)
+      }
+    }
+
+    window.addEventListener('resize', schedule)
+    return () => {
+      window.removeEventListener('resize', schedule)
+      if (frameId) cancelAnimationFrame(frameId)
+    }
   }, [
     zoom,
     displayMode,
+    isFullscreen,
     showThumbnails,
     showToc,
     publication.page_width,
@@ -145,7 +177,7 @@ export function FlipbookViewer({
         hasToc={hasToc}
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         {showThumbnails && (
           <FlipbookThumbnails
             pages={pages}
@@ -155,28 +187,30 @@ export function FlipbookViewer({
           />
         )}
 
-        <div className="flex-1 flex items-center justify-center overflow-hidden p-4">
+        <div
+          ref={bookAreaRef}
+          className={`flex-1 flex p-4 ${
+            isZoomed ? 'items-start justify-center overflow-auto' : 'items-center justify-center overflow-hidden'
+          }`}
+        >
           {pages.length > 0 ? (
             <HTMLFlipBook
+              key={`${dimensions.width}x${dimensions.height}-${displayMode}`}
               ref={bookRef}
               width={dimensions.width}
               height={dimensions.height}
-              size="stretch"
-              minWidth={200}
-              maxWidth={1200}
-              minHeight={300}
-              maxHeight={1600}
+              size="fixed"
               showCover={true}
               mobileScrollSupport={true}
               onFlip={onFlip}
               className="flipbook shadow-2xl"
               style={{}}
-              startPage={initialPage}
+              startPage={currentPage}
               drawShadow={true}
               flippingTime={600}
               usePortrait={displayMode === 'single'}
               startZIndex={0}
-              autoSize={true}
+              autoSize={false}
               maxShadowOpacity={0.5}
               showPageCorners={true}
               disableFlipByClick={false}

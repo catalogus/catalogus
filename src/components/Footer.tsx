@@ -1,58 +1,59 @@
 import { Link } from '@tanstack/react-router'
 import { ExternalLink } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 type FooterLink = {
-  label: string
+  labelKey: string
   href: string
   external?: boolean
 }
 
 type FooterColumn = {
-  title: string
+  titleKey: string
   links: FooterLink[]
 }
 
 const footerColumns: FooterColumn[] = [
   {
-    title: 'Projectos',
+    titleKey: 'footer.columns.projects',
     links: [
-      { label: 'Prémio Literário Carlos Morgado', href: '/projectos#premio-literario-carlos-morgado' },
-      { label: 'Anonimus Podcast', href: '/projectos#anonimus-podcast' },
-      { label: 'Oficinas Criativas', href: '/projectos#oficinas-criativas' },
+      { labelKey: 'footer.links.award', href: '/projectos#premio-literario-carlos-morgado' },
+      { labelKey: 'footer.links.podcast', href: '/projectos#anonimus-podcast' },
+      { labelKey: 'footer.links.workshops', href: '/projectos#oficinas-criativas' },
     ],
   },
   {
-    title: 'Serviços',
+    titleKey: 'footer.columns.services',
     links: [
-      { label: 'Editora', href: '/loja' },
-      { label: 'Produção', href: '/producao' },
+      { labelKey: 'footer.links.publisher', href: '/loja' },
+      { labelKey: 'footer.links.production', href: '/producao' },
     ],
   },
   {
-    title: 'Noticias',
+    titleKey: 'footer.columns.news',
     links: [
-      { label: 'Eventos', href: '/noticias' },
+      { labelKey: 'footer.links.events', href: '/noticias' },
     ],
   },
   {
-    title: 'Plataforma',
+    titleKey: 'footer.columns.platform',
     links: [
-      { label: 'Sobre nós', href: '/sobre' },
-      { label: 'Contactos', href: '/contactos' },
-      { label: 'Mapa Literario', href: 'https://www.calameo.com/read/0075442149b5bd3a18181', external: true },
+      { labelKey: 'footer.links.about', href: '/sobre' },
+      { labelKey: 'footer.links.contacts', href: '/contactos' },
+      { labelKey: 'footer.links.literaryMap', href: '/publicacoes' },
     ],
   },
 ]
 
 const legalLinks: FooterLink[] = [
-  { label: 'Informação Legal', href: '/legal' },
-  { label: 'Política de Privacidade', href: '/privacidade' },
-  { label: 'Termos de Uso', href: '/termos' },
-  { label: 'Cookies', href: '/cookies' },
+  { labelKey: 'footer.legal.legalInfo', href: '/legal' },
+  { labelKey: 'footer.legal.privacy', href: '/privacidade' },
+  { labelKey: 'footer.legal.terms', href: '/termos' },
+  { labelKey: 'footer.legal.cookies', href: '/cookies' },
 ]
 
 export default function Footer() {
+  const { t } = useTranslation()
   const currentYear = new Date().getFullYear()
 
   return (
@@ -72,9 +73,9 @@ export default function Footer() {
 
           {/* Navigation columns */}
           {footerColumns.map((column) => (
-            <div key={column.title}>
+            <div key={column.titleKey}>
               <h3 className="mb-4 text-sm font-semibold text-gray-900">
-                {column.title}
+                {t(column.titleKey)}
               </h3>
               <ul className="space-y-3">
                 {column.links.map((link) => (
@@ -86,7 +87,7 @@ export default function Footer() {
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-sm text-gray-600 transition-colors hover:text-gray-900"
                       >
-                        {link.label}
+                        {t(link.labelKey)}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     ) : (
@@ -94,7 +95,7 @@ export default function Footer() {
                         href={link.href}
                         className="text-sm text-gray-600 transition-colors hover:text-gray-900"
                       >
-                        {link.label}
+                        {t(link.labelKey)}
                       </a>
                     )}
                   </li>
@@ -109,7 +110,7 @@ export default function Footer() {
       <div className="border-t border-gray-200">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-6 md:flex-row md:px-8">
           <p className="text-sm text-gray-600">
-            &copy; {currentYear} Catalogus Copyright
+            &copy; {currentYear} {t('footer.copyright')}
           </p>
           <nav className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
             {legalLinks.map((link) => (
@@ -118,7 +119,7 @@ export default function Footer() {
                 href={link.href}
                 className="text-sm text-gray-600 transition-colors hover:text-gray-900"
               >
-                {link.label}
+                {t(link.labelKey)}
               </a>
             ))}
           </nav>

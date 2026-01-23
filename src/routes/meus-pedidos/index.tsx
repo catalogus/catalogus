@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { useAuth } from '../../contexts/AuthProvider'
-import { formatPrice, getOrderStatusColor, getOrderStatusLabel } from '../../lib/shopHelpers'
+import { formatPrice, getOrderStatusColor } from '../../lib/shopHelpers'
 import { supabase } from '../../lib/supabaseClient'
 
 export const Route = createFileRoute('/meus-pedidos/')({
@@ -32,7 +33,9 @@ type OrderSummary = {
 
 function OrdersHistoryPage() {
   const { session, profile } = useAuth()
+  const { t, i18n } = useTranslation()
   const [statusFilter, setStatusFilter] = useState('all')
+  const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
 
   const email = profile?.email ?? session?.user?.email ?? null
 
@@ -78,18 +81,20 @@ function OrdersHistoryPage() {
       <Header />
 
       <main className="container mx-auto px-4 py-16 lg:px-15">
-        <h1 className="text-3xl font-semibold md:text-5xl">Meus pedidos</h1>
+        <h1 className="text-3xl font-semibold md:text-5xl">
+          {t('orders.history.title')}
+        </h1>
 
         {!email && (
           <div className="mt-8 border border-gray-200 bg-white p-8 text-center">
             <p className="text-lg font-semibold text-gray-900">
-              Faça login para ver os seus pedidos
+              {t('orders.history.loginPrompt')}
             </p>
             <Link
               to="/auth/sign-in"
               className="mt-6 inline-flex items-center justify-center bg-[color:var(--brand)] px-6 py-2.5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-[#a25a2c]"
             >
-              Entrar
+              {t('orders.history.signIn')}
             </Link>
           </div>
         )}
@@ -98,7 +103,7 @@ function OrdersHistoryPage() {
           <>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <label className="text-sm text-gray-600" htmlFor="order-status">
-                Filtrar status
+                {t('orders.history.filterLabel')}
               </label>
               <select
                 id="order-status"
@@ -106,10 +111,10 @@ function OrdersHistoryPage() {
                 onChange={(event) => setStatusFilter(event.target.value)}
                 className="border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none"
               >
-                <option value="all">Todos</option>
-                <option value="pending">Pendente</option>
-                <option value="paid">Pago</option>
-                <option value="cancelled">Cancelado</option>
+                <option value="all">{t('orders.history.filterAll')}</option>
+                <option value="pending">{t('orders.status.pending')}</option>
+                <option value="paid">{t('orders.status.paid')}</option>
+                <option value="cancelled">{t('orders.status.cancelled')}</option>
               </select>
             </div>
 
@@ -126,7 +131,7 @@ function OrdersHistoryPage() {
 
             {ordersQuery.isError && (
               <div className="mt-6 border border-gray-200 bg-white p-6 text-sm text-gray-600">
-                Falha ao carregar pedidos. Tente novamente.
+                {t('orders.history.error')}
               </div>
             )}
 
@@ -134,7 +139,7 @@ function OrdersHistoryPage() {
               !ordersQuery.isError &&
               filteredOrders.length === 0 && (
                 <div className="mt-6 border border-gray-200 bg-white p-6 text-sm text-gray-600">
-                  Nenhum pedido encontrado.
+                  {t('orders.history.empty')}
                 </div>
               )}
 
@@ -144,9 +149,11 @@ function OrdersHistoryPage() {
                 <div className="mt-6 space-y-4">
                   {filteredOrders.map((order) => {
                     const statusColor = getOrderStatusColor(order.status)
-                    const statusLabel = getOrderStatusLabel(order.status)
+                    const statusLabel = t(`orders.status.${order.status}`, {
+                      defaultValue: order.status,
+                    })
                     const createdAt = new Date(order.created_at)
-                    const dateLabel = createdAt.toLocaleDateString('pt-PT', {
+                    const dateLabel = createdAt.toLocaleDateString(locale, {
                       day: '2-digit',
                       month: 'short',
                       year: 'numeric',
@@ -171,14 +178,14 @@ function OrdersHistoryPage() {
                             {dateLabel}
                           </p>
                           <p className="text-sm text-gray-600">
-                            {formatPrice(order.total)}
+                            {formatPrice(order.total, locale)}
                           </p>
                         </div>
                         <Link
                           to={`/pedido/${order.id}`}
                           className="inline-flex items-center justify-center border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400"
                         >
-                          Ver detalhes
+                          {t('orders.history.viewDetails')}
                         </Link>
                       </div>
                     )

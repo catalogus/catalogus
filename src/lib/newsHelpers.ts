@@ -1,11 +1,11 @@
 // Shared helper functions for news/posts components
 // Used by: NewsSection, noticias/$slug, noticias/index
 
-export const formatPostDate = (value: string | null) => {
+export const formatPostDate = (value: string | null, locale = 'pt-PT') => {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleDateString('pt-PT', {
+  return date.toLocaleDateString(locale, {
     day: '2-digit',
     month: 'long',
     year: 'numeric',

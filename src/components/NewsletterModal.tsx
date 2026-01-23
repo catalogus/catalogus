@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 const STORAGE_KEY = 'catalogus_newsletter_dismissed'
 const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 
 export function NewsletterModal() {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
@@ -74,20 +76,19 @@ export function NewsletterModal() {
             type="button"
             onClick={handleClose}
             className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center text-gray-400 transition-colors hover:text-gray-900"
-            aria-label="Fechar"
+            aria-label={t('newsletter.modal.close')}
           >
             <X className="h-5 w-5" />
           </button>
 
           <p className="text-xs uppercase tracking-[0.3em] text-[#9a8776]">
-            Newsletter
+            {t('newsletter.modal.label')}
           </p>
           <h2 className="mt-3 text-2xl font-semibold text-gray-900 md:text-3xl">
-            Junte-se à nossa comunidade
+            {t('newsletter.modal.title')}
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-gray-600 md:text-base">
-            Receba actualizações mensais sobre novos livros, eventos culturais,
-            autores em destaque e muito mais.
+            {t('newsletter.modal.body')}
           </p>
 
           <div className="mt-6">

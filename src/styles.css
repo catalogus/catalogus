@@ -190,6 +190,11 @@ code {
   body {
     @apply bg-background text-foreground;
   }
+  input,
+  textarea,
+  select {
+    border-radius: 0;
+  }
 }
 
 .about-reveal .reveal-word {

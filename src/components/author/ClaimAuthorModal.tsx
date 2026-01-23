@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
-import { Button } from '../ui/button'
+import { useTranslation } from 'react-i18next'
 
 type ClaimVerificationData = {
   authorId: string
@@ -25,6 +25,7 @@ export function ClaimAuthorModal({
   authorName,
   onSubmit,
 }: ClaimAuthorModalProps) {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [message, setMessage] = useState('')
@@ -36,19 +37,19 @@ export function ClaimAuthorModal({
     const newErrors: Record<string, string> = {}
 
     if (!email.trim()) {
-      newErrors.email = 'Email é obrigatório'
+      newErrors.email = t('authorDetail.modal.errors.emailRequired')
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Email inválido'
+      newErrors.email = t('authorDetail.modal.errors.emailInvalid')
     }
 
     if (!phone.trim()) {
-      newErrors.phone = 'Telefone é obrigatório'
+      newErrors.phone = t('authorDetail.modal.errors.phoneRequired')
     }
 
     if (!message.trim()) {
-      newErrors.message = 'Mensagem é obrigatória'
+      newErrors.message = t('authorDetail.modal.errors.messageRequired')
     } else if (message.trim().length < 20) {
-      newErrors.message = 'A mensagem deve ter pelo menos 20 caracteres'
+      newErrors.message = t('authorDetail.modal.errors.messageMin')
     }
 
     setErrors(newErrors)
@@ -76,16 +77,16 @@ export function ClaimAuthorModal({
         <div className="flex items-center justify-between border-b border-gray-200 bg-[#fafafa] px-8 py-5">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 tracking-tight">
-              Reivindicar Perfil de Autor
+              {t('authorDetail.modal.title')}
             </h2>
             <p className="text-xs text-gray-600 mt-1 uppercase tracking-[0.2em]">
-              Verificação de identidade
+              {t('authorDetail.modal.subtitle')}
             </p>
           </div>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-900 transition-colors"
-            aria-label="Fechar"
+            aria-label={t('authorDetail.modal.close')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -95,21 +96,20 @@ export function ClaimAuthorModal({
         <form onSubmit={handleSubmit} className="px-8 py-6">
           <div className="mb-6 bg-[#f8f4ef] border border-gray-200 p-4 rounded-none">
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-1">
-              Perfil a reivindicar
+              {t('authorDetail.modal.profileLabel')}
             </p>
             <p className="text-lg font-semibold text-gray-900">{authorName}</p>
           </div>
 
           <p className="text-sm text-gray-700 mb-6 leading-relaxed">
-            Para verificar que este perfil é seu, forneça as seguintes informações. Um
-            administrador irá revisar a sua solicitação antes de aprovar.
+            {t('authorDetail.modal.intro')}
           </p>
 
           <div className="space-y-5">
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">
-                Email <span className="text-red-600">*</span>
+                {t('authorDetail.modal.emailLabel')} <span className="text-red-600">*</span>
               </label>
               <input
                 type="email"
@@ -121,7 +121,7 @@ export function ClaimAuthorModal({
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-gray-900 focus:border-gray-900'
                 }`}
-                placeholder="seu@email.com"
+                placeholder={t('authorDetail.modal.emailPlaceholder')}
               />
               {errors.email && (
                 <p className="mt-1.5 text-xs text-red-600">{errors.email}</p>
@@ -131,7 +131,7 @@ export function ClaimAuthorModal({
             {/* Phone */}
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-900 mb-2">
-                Telefone <span className="text-red-600">*</span>
+                {t('authorDetail.modal.phoneLabel')} <span className="text-red-600">*</span>
               </label>
               <input
                 type="tel"
@@ -143,7 +143,7 @@ export function ClaimAuthorModal({
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-gray-900 focus:border-gray-900'
                 }`}
-                placeholder="+258 XX XXX XXXX"
+                placeholder={t('authorDetail.modal.phonePlaceholder')}
               />
               {errors.phone && (
                 <p className="mt-1.5 text-xs text-red-600">{errors.phone}</p>
@@ -153,7 +153,8 @@ export function ClaimAuthorModal({
             {/* Message */}
             <div>
               <label htmlFor="message" className="block text-sm font-medium text-gray-900 mb-2">
-                Porque este perfil é seu? <span className="text-red-600">*</span>
+                {t('authorDetail.modal.messageLabel')}{' '}
+                <span className="text-red-600">*</span>
               </label>
               <textarea
                 id="message"
@@ -165,13 +166,13 @@ export function ClaimAuthorModal({
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-gray-900 focus:border-gray-900'
                 }`}
-                placeholder="Explique porque este perfil pertence a você. Inclua detalhes que apenas o autor conheceria, como obras publicadas, eventos em que participou, ou outras informações verificáveis..."
+                placeholder={t('authorDetail.modal.messagePlaceholder')}
               />
               {errors.message && (
                 <p className="mt-1.5 text-xs text-red-600">{errors.message}</p>
               )}
               <p className="mt-1.5 text-xs text-gray-500">
-                Mínimo 20 caracteres • {message.length}/20
+                {t('authorDetail.modal.minChars', { count: message.length })}
               </p>
             </div>
           </div>
@@ -183,13 +184,13 @@ export function ClaimAuthorModal({
               onClick={onClose}
               className="px-6 py-2.5 border border-gray-300 bg-white text-gray-900 text-sm font-medium rounded-none hover:bg-gray-50 transition-colors"
             >
-              Cancelar
+              {t('authorDetail.modal.cancel')}
             </button>
             <button
               type="submit"
               className="px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-none hover:bg-gray-800 transition-colors"
             >
-              Continuar para Criar Conta
+              {t('authorDetail.modal.submit')}
             </button>
           </div>
         </form>

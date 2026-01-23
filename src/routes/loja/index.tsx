@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { FilterSidebar } from '../../components/shop/FilterSidebar'
@@ -92,6 +93,7 @@ const DEFAULT_PRICE_RANGE: PriceRange = { min: 0, max: 10000 }
 const PAGE_SIZE = 12
 
 function ShopListingPage() {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [language, setLanguage] = useState<string | null>(null)
@@ -244,9 +246,11 @@ function ShopListingPage() {
 
       <section className="bg-[#1c1b1a] text-white">
         <div className="container mx-auto px-4 py-16 lg:px-15">
-          <h1 className="text-4xl font-semibold md:text-6xl">Loja</h1>
+          <h1 className="text-4xl font-semibold md:text-6xl">
+            {t('shop.listing.title')}
+          </h1>
           <p className="mt-4 text-lg text-white/80">
-            Descubra a nossa colecao de livros
+            {t('shop.listing.subtitle')}
           </p>
         </div>
       </section>
@@ -281,7 +285,7 @@ function ShopListingPage() {
                 className="flex w-full items-center justify-center gap-2 border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium"
               >
                 <SlidersHorizontal className="h-4 w-4" />
-                Filtros
+                {t('shop.listing.filters')}
                 {activeFiltersCount > 0 && (
                   <span className="ml-1 rounded-full bg-[color:var(--brand)] px-2 py-0.5 text-xs text-white">
                     {activeFiltersCount}
@@ -311,7 +315,7 @@ function ShopListingPage() {
                     onClick={() => setShowFilters(false)}
                     className="w-full bg-[color:var(--brand)] px-4 py-2.5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-[#a25a2c]"
                   >
-                    Fechar filtros
+                    {t('shop.listing.closeFilters')}
                   </button>
                 </div>
               )}
@@ -323,19 +327,15 @@ function ShopListingPage() {
                   {booksQuery.isSuccess && (
                     <>
                       {allBooks.length > 0
-                        ? `${allBooks.length} ${
-                            allBooks.length === 1
-                              ? 'livro encontrado'
-                              : 'livros encontrados'
-                          }`
-                        : 'Nenhum livro encontrado'}
+                        ? t('shop.listing.resultsCount', { count: allBooks.length })
+                        : t('shop.listing.resultsNone')}
                     </>
                   )}
                 </p>
 
                 <div className="flex items-center gap-2">
                   <label htmlFor="sort" className="text-sm text-gray-600">
-                    Ordenar:
+                    {t('shop.listing.sortLabel')}
                   </label>
                   <select
                     id="sort"
@@ -343,11 +343,11 @@ function ShopListingPage() {
                     onChange={(e) => setSortBy(e.target.value as SortOption)}
                     className="border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-[color:var(--brand)] focus:outline-none"
                   >
-                    <option value="newest">Mais recentes</option>
-                    <option value="oldest">Mais antigos</option>
-                    <option value="price-asc">Preco: Baixo para Alto</option>
-                    <option value="price-desc">Preco: Alto para Baixo</option>
-                    <option value="title">Titulo (A-Z)</option>
+                    <option value="newest">{t('shop.listing.sortOptions.newest')}</option>
+                    <option value="oldest">{t('shop.listing.sortOptions.oldest')}</option>
+                    <option value="price-asc">{t('shop.listing.sortOptions.priceAsc')}</option>
+                    <option value="price-desc">{t('shop.listing.sortOptions.priceDesc')}</option>
+                    <option value="title">{t('shop.listing.sortOptions.title')}</option>
                   </select>
                 </div>
               </div>
@@ -368,7 +368,7 @@ function ShopListingPage() {
               {booksQuery.isError && (
                 <div className="border border-gray-200 bg-white p-8 text-center">
                   <p className="text-sm text-gray-600">
-                    Falha ao carregar os livros. Tente novamente.
+                    {t('shop.listing.error')}
                   </p>
                 </div>
               )}
@@ -378,10 +378,10 @@ function ShopListingPage() {
                 allBooks.length === 0 && (
                   <div className="border border-gray-200 bg-white p-8 text-center">
                     <p className="mb-4 text-lg font-semibold text-gray-900">
-                      Nenhum livro encontrado
+                      {t('shop.listing.emptyTitle')}
                     </p>
                     <p className="mb-6 text-sm text-gray-600">
-                      Tente ajustar os filtros ou pesquisar por outro termo
+                      {t('shop.listing.emptyBody')}
                     </p>
                     {activeFiltersCount > 0 && (
                       <button
@@ -389,7 +389,7 @@ function ShopListingPage() {
                         onClick={handleClearFilters}
                         className="bg-[color:var(--brand)] px-6 py-2.5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-[#a25a2c]"
                       >
-                        Limpar filtros
+                        {t('shop.listing.clearFilters')}
                       </button>
                     )}
                   </div>
@@ -411,14 +411,14 @@ function ShopListingPage() {
                           type="button"
                           onClick={() => booksQuery.fetchNextPage()}
                           disabled={booksQuery.isFetchingNextPage}
-                          className="bg-[color:var(--brand)] px-8 py-3 text-sm font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#a25a2c] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {booksQuery.isFetchingNextPage
-                            ? 'Carregando...'
-                            : 'Carregar mais'}
-                        </button>
-                      </div>
-                    )}
+                        className="bg-[color:var(--brand)] px-8 py-3 text-sm font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#a25a2c] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {booksQuery.isFetchingNextPage
+                          ? t('shop.listing.loadingMore')
+                          : t('shop.listing.loadMore')}
+                      </button>
+                    </div>
+                  )}
 
                     {booksQuery.isFetchingNextPage && (
                       <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

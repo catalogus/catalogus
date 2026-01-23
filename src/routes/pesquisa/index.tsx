@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import {
   AuthorResultCard,
@@ -41,12 +42,14 @@ type SearchResults = {
 }
 
 function SearchResultsPage() {
+  const { t, i18n } = useTranslation()
   const { q } = Route.useSearch()
   const query = normalizeSearchTerm(q)
   const authorTokens = query.split(/\s+/).filter(Boolean)
+  const language = i18n.language === 'en' ? 'en' : 'pt'
 
   const resultsQuery = useQuery({
-    queryKey: ['search', query],
+    queryKey: ['search', query, language],
     queryFn: async (): Promise<SearchResults> => {
       if (!query) {
         return { books: [], authors: [], posts: [] }
@@ -115,6 +118,7 @@ function SearchResultsPage() {
         `,
         )
         .eq('status', 'published')
+        .eq('language', language)
         .or(buildSearchOrFilter(['title', 'excerpt'], query))
         .order('published_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
@@ -147,7 +151,7 @@ function SearchResultsPage() {
   const sections = [
     {
       key: 'books',
-      title: 'Livros',
+      title: t('searchPage.sections.books'),
       count: books.length,
       content: books.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -157,13 +161,13 @@ function SearchResultsPage() {
         </div>
       ) : (
         <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
-          Nenhum livro encontrado.
+          {t('searchPage.sections.emptyBooks')}
         </div>
       ),
     },
     {
       key: 'authors',
-      title: 'Autores',
+      title: t('searchPage.sections.authors'),
       count: authors.length,
       content: authors.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -173,13 +177,13 @@ function SearchResultsPage() {
         </div>
       ) : (
         <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
-          Nenhum autor encontrado.
+          {t('searchPage.sections.emptyAuthors')}
         </div>
       ),
     },
     {
       key: 'posts',
-      title: 'Noticias',
+      title: t('searchPage.sections.posts'),
       count: posts.length,
       content: posts.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
@@ -189,7 +193,7 @@ function SearchResultsPage() {
         </div>
       ) : (
         <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
-          Nenhum post encontrado.
+          {t('searchPage.sections.emptyPosts')}
         </div>
       ),
     },
@@ -202,17 +206,19 @@ function SearchResultsPage() {
       <section className="bg-[#1c1b1a] text-white">
         <div className="container mx-auto px-4 py-16 lg:px-15">
           <p className="text-xs uppercase tracking-[0.35em] text-white/60">
-            Pesquisa
+            {t('searchPage.hero.label')}
           </p>
           <h1 className="mt-3 text-3xl font-semibold md:text-5xl">
-            Resultados da pesquisa
+            {t('searchPage.hero.title')}
           </h1>
           <p className="mt-4 text-base text-white/70">
-            {query ? `Resultados para "${query}"` : 'Digite um termo para pesquisar.'}
+            {query
+              ? t('searchPage.hero.resultsFor', { query })
+              : t('searchPage.hero.prompt')}
           </p>
           {query && (
             <p className="mt-2 text-sm uppercase tracking-[0.3em] text-white/50">
-              {totalResults} resultados encontrados
+              {t('searchPage.hero.count', { count: totalResults })}
             </p>
           )}
         </div>
@@ -222,19 +228,19 @@ function SearchResultsPage() {
         <div className="container mx-auto px-4 lg:px-15 space-y-12">
           {!query && (
             <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
-              Use o botao de pesquisa para procurar livros, autores e noticias.
+              {t('searchPage.empty')}
             </div>
           )}
 
           {query && resultsQuery.isLoading && (
             <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
-              A procurar resultados...
+              {t('searchPage.loading')}
             </div>
           )}
 
           {query && resultsQuery.isError && (
             <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
-              Nao foi possivel carregar os resultados. Tente novamente.
+              {t('searchPage.error')}
             </div>
           )}
 
@@ -250,7 +256,7 @@ function SearchResultsPage() {
                         {section.title}
                       </h2>
                       <span className="text-sm text-gray-500">
-                        {section.count} resultados
+                        {t('searchPage.sections.count', { count: section.count })}
                       </span>
                     </div>
                     {section.content}

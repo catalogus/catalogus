@@ -62,7 +62,7 @@ function PublicationViewerPage() {
   // Loading state
   if (publicationQuery.isLoading) {
     return (
-      <div className="flex min-h-screen flex-col bg-gray-900">
+      <div className="flex h-screen flex-col bg-gray-900">
         <Header />
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center text-white">
@@ -77,7 +77,7 @@ function PublicationViewerPage() {
   // Error state - publication not found
   if (publicationQuery.isError || !publicationQuery.data) {
     return (
-      <div className="flex min-h-screen flex-col bg-gray-900">
+      <div className="flex h-screen flex-col bg-gray-900">
         <Header />
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center text-white">
@@ -119,7 +119,7 @@ function PublicationViewerPage() {
   const pages = pagesQuery.data ?? []
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-900">
+    <div className="flex h-screen flex-col bg-gray-900">
       {/* Minimal header for viewer */}
       <header className="flex items-center justify-between border-b border-gray-700 bg-gray-900 px-4 py-3">
         <a
@@ -150,7 +150,7 @@ function PublicationViewerPage() {
       </header>
 
       {/* Flipbook viewer */}
-      <main className="flex-1">
+      <main className="flex-1 min-h-0 overflow-hidden">
         {pagesQuery.isLoading ? (
           <div className="flex h-full items-center justify-center">
             <div className="text-center text-white">

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Facebook, Globe, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabaseClient'
 import type { SocialLinks } from '../../types/author'
 
@@ -79,6 +80,7 @@ const getSocialLinks = (author: FeaturedAuthor) => {
 }
 
 export default function FeaturedAuthorsSection() {
+  const { t } = useTranslation()
   const authorsQuery = useQuery({
     queryKey: ['home', 'featured-authors'],
     queryFn: async () => {
@@ -100,11 +102,11 @@ export default function FeaturedAuthorsSection() {
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div className="space-y-4">
             <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-              Autores
+              {t('home.featuredAuthors.label')}
             </p>
             <div>
               <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-                Autores em destaque
+                {t('home.featuredAuthors.title')}
               </h2>
               <div className="mt-3 h-1 w-12 bg-[color:var(--brand)]" />
             </div>
@@ -113,7 +115,7 @@ export default function FeaturedAuthorsSection() {
             href="/autores"
             className="inline-flex items-center gap-3 border border-gray-900/60 px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-gray-900 transition-colors hover:border-gray-900 hover:text-gray-900 rounded-none"
           >
-            Ver mais autores
+            {t('home.featuredAuthors.cta')}
           </a>
         </div>
 
@@ -129,7 +131,7 @@ export default function FeaturedAuthorsSection() {
 
           {authorsQuery.isError && (
             <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
-              Falha ao carregar autores em destaque.
+              {t('home.featuredAuthors.error')}
             </div>
           )}
 
@@ -137,7 +139,7 @@ export default function FeaturedAuthorsSection() {
             !authorsQuery.isError &&
             (authorsQuery.data ?? []).map((author) => {
               const photoUrl = photoUrlFor(author)
-              const typeLabel = author.author_type || 'Autor'
+              const typeLabel = author.author_type || t('home.featuredAuthors.typeFallback')
               const socialLinks = getSocialLinks(author)
               const authorHref = `/autor/${author.wp_slug || author.id}`
               return (
@@ -180,7 +182,7 @@ export default function FeaturedAuthorsSection() {
                       <a
                         href={authorHref}
                         className="hover:underline"
-                        aria-label={`Ver autor ${author.name}`}
+                        aria-label={t('home.featuredAuthors.viewAuthor', { name: author.name })}
                       >
                         {author.name}
                       </a>
@@ -195,7 +197,7 @@ export default function FeaturedAuthorsSection() {
             !authorsQuery.isError &&
             (authorsQuery.data?.length ?? 0) === 0 && (
               <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
-                Sem autores em destaque.
+                {t('home.featuredAuthors.empty')}
               </div>
             )}
         </div>
@@ -213,16 +215,16 @@ export default function FeaturedAuthorsSection() {
             <div className="absolute inset-0 bg-black/55" />
             <div className="relative z-10 flex flex-col items-center gap-4 px-6 py-14 text-center md:px-10 lg:px-20">
               <h3 className="text-3xl font-semibold leading-tight md:text-4xl lg:text-5xl">
-                Fazer parte do catalogus agora é gratuito
+                {t('home.featuredAuthors.joinTitle')}
               </h3>
               <p className="max-w-2xl text-sm text-white/85 md:text-base">
-                Regista-te no mais completo portfólio de autores moçambicanos.
+                {t('home.featuredAuthors.joinSubtitle')}
               </p>
               <a
                 href="/author/sign-up"
                 className="mt-2 inline-flex items-center justify-center bg-[color:var(--brand)] px-8 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#a25a2c]"
               >
-                Registar-me
+                {t('home.featuredAuthors.joinCta')}
               </a>
             </div>
           </div>

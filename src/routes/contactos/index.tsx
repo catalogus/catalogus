@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Mail, Phone, MapPin, Send } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { cn } from '@/lib/utils'
@@ -8,23 +9,6 @@ import { cn } from '@/lib/utils'
 export const Route = createFileRoute('/contactos/')({
   component: ContactosPage,
 })
-
-const contactInfo = {
-  general: {
-    label: 'Informações gerais',
-    email: 'geral@catalogus.co.mz',
-    phone: '+258 84 123 4567',
-  },
-  editorial: {
-    label: 'Editorial',
-    email: 'editorial@catalogus.co.mz',
-    phone: '+258 84 765 4321',
-  },
-  address: {
-    label: 'Morada',
-    lines: ['Maputo, Moçambique', 'Av. 24 de Julho, 1234'],
-  },
-}
 
 const socialLinks = [
   { name: 'Facebook', href: 'https://facebook.com/catalogus' },
@@ -37,6 +21,32 @@ const MAPS_EMBED_URL =
   'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3587.123456789!2d32.5732!3d-25.9692!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjXCsDU4JzA5LjEiUyAzMsKwMzQnMjMuNSJF!5e0!3m2!1sen!2smz!4v1234567890'
 
 function ContactosPage() {
+  const { t } = useTranslation()
+  const addressLines = t('contact.address.lines', { returnObjects: true }) as string[]
+  const contactInfo = {
+    general: {
+      label: t('contact.info.general'),
+      email: 'geral@catalogus.co.mz',
+      phone: '+258 84 123 4567',
+    },
+    editorial: {
+      label: t('contact.info.editorial'),
+      email: 'editorial@catalogus.co.mz',
+      phone: '+258 84 765 4321',
+    },
+    address: {
+      label: t('contact.info.address'),
+      lines: addressLines,
+    },
+  }
+  const subjectOptions = [
+    { value: '', label: t('contact.form.subjectPlaceholder') },
+    { value: 'general', label: t('contact.form.subjectOptions.general') },
+    { value: 'editorial', label: t('contact.form.subjectOptions.editorial') },
+    { value: 'events', label: t('contact.form.subjectOptions.events') },
+    { value: 'partnership', label: t('contact.form.subjectOptions.partnership') },
+    { value: 'other', label: t('contact.form.subjectOptions.other') },
+  ]
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -77,11 +87,10 @@ function ContactosPage() {
               {/* Left Column - Title and Description */}
               <div>
                 <h1 className="text-4xl font-semibold leading-tight text-gray-900 md:text-6xl">
-                  Contacte-nos
+                  {t('contact.hero.title')}
                 </h1>
                 <p className="mt-6 max-w-md text-base leading-relaxed text-gray-600 md:text-lg">
-                  Entre em contacto connosco para qualquer questão, colaboração
-                  ou informação sobre os nossos serviços.
+                  {t('contact.hero.subtitle')}
                 </p>
 
                 {/* Social Links */}
@@ -168,7 +177,9 @@ function ContactosPage() {
                   <Mail className="h-5 w-5 text-[#c07238]" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Email</h3>
+                  <h3 className="font-semibold text-gray-900">
+                    {t('contact.quick.email')}
+                  </h3>
                   <p className="mt-1 text-sm text-gray-600">
                     {contactInfo.general.email}
                   </p>
@@ -183,7 +194,9 @@ function ContactosPage() {
                   <Phone className="h-5 w-5 text-[#c07238]" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Telefone</h3>
+                  <h3 className="font-semibold text-gray-900">
+                    {t('contact.quick.phone')}
+                  </h3>
                   <p className="mt-1 text-sm text-gray-600">
                     {contactInfo.general.phone}
                   </p>
@@ -195,7 +208,9 @@ function ContactosPage() {
                   <MapPin className="h-5 w-5 text-[#c07238]" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Morada</h3>
+                  <h3 className="font-semibold text-gray-900">
+                    {t('contact.quick.address')}
+                  </h3>
                   <p className="mt-1 text-sm text-gray-600">
                     {contactInfo.address.lines.join(', ')}
                   </p>
@@ -212,11 +227,10 @@ function ContactosPage() {
               {/* Contact Form */}
               <div className="order-2 lg:order-1">
                 <h2 className="text-2xl font-semibold text-gray-900 md:text-3xl">
-                  Envie-nos uma mensagem
+                  {t('contact.form.title')}
                 </h2>
                 <p className="mt-3 text-sm text-gray-600 md:text-base">
-                  Preencha o formulário abaixo e entraremos em contacto consigo
-                  o mais brevemente possível.
+                  {t('contact.form.subtitle')}
                 </p>
 
                 {isSuccess ? (
@@ -239,10 +253,10 @@ function ContactosPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-green-800">
-                          Mensagem enviada!
+                          {t('contact.form.successTitle')}
                         </h3>
                         <p className="text-sm text-green-700">
-                          Obrigado pelo seu contacto. Responderemos em breve.
+                          {t('contact.form.successBody')}
                         </p>
                       </div>
                     </div>
@@ -251,7 +265,7 @@ function ContactosPage() {
                       onClick={() => setIsSuccess(false)}
                       className="mt-4 text-sm font-medium text-green-700 underline hover:text-green-900"
                     >
-                      Enviar outra mensagem
+                      {t('contact.form.successCta')}
                     </button>
                   </div>
                 ) : (
@@ -262,7 +276,7 @@ function ContactosPage() {
                           htmlFor="name"
                           className="mb-2 block text-sm font-medium text-gray-700"
                         >
-                          Nome
+                          {t('contact.form.fields.nameLabel')}
                         </label>
                         <input
                           type="text"
@@ -272,7 +286,7 @@ function ContactosPage() {
                           onChange={handleChange}
                           required
                           className="w-full border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                          placeholder="O seu nome"
+                          placeholder={t('contact.form.fields.namePlaceholder')}
                         />
                       </div>
                       <div>
@@ -280,7 +294,7 @@ function ContactosPage() {
                           htmlFor="email"
                           className="mb-2 block text-sm font-medium text-gray-700"
                         >
-                          Email
+                          {t('contact.form.fields.emailLabel')}
                         </label>
                         <input
                           type="email"
@@ -290,18 +304,18 @@ function ContactosPage() {
                           onChange={handleChange}
                           required
                           className="w-full border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                          placeholder="O seu email"
+                          placeholder={t('contact.form.fields.emailPlaceholder')}
                         />
                       </div>
                     </div>
 
                     <div>
                       <label
-                        htmlFor="subject"
-                        className="mb-2 block text-sm font-medium text-gray-700"
-                      >
-                        Assunto
-                      </label>
+                          htmlFor="subject"
+                          className="mb-2 block text-sm font-medium text-gray-700"
+                        >
+                          {t('contact.form.fields.subjectLabel')}
+                        </label>
                       <select
                         id="subject"
                         name="subject"
@@ -310,22 +324,21 @@ function ContactosPage() {
                         required
                         className="w-full border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 transition-colors focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       >
-                        <option value="">Seleccione um assunto</option>
-                        <option value="general">Informações gerais</option>
-                        <option value="editorial">Publicação / Editorial</option>
-                        <option value="events">Eventos e produções</option>
-                        <option value="partnership">Parcerias</option>
-                        <option value="other">Outro</option>
+                        {subjectOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
                     <div>
                       <label
-                        htmlFor="message"
-                        className="mb-2 block text-sm font-medium text-gray-700"
-                      >
-                        Mensagem
-                      </label>
+                          htmlFor="message"
+                          className="mb-2 block text-sm font-medium text-gray-700"
+                        >
+                          {t('contact.form.fields.messageLabel')}
+                        </label>
                       <textarea
                         id="message"
                         name="message"
@@ -334,7 +347,7 @@ function ContactosPage() {
                         required
                         rows={5}
                         className="w-full resize-none border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                        placeholder="A sua mensagem..."
+                        placeholder={t('contact.form.fields.messagePlaceholder')}
                       />
                     </div>
 
@@ -347,10 +360,10 @@ function ContactosPage() {
                       )}
                     >
                       {isSubmitting ? (
-                        'A enviar...'
+                        t('contact.form.submitting')
                       ) : (
                         <>
-                          Enviar mensagem
+                          {t('contact.form.submit')}
                           <Send className="h-4 w-4" />
                         </>
                       )}
@@ -370,7 +383,7 @@ function ContactosPage() {
                     allowFullScreen
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
-                    title="Localização Catalogus"
+                    title={t('contact.mapTitle')}
                     className="h-full w-full"
                   />
                 </div>

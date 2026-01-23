@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { QuantitySelector } from '../../components/shop/QuantitySelector'
 import { useCart } from '../../lib/useCart'
@@ -10,14 +11,18 @@ export const Route = createFileRoute('/carrinho/')({
 })
 
 function CartPage() {
+  const { t, i18n } = useTranslation()
   const { items, updateQuantity, removeFromCart, total, isLoading } = useCart()
+  const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
 
   return (
     <div className="min-h-screen bg-[#f8f4ef] text-gray-900">
       <Header />
 
       <main className="container mx-auto px-4 py-16 lg:px-15">
-        <h1 className="text-3xl font-semibold md:text-5xl">Carrinho</h1>
+        <h1 className="text-3xl font-semibold md:text-5xl">
+          {t('cart.page.title')}
+        </h1>
 
         {isLoading && (
           <div className="mt-8 space-y-4">
@@ -33,16 +38,16 @@ function CartPage() {
         {!isLoading && items.length === 0 && (
           <div className="mt-8 border border-gray-200 bg-white p-8 text-center">
             <p className="text-lg font-semibold text-gray-900">
-              O seu carrinho esta vazio
+              {t('cart.page.emptyTitle')}
             </p>
             <p className="mt-2 text-sm text-gray-600">
-              Explore a loja para adicionar livros.
+              {t('cart.page.emptyBody')}
             </p>
             <Link
               to="/loja"
               className="mt-6 inline-flex items-center justify-center bg-[color:var(--brand)] px-6 py-2.5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-[#a25a2c]"
             >
-              Continuar a comprar
+              {t('cart.page.emptyCta')}
             </Link>
           </div>
         )}
@@ -80,7 +85,7 @@ function CartPage() {
                           {item.title}
                         </a>
                         <p className="mt-1 text-sm text-gray-600">
-                          {formatPrice(item.price)}
+                          {formatPrice(item.price, locale)}
                         </p>
                       </div>
 
@@ -97,7 +102,7 @@ function CartPage() {
                           className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-red-600"
                         >
                           <Trash2 className="h-4 w-4" />
-                          Remover
+                          {t('cart.page.remove')}
                         </button>
                       </div>
                     </div>
@@ -107,11 +112,13 @@ function CartPage() {
             </div>
 
             <div className="h-fit border border-gray-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-gray-900">Resumo</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {t('cart.page.summary')}
+              </h2>
               <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-                <span>Subtotal</span>
+                <span>{t('cart.page.subtotal')}</span>
                 <span className="font-semibold text-gray-900">
-                  {formatPrice(total)}
+                  {formatPrice(total, locale)}
                 </span>
               </div>
               <div className="mt-6 space-y-3">
@@ -119,13 +126,13 @@ function CartPage() {
                   to="/checkout"
                   className="flex w-full items-center justify-center bg-[color:var(--brand)] px-4 py-2.5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-[#a25a2c]"
                 >
-                  Finalizar compra
+                  {t('cart.page.checkout')}
                 </Link>
                 <Link
                   to="/loja"
                   className="flex w-full items-center justify-center border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400"
                 >
-                  Continuar comprando
+                  {t('cart.page.continue')}
                 </Link>
               </div>
             </div>

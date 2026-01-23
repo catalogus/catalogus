@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { HeroSlideWithContent, ContentType } from '../types/hero'
 
 type HeroProps = {
@@ -7,6 +8,7 @@ type HeroProps = {
 }
 
 export function Hero({ slides }: HeroProps) {
+  const { t } = useTranslation()
   const [activeIndex, setActiveIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
 
@@ -46,15 +48,15 @@ export function Hero({ slides }: HeroProps) {
   const getContentTypeLabel = (type: ContentType) => {
     switch (type) {
       case 'book':
-        return 'Livro em destaque'
+        return t('hero.contentType.book')
       case 'author':
-        return 'Autor em destaque'
+        return t('hero.contentType.author')
       case 'post':
-        return 'Post em destaque'
+        return t('hero.contentType.post')
       case 'custom':
-        return 'Destaque'
+        return t('hero.contentType.custom')
       default:
-        return 'Destaque'
+        return t('hero.contentType.custom')
     }
   }
 
@@ -202,7 +204,7 @@ export function Hero({ slides }: HeroProps) {
               type="button"
               onClick={handlePrevious}
               className="pointer-events-auto flex h-10 w-10 items-center justify-center border border-white/50 bg-white/10 backdrop-blur-sm text-white transition hover:bg-white/20 hover:-translate-x-1"
-              aria-label="Slide anterior"
+              aria-label={t('hero.previous')}
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -210,7 +212,7 @@ export function Hero({ slides }: HeroProps) {
               type="button"
               onClick={handleNext}
               className="pointer-events-auto flex h-10 w-10 items-center justify-center border border-white/50 bg-white/10 backdrop-blur-sm text-white transition hover:bg-white/20 hover:translate-x-1"
-              aria-label="Próximo slide"
+              aria-label={t('hero.next')}
             >
               <ChevronRight className="h-5 w-5" />
             </button>
@@ -228,7 +230,7 @@ export function Hero({ slides }: HeroProps) {
                     ? 'w-8 bg-white'
                     : 'w-2 bg-white/50 hover:bg-white/75'
                 }`}
-                aria-label={`Ir para o slide ${index + 1}`}
+                aria-label={t('hero.goToSlide', { index: index + 1 })}
               />
             ))}
           </div>
@@ -238,7 +240,7 @@ export function Hero({ slides }: HeroProps) {
       {/* Pause Indicator (optional - shows when user hovers) */}
       {isPaused && slides.length > 1 && (
         <div className="absolute top-4 right-4 z-20 border border-white/20 bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1.5">
-          Pausado
+          {t('hero.paused')}
         </div>
       )}
     </section>

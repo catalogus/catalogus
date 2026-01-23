@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { ShoppingCart } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { ProductCard } from '../../components/shop/ProductCard'
 import { QuantitySelector } from '../../components/shop/QuantitySelector'
@@ -11,7 +12,6 @@ import {
   formatPrice,
   getMaxQuantity,
   getStockStatusColor,
-  getStockStatusLabel,
   isInStock,
   truncateText,
 } from '../../lib/shopHelpers'
@@ -68,6 +68,7 @@ const resolveCoverUrl = (book: BookDetail | null) => {
 
 function BookDetailPage() {
   const { bookId } = Route.useParams()
+  const { t, i18n } = useTranslation()
   const { addToCart } = useCart()
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description')
@@ -81,8 +82,13 @@ function BookDetailPage() {
   const stock = book?.stock ?? 0
   const maxQuantity = getMaxQuantity(stock)
   const inStock = isInStock(stock)
-  const stockLabel = getStockStatusLabel(stock)
   const stockColor = getStockStatusColor(stock)
+  const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
+  const stockLabel = inStock
+    ? stock <= 5
+      ? t('shop.detail.stock.low', { count: stock })
+      : t('shop.detail.stock.inStock')
+    : t('shop.detail.stock.outOfStock')
 
   useEffect(() => {
     if (!book) return
@@ -109,7 +115,7 @@ function BookDetailPage() {
   const handleAddToCart = () => {
     if (!book) return
     if (!inStock) {
-      toast.error('Este livro esta esgotado')
+      toast.error(t('shop.detail.toasts.outOfStock'))
       return
     }
 
@@ -125,7 +131,11 @@ function BookDetailPage() {
       quantity,
     )
 
-    toast.success(`"${truncateText(book.title, 40)}" adicionado ao carrinho`)
+    toast.success(
+      t('shop.detail.toasts.addSuccess', {
+        title: truncateText(book.title, 40),
+      }),
+    )
   }
 
   return (
@@ -141,7 +151,7 @@ function BookDetailPage() {
       {bookQuery.isError && (
         <div className="container mx-auto px-4 py-24 lg:px-15">
           <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
-            Falha ao carregar o livro. Tente novamente.
+            {t('shop.detail.error')}
           </div>
         </div>
       )}
@@ -149,7 +159,7 @@ function BookDetailPage() {
       {!bookQuery.isLoading && !bookQuery.isError && !book && (
         <div className="container mx-auto px-4 py-24 lg:px-15">
           <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
-            Livro nao encontrado.
+            {t('shop.detail.notFound')}
           </div>
         </div>
       )}
@@ -177,11 +187,11 @@ function BookDetailPage() {
                   </h1>
                   <div className="text-xs uppercase tracking-[0.3em] text-white/70">
                     <a href="/" className="hover:text-white">
-                      Home
+                      {t('shop.detail.breadcrumb.home')}
                     </a>{' '}
                     /{' '}
                     <a href="/loja" className="hover:text-white">
-                      Loja
+                      {t('shop.detail.breadcrumb.shop')}
                     </a>{' '}
                     / {book.title}
                   </div>
@@ -230,7 +240,7 @@ function BookDetailPage() {
 
                 <div className="space-y-2">
                   <p className="text-2xl font-bold text-[color:var(--brand)]">
-                    {formatPrice(book.price_mzn ?? 0)}
+                    {formatPrice(book.price_mzn ?? 0, locale)}
                   </p>
                   <p className={`text-sm font-medium ${stockColor}`}>{stockLabel}</p>
                 </div>
@@ -239,7 +249,7 @@ function BookDetailPage() {
                   <p>
                     {book.description ||
                       book.seo_description ||
-                      'Descricao indisponivel.'}
+                      t('shop.detail.descriptionFallback')}
                   </p>
                 </div>
 
@@ -258,31 +268,33 @@ function BookDetailPage() {
                     className="flex items-center gap-2 bg-[color:var(--brand)] px-6 py-3 text-sm font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#a25a2c] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
                   >
                     <ShoppingCart className="h-4 w-4" />
-                    {inStock ? 'Adicionar ao carrinho' : 'Esgotado'}
+                    {inStock
+                      ? t('shop.detail.addToCart')
+                      : t('shop.detail.stock.outOfStock')}
                   </button>
                 </div>
 
                 <div className="space-y-2 text-xs uppercase tracking-wider text-gray-500">
                   <p>
-                    Categoria:{' '}
+                    {t('shop.detail.categoryLabel')}{' '}
                     <span className="text-gray-700 normal-case">
-                      {book.category || 'Nao informado'}
+                      {book.category || t('shop.detail.notProvided')}
                     </span>
                   </p>
                   <p>
-                    Idioma:{' '}
+                    {t('shop.detail.languageLabel')}{' '}
                     <span className="text-gray-700 normal-case">
-                      {book.language?.toUpperCase() || 'Nao informado'}
+                      {book.language?.toUpperCase() || t('shop.detail.notProvided')}
                     </span>
                   </p>
                   <p>
-                    ISBN:{' '}
+                    {t('shop.detail.isbnLabel')}{' '}
                     <span className="text-gray-700 normal-case">
-                      {book.isbn || 'Nao informado'}
+                      {book.isbn || t('shop.detail.notProvided')}
                     </span>
                   </p>
                   <p>
-                    ID:{' '}
+                    {t('shop.detail.idLabel')}{' '}
                     <span className="text-gray-700 normal-case">{book.id}</span>
                   </p>
                 </div>
@@ -300,7 +312,7 @@ function BookDetailPage() {
                       : 'bg-white text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  Descricao
+                  {t('shop.detail.tabs.description')}
                 </button>
                 <button
                   type="button"
@@ -311,7 +323,7 @@ function BookDetailPage() {
                       : 'bg-white text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  Reviews (0)
+                  {t('shop.detail.tabs.reviews')}
                 </button>
               </div>
               <div className="mt-4 border border-gray-200 bg-white p-6 text-sm text-gray-700">
@@ -319,17 +331,19 @@ function BookDetailPage() {
                   <p>
                     {book.description ||
                       book.seo_description ||
-                      'Descricao indisponivel.'}
+                      t('shop.detail.descriptionFallback')}
                   </p>
                 ) : (
-                  <p>Sem reviews ainda.</p>
+                  <p>{t('shop.detail.tabs.noReviews')}</p>
                 )}
               </div>
             </section>
 
             <section className="mt-16">
             <div className="mb-8 flex items-center justify-between">
-              <h2 className="text-2xl font-semibold md:text-3xl">Livros relacionados</h2>
+              <h2 className="text-2xl font-semibold md:text-3xl">
+                {t('shop.detail.relatedTitle')}
+              </h2>
             </div>
 
             {relatedBooksQuery.isLoading && (
@@ -345,7 +359,7 @@ function BookDetailPage() {
 
             {relatedBooksQuery.isError && (
               <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
-                Falha ao carregar livros relacionados.
+                {t('shop.detail.relatedError')}
               </div>
             )}
 
@@ -353,7 +367,7 @@ function BookDetailPage() {
               !relatedBooksQuery.isError &&
               (relatedBooksQuery.data?.length ?? 0) === 0 && (
                 <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
-                  Sem livros relacionados no momento.
+                  {t('shop.detail.relatedEmpty')}
                 </div>
               )}
 

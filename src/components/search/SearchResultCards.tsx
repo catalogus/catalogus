@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { buildExcerpt, formatPostDate } from '../../lib/newsHelpers'
 import { formatPrice, truncateText } from '../../lib/shopHelpers'
 import { supabase } from '../../lib/supabaseClient'
@@ -43,12 +44,13 @@ const coverUrlFor = (book: SearchBook) => {
 }
 
 export function BookResultCard({ book }: { book: SearchBook }) {
+  const { t, i18n } = useTranslation()
   const coverUrl = coverUrlFor(book)
   const href = `/livro/${book.slug ?? book.id}`
   const priceLabel =
     book.price_mzn === null || book.price_mzn === undefined
       ? ''
-      : formatPrice(book.price_mzn)
+      : formatPrice(book.price_mzn, i18n.language === 'en' ? 'en-US' : 'pt-PT')
   const description = truncateText(
     book.description || book.seo_description || '',
     140,
@@ -73,13 +75,15 @@ export function BookResultCard({ book }: { book: SearchBook }) {
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-[10px] uppercase tracking-[0.2em] text-gray-400">
-            Sem capa
+            {t('search.results.noCover')}
           </div>
         )}
       </div>
       <div className="flex-1 space-y-2">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs uppercase tracking-[0.3em] text-gray-400">Livro</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
+            {t('search.results.bookLabel')}
+          </p>
           {priceLabel && (
             <p className="text-sm font-semibold text-[color:var(--brand)]">
               {priceLabel}
@@ -99,8 +103,12 @@ export function AuthorResultCard({ author }: { author: SearchAuthor }) {
 }
 
 export function PostResultCard({ post }: { post: SearchPost }) {
+  const { t, i18n } = useTranslation()
   const href = post.slug ? `/noticias/${post.slug}` : '/noticias'
-  const dateLabel = formatPostDate(post.published_at ?? post.created_at)
+  const dateLabel = formatPostDate(
+    post.published_at ?? post.created_at,
+    i18n.language === 'en' ? 'en-US' : 'pt-PT',
+  )
   const summary = buildExcerpt(post.excerpt)
 
   return (
@@ -110,7 +118,9 @@ export function PostResultCard({ post }: { post: SearchPost }) {
     >
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs uppercase tracking-[0.3em] text-gray-400">Post</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
+            {t('search.results.postLabel')}
+          </p>
           <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
             {dateLabel}
           </p>

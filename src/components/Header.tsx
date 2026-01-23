@@ -1,48 +1,50 @@
 import { Link } from '@tanstack/react-router'
 import { Menu, X, User, LogOut, LayoutDashboard, ChevronDown } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthProvider'
 import { CartButton } from './shop/CartButton'
 import { FloatingSearch } from './search/FloatingSearch'
 
 type NavChild = {
-  label: string
+  labelKey: string
   href: string
 }
 
 type NavItem = {
-  label: string
+  labelKey: string
   href: string
   spa?: boolean
   children?: NavChild[]
 }
 
 const navItems: NavItem[] = [
-  { label: 'Autores', href: '/autores' },
-  { label: 'Editora', href: '/loja' },
-  { label: 'Noticias', href: '/noticias' },
+  { labelKey: 'header.nav.authors', href: '/autores' },
+  { labelKey: 'header.nav.publisher', href: '/loja' },
+  { labelKey: 'header.nav.news', href: '/noticias' },
   {
-    label: 'Mapa Literario',
-    href: 'https://www.calameo.com/read/0075442149b5bd3a18181',
+    labelKey: 'header.nav.literaryMap',
+    href: '/publicacoes',
   },
   {
-    label: 'Projectos',
+    labelKey: 'header.nav.projects',
     href: '/projectos',
     children: [
       {
-        label: 'Prémio Literário Carlos Morgado',
+        labelKey: 'header.nav.award',
         href: '/projectos#premio-literario-carlos-morgado',
       },
-      { label: 'Anonimus Podcast', href: '/projectos#anonimus-podcast' },
-      { label: 'Oficinas Criativas', href: '/projectos#oficinas-criativas' },
+      { labelKey: 'header.nav.podcast', href: '/projectos#anonimus-podcast' },
+      { labelKey: 'header.nav.workshops', href: '/projectos#oficinas-criativas' },
     ],
   },
-  { label: 'Produção', href: '/producao' },
-  { label: 'Sobre', href: '/sobre' },
-  { label: 'Contactos', href: '/contactos' },
+  { labelKey: 'header.nav.production', href: '/producao' },
+  { labelKey: 'header.nav.about', href: '/sobre' },
+  { labelKey: 'header.nav.contacts', href: '/contactos' },
 ]
 
 export default function Header() {
+  const { t } = useTranslation()
   const { session, profile, signOut } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
@@ -126,17 +128,17 @@ export default function Header() {
         <nav className="hidden items-center gap-6 lg:flex">
           {navItems.map((item) => {
             const className =
-              "relative text-xl font-medium text-[color:var(--header-ink)] transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-[color:var(--header-accent)] after:transition-transform after:duration-300 after:content-[''] hover:text-[color:var(--header-accent)] hover:after:scale-x-100"
+              "relative text-(--header-ink) transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-(--header-accent) after:transition-transform after:duration-300 after:content-[''] hover:text-(--header-accent) hover:after:scale-x-100"
 
             if (item.children && item.children.length > 0) {
               return (
-                <div key={item.label} className="relative group">
+                <div key={item.labelKey} className="relative group">
                   <a
                     href={item.href}
                     className={className}
                     aria-haspopup="true"
                   >
-                    {item.label}
+                    {t(item.labelKey)}
                   </a>
                   <div className="pointer-events-none absolute left-0 top-full pt-3 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
                     <div className="min-w-[280px] border border-gray-200 bg-white py-3 shadow-lg">
@@ -146,7 +148,7 @@ export default function Header() {
                           href={child.href}
                           className="block px-5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-[#f4efe9] hover:text-[color:var(--header-accent)]"
                         >
-                          {child.label}
+                          {t(child.labelKey)}
                         </a>
                       ))}
                     </div>
@@ -157,14 +159,14 @@ export default function Header() {
 
             if (item.spa) {
               return (
-                <Link key={item.label} to="/" className={className}>
-                  {item.label}
+                <Link key={item.labelKey} to="/" className={className}>
+                  {t(item.labelKey)}
                 </Link>
               )
             }
             return (
-              <a key={item.label} href={item.href} className={className}>
-                {item.label}
+              <a key={item.labelKey} href={item.href} className={className}>
+                {t(item.labelKey)}
               </a>
             )
           })}
@@ -177,7 +179,7 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 bg-[color:var(--header-ink)] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[color:var(--header-accent)]"
+                className="flex items-center gap-2 bg-(--header-ink) px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-(--header-accent)"
               >
                 {profile.photo_url ? (
                   <img
@@ -206,7 +208,7 @@ export default function Header() {
                         onClick={() => setUserMenuOpen(false)}
                       >
                         <LayoutDashboard className="h-4 w-4" />
-                        Painel Admin
+                        {t('header.auth.adminPanel')}
                       </Link>
                     )}
                     {profile.role === 'author' && (
@@ -216,7 +218,7 @@ export default function Header() {
                         onClick={() => setUserMenuOpen(false)}
                       >
                         <User className="h-4 w-4" />
-                        Meu Perfil
+                        {t('header.auth.myProfile')}
                       </Link>
                     )}
                     {profile.role === 'customer' && (
@@ -226,7 +228,7 @@ export default function Header() {
                         onClick={() => setUserMenuOpen(false)}
                       >
                         <User className="h-4 w-4" />
-                        Minha Conta
+                        {t('header.auth.myAccount')}
                       </Link>
                     )}
                     <button
@@ -238,7 +240,7 @@ export default function Header() {
                       className="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-900 hover:bg-gray-100 transition-colors"
                     >
                       <LogOut className="h-4 w-4" />
-                      Sair
+                      {t('header.auth.signOut')}
                     </button>
                   </div>
                 </>
@@ -249,7 +251,7 @@ export default function Header() {
               to="/auth/sign-in"
               className="bg-[color:var(--header-ink)] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[color:var(--header-accent)]"
             >
-              Entrar
+              {t('header.auth.signIn')}
             </Link>
           )}
         </div>
@@ -260,7 +262,7 @@ export default function Header() {
             type="button"
             onClick={() => setMenuOpen(true)}
             className="flex h-10 w-10 items-center justify-center text-[color:var(--header-ink)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[color:var(--header-accent)]"
-            aria-label="Abrir menu"
+            aria-label={t('header.menu.open')}
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
           >
@@ -295,7 +297,7 @@ export default function Header() {
             <div className="leading-tight">
               <p className="text-base font-semibold">Catalogus</p>
               <p className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--header-panel-muted)]">
-                Livraria & cultura
+                {t('header.mobile.tagline')}
               </p>
             </div>
           </Link>
@@ -303,7 +305,7 @@ export default function Header() {
             type="button"
             onClick={() => setMenuOpen(false)}
             className="flex h-10 w-10 items-center justify-center border border-white/20 text-white"
-            aria-label="Fechar menu"
+            aria-label={t('header.menu.close')}
           >
             <X className="h-5 w-5" />
           </button>
@@ -317,25 +319,25 @@ export default function Header() {
             if (item.spa) {
               return (
                 <Link
-                  key={item.label}
+                  key={item.labelKey}
                   to="/"
                   className={baseClass}
                   style={style}
                   onClick={() => setMenuOpen(false)}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               )
             }
             return (
               <a
-                key={item.label}
+                key={item.labelKey}
                 href={item.href}
                 className={baseClass}
                 style={style}
                 onClick={() => setMenuOpen(false)}
               >
-                {item.label}
+                {t(item.labelKey)}
               </a>
             )
           })}
@@ -359,7 +361,7 @@ export default function Header() {
                   )}
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-white">
-                      {profile.name ?? 'Usuário'}
+                      {profile.name ?? t('header.mobile.userFallback')}
                     </p>
                     <p className="text-xs text-white/60">{session.user.email}</p>
                   </div>
@@ -373,7 +375,7 @@ export default function Header() {
                   onClick={() => setMenuOpen(false)}
                 >
                   <LayoutDashboard className="h-4 w-4" />
-                  Painel Admin
+                  {t('header.auth.adminPanel')}
                 </Link>
               )}
 
@@ -384,7 +386,7 @@ export default function Header() {
                   onClick={() => setMenuOpen(false)}
                 >
                   <User className="h-4 w-4" />
-                  Meu Perfil
+                  {t('header.auth.myProfile')}
                 </Link>
               )}
 
@@ -395,7 +397,7 @@ export default function Header() {
                   onClick={() => setMenuOpen(false)}
                 >
                   <User className="h-4 w-4" />
-                  Minha Conta
+                  {t('header.auth.myAccount')}
                 </Link>
               )}
 
@@ -408,7 +410,7 @@ export default function Header() {
                 className="flex w-full items-center gap-2 bg-white px-4 py-3 text-sm font-semibold text-[color:var(--header-ink)] hover:bg-gray-100 transition-colors"
               >
                 <LogOut className="h-4 w-4" />
-                Sair
+                {t('header.auth.signOut')}
               </button>
             </>
           ) : (
@@ -417,7 +419,7 @@ export default function Header() {
               className="flex items-center justify-between bg-white px-4 py-3 text-sm font-semibold text-[color:var(--header-ink)]"
               onClick={() => setMenuOpen(false)}
             >
-              Entrar
+              {t('header.auth.signIn')}
             </Link>
           )}
         </div>

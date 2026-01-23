@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { supabase } from '../../lib/supabaseClient'
@@ -36,11 +37,13 @@ type NewsPost = {
 }
 
 function NewsListingPage() {
+  const { t, i18n } = useTranslation()
+  const language = i18n.language === 'en' ? 'en' : 'pt'
   const { q, categoria, tag } = Route.useSearch()
 
   // Query for featured post (hero spotlight)
   const featuredPostQuery = useQuery({
-    queryKey: ['news-posts', 'featured-spotlight'],
+    queryKey: ['news-posts', 'featured-spotlight', language],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('posts')
@@ -54,6 +57,7 @@ function NewsListingPage() {
         `,
         )
         .eq('status', 'published')
+        .eq('language', language)
         .eq('featured', true)
 
       if (error) throw error
@@ -74,7 +78,15 @@ function NewsListingPage() {
   })
 
   const postsQuery = useInfiniteQuery({
-    queryKey: ['news-posts', 'listing', q, categoria, tag, featuredPostQuery.data?.id],
+    queryKey: [
+      'news-posts',
+      'listing',
+      q,
+      categoria,
+      tag,
+      featuredPostQuery.data?.id,
+      language,
+    ],
     queryFn: async ({ pageParam = 1 }) => {
       // Build select with conditional inner joins for filters
       let selectQuery = `
@@ -98,6 +110,7 @@ function NewsListingPage() {
         .from('posts')
         .select(selectQuery)
         .eq('status', 'published')
+        .eq('language', language)
         .order('published_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
 
@@ -189,13 +202,13 @@ function NewsListingPage() {
                 </span>
               ) : (
                 <p className="text-xs uppercase tracking-[0.4em] text-white/70">
-                  Notícias
+                  {t('news.listing.label')}
                 </p>
               )}
 
               {/* Title */}
               <h1 className="text-2xl font-semibold leading-tight md:text-4xl">
-                {featuredPost ? featuredPost.title : 'Notícias'}
+                {featuredPost ? featuredPost.title : t('news.listing.title')}
               </h1>
 
               {/* CTA Button */}
@@ -204,16 +217,18 @@ function NewsListingPage() {
                   href={`/noticias/${featuredPost.slug}`}
                   className="inline-flex items-center gap-2 bg-[color:var(--brand)] px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#a25a2c]"
                 >
-                  Ler artigo completo
+                  {t('news.listing.readFull')}
                 </a>
               )}
 
               {/* Show active filters */}
               {(q || categoria || tag) && (
                 <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.3em] text-white/70">
-                  {q && <span>Pesquisa: "{q}"</span>}
-                  {categoria && <span>Categoria: {categoria}</span>}
-                  {tag && <span>Tag: {tag}</span>}
+                  {q && <span>{t('news.listing.filters.search', { query: q })}</span>}
+                  {categoria && (
+                    <span>{t('news.listing.filters.category', { category: categoria })}</span>
+                  )}
+                  {tag && <span>{t('news.listing.filters.tag', { tag })}</span>}
                 </div>
               )}
             </div>
@@ -239,7 +254,7 @@ function NewsListingPage() {
           {/* Error State */}
           {postsQuery.isError && (
             <div className="rounded-none border border-white/10 bg-white/5 p-6 text-sm text-white/70">
-              Falha ao carregar as notícias. Tente novamente.
+              {t('news.listing.error')}
             </div>
           )}
 
@@ -248,7 +263,7 @@ function NewsListingPage() {
             !postsQuery.isError &&
             allPosts.length === 0 && (
               <div className="rounded-none border border-white/10 bg-white/5 p-6 text-sm text-white/70">
-                Nenhuma notícia encontrada.
+                {t('news.listing.empty')}
               </div>
             )}
 
@@ -262,6 +277,7 @@ function NewsListingPage() {
                     const category = post.categories?.[0]?.category
                     const dateLabel = formatPostDate(
                       post.published_at ?? post.created_at,
+                      i18n.language === 'en' ? 'en-US' : 'pt-PT',
                     )
                     const excerpt =
                       post.excerpt?.trim() || buildExcerpt(post.body)
@@ -333,8 +349,8 @@ function NewsListingPage() {
                       className="rounded-none bg-[color:var(--brand)] px-8 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#a25a2c] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {postsQuery.isFetchingNextPage
-                        ? 'Carregando...'
-                        : 'Carregar mais'}
+                        ? t('news.listing.loadingMore')
+                        : t('news.listing.loadMore')}
                     </button>
                   </div>
                 )}

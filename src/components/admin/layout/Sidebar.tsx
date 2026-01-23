@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   LayoutDashboard,
   BookOpen,
+  BookMarked,
   ShoppingCart,
   Users,
   FileText,
@@ -31,6 +32,7 @@ const adminNavigation: NavigationItem[] = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Hero Slides', href: '/admin/hero-slides', icon: Image },
   { name: 'Posts', href: '/admin/posts', icon: FileText },
+  { name: 'Publications', href: '/admin/publications', icon: BookMarked },
   { name: 'Books', href: '/admin/books', icon: BookOpen },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Users', href: '/admin/users', icon: Users },

@@ -1,5 +1,6 @@
 import type { ChangeEvent } from 'react'
 import { Minus, Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(value, max))
@@ -21,6 +22,7 @@ export function QuantitySelector({
   disabled = false,
   className,
 }: QuantitySelectorProps) {
+  const { t } = useTranslation()
   const handleDecrease = () => {
     if (disabled) return
     onChange(clamp(value - 1, min, max))
@@ -47,7 +49,7 @@ export function QuantitySelector({
         onClick={handleDecrease}
         disabled={disabled || value <= min}
         className="flex h-10 w-10 items-center justify-center text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-300"
-        aria-label="Diminuir quantidade"
+        aria-label={t('shop.quantity.decrease')}
       >
         <Minus className="h-4 w-4" />
       </button>
@@ -60,14 +62,14 @@ export function QuantitySelector({
         onChange={handleInputChange}
         disabled={disabled}
         className="h-10 w-12 border-l border-r border-gray-200 text-center text-sm font-semibold text-gray-900 focus:outline-none"
-        aria-label="Quantidade"
+        aria-label={t('shop.quantity.label')}
       />
       <button
         type="button"
         onClick={handleIncrease}
         disabled={disabled || value >= max}
         className="flex h-10 w-10 items-center justify-center text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-300"
-        aria-label="Aumentar quantidade"
+        aria-label={t('shop.quantity.increase')}
       >
         <Plus className="h-4 w-4" />
       </button>

@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 const partners = [
   { name: 'Camões', logo: '/partners/camoes.png', className: 'scale-125' },
@@ -12,16 +13,16 @@ const partners = [
 ]
 
 export default function PartnersSection() {
+  const { t } = useTranslation()
   return (
     <section className="text-gray-900">
       <div className="container mx-auto px-4 py-24 lg:px-15">
         <div className="space-y-5">
           <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-            Reconhecimento
+            {t('home.partners.label')}
           </p>
           <h2 className="max-w-4xl text-3xl font-semibold leading-tight text-gray-900 md:text-5xl">
-            Desde 2020 trabalhamos com parceiros que impulsionam a cultura,
-            educação e leitura.
+            {t('home.partners.title')}
           </h2>
         </div>
 

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { normalizeSearchTerm } from '../../lib/searchHelpers'
 
 export function FloatingSearch() {
+  const { t, i18n } = useTranslation()
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
   const navigate = useNavigate()
@@ -70,16 +72,30 @@ export function FloatingSearch() {
     setOpen(false)
   }
 
+  const isEnglish = i18n.language === 'en'
+  const nextLanguage = isEnglish ? 'pt' : 'en'
+  const toggleLabel = isEnglish
+    ? t('language.toggleToPortuguese')
+    : t('language.toggleToEnglish')
+
   return (
     <>
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-white shadow-lg transition-transform hover:-translate-y-0.5"
-          aria-label="Abrir pesquisa"
+          className="flex h-12 w-12 items-center justify-center rounded-none bg-[color:var(--brand)] text-white shadow-lg transition-transform hover:-translate-y-0.5"
+          aria-label={t('search.open')}
         >
           <Search className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => i18n.changeLanguage(nextLanguage)}
+          className="flex h-9 min-w-12 items-center justify-center rounded-none border border-white/30 bg-white/95 px-3 text-xs font-semibold uppercase tracking-[0.2em] text-gray-900 shadow-md transition-transform hover:-translate-y-0.5"
+          aria-label={toggleLabel}
+        >
+          {nextLanguage.toUpperCase()}
         </button>
       </div>
 
@@ -94,14 +110,14 @@ export function FloatingSearch() {
           >
             <form onSubmit={handleSubmit}>
               <label className="relative block">
-                <span className="sr-only">Pesquisar</span>
+                <span className="sr-only">{t('search.label')}</span>
                 <Search className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
                   ref={inputRef}
                   type="search"
                   value={value}
                   onChange={(event) => setValue(event.target.value)}
-                  placeholder="Pesquise por autor, livro ou noticia"
+                  placeholder={t('search.placeholder')}
                   className="h-14 w-full border border-gray-200 bg-white px-14 text-sm text-gray-900 shadow-lg outline-none transition focus:border-[color:var(--brand)]"
                 />
               </label>

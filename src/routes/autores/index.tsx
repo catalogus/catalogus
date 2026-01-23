@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { AuthorCard } from '../../components/author/AuthorCard'
@@ -101,6 +102,7 @@ const getSocialLinks = (author: AuthorData) => {
 }
 
 function AutoresListingPage() {
+  const { t, i18n } = useTranslation()
   const [searchQuery, setSearchQuery] = useState('')
   const trimmedSearch = searchQuery.trim()
   const hasSearch = trimmedSearch.length > 0
@@ -172,7 +174,7 @@ function AutoresListingPage() {
 
   // Query for standalone author profiles (registered authors not in authors table)
   const standaloneAuthorsQuery = useQuery({
-    queryKey: ['authors', 'standalone', trimmedSearch],
+    queryKey: ['authors', 'standalone', trimmedSearch, i18n.language],
     queryFn: async () => {
       let query = supabase
         .from('profiles')
@@ -211,8 +213,8 @@ function AutoresListingPage() {
       return standaloneProfiles.map((profile) => ({
         id: profile.id,
         wp_slug: null,
-        name: profile.name || 'Autor',
-        author_type: 'Autor Registrado',
+        name: profile.name || t('authors.listing.fallbackName'),
+        author_type: t('authors.listing.registeredType'),
         bio: profile.bio || null,
         photo_url: profile.photo_url || null,
         photo_path: profile.photo_path || null,
@@ -223,7 +225,7 @@ function AutoresListingPage() {
         profile_id: profile.id,
         profile: {
           id: profile.id,
-          name: profile.name || 'Autor',
+          name: profile.name || t('authors.listing.fallbackName'),
           photo_url: profile.photo_url || null,
           photo_path: profile.photo_path || null,
           bio: profile.bio || null,
@@ -276,12 +278,14 @@ function AutoresListingPage() {
             <div className="max-w-3xl space-y-5">
               {/* Label */}
               <p className="text-xs uppercase tracking-[0.4em] text-white/70">
-                {featuredAuthor ? 'Autor em destaque' : 'Nossos Autores'}
+                {featuredAuthor
+                  ? t('authors.listing.heroFeatured')
+                  : t('authors.listing.heroDefault')}
               </p>
 
               {/* Name */}
               <h1 className="text-4xl font-semibold leading-tight md:text-6xl">
-                {featuredAuthor ? featuredAuthor.name : 'Autores'}
+                {featuredAuthor ? featuredAuthor.name : t('authors.listing.title')}
               </h1>
 
               {/* Author Type */}
@@ -344,7 +348,7 @@ function AutoresListingPage() {
                   href={`/autor/${featuredAuthor.wp_slug || featuredAuthor.id}`}
                   className="inline-flex items-center gap-2 bg-[color:var(--brand)] px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#a25a2c]"
                 >
-                  Ver perfil completo
+                  {t('authors.listing.ctaProfile')}
                 </a>
               )}
             </div>
@@ -364,15 +368,17 @@ function AutoresListingPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Pesquisar autores pelo nome..."
+                  placeholder={t('authors.listing.searchPlaceholder')}
                   className="w-full pl-12 pr-4 py-4 text-base bg-white border border-gray-300 rounded-none focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
                 />
               </div>
               {hasSearch && (
                 <p className="mt-3 text-sm text-gray-600">
                   {allAuthors.length === 0
-                    ? 'Nenhum autor encontrado para a sua pesquisa.'
-                    : `${allAuthors.length} ${allAuthors.length === 1 ? 'autor encontrado' : 'autores encontrados'}`}
+                    ? t('authors.listing.emptySearch')
+                    : t('authors.listing.searchCount', {
+                        count: allAuthors.length,
+                      })}
                 </p>
               )}
             </div>
@@ -394,16 +400,14 @@ function AutoresListingPage() {
           {/* Error State */}
           {isError && (
             <div className="rounded-none border border-gray-200 bg-white p-6 text-sm text-gray-600">
-              Falha ao carregar autores. Tente novamente.
+              {t('authors.listing.error')}
             </div>
           )}
 
           {/* Empty State */}
           {!isLoading && !isError && allAuthors.length === 0 && (
             <div className="rounded-none border border-gray-200 bg-white p-6 text-sm text-gray-600">
-              {hasSearch
-                ? 'Nenhum autor encontrado para a sua pesquisa.'
-                : 'Nenhum autor encontrado.'}
+              {hasSearch ? t('authors.listing.emptySearch') : t('authors.listing.empty')}
             </div>
           )}
 
@@ -426,8 +430,8 @@ function AutoresListingPage() {
                       className="rounded-none bg-[color:var(--brand)] px-8 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#a25a2c] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {authorsQuery.isFetchingNextPage
-                        ? 'Carregando...'
-                        : 'Carregar mais autores'}
+                        ? t('authors.listing.loadingMore')
+                        : t('authors.listing.loadMore')}
                     </button>
                   </div>
                 )}

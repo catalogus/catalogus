@@ -1,4 +1,5 @@
 import { Search, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { formatPriceCompact } from '../../lib/shopHelpers'
 
 type PriceRange = {
@@ -42,6 +43,7 @@ export function FilterSidebar({
   className,
   idPrefix = 'shop',
 }: FilterSidebarProps) {
+  const { t, i18n } = useTranslation()
   const handleCategoryToggle = (category: string) => {
     const isSelected = selectedCategories.includes(category)
     const next = isSelected
@@ -60,8 +62,9 @@ export function FilterSidebar({
     onPriceChange({ min: selectedPrice.min, max: nextMax })
   }
 
-  const minLabel = formatPriceCompact(priceRange.min)
-  const maxLabel = formatPriceCompact(priceRange.max)
+  const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
+  const minLabel = formatPriceCompact(priceRange.min, locale)
+  const maxLabel = formatPriceCompact(priceRange.max, locale)
 
   const searchId = `${idPrefix}-search`
 
@@ -70,7 +73,9 @@ export function FilterSidebar({
       className={`space-y-6 border border-gray-200 bg-white p-6 ${className ?? ''}`}
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Filtros</h2>
+        <h2 className="text-lg font-semibold text-gray-900">
+          {t('shop.filters.title')}
+        </h2>
         <button
           type="button"
           onClick={onClearFilters}
@@ -78,13 +83,13 @@ export function FilterSidebar({
           disabled={isLoading}
         >
           <X className="h-3.5 w-3.5" />
-          Limpar
+          {t('shop.filters.clear')}
         </button>
       </div>
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700" htmlFor={searchId}>
-          Pesquisa
+          {t('shop.filters.searchLabel')}
         </label>
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -93,7 +98,7 @@ export function FilterSidebar({
             type="search"
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Buscar por titulo"
+            placeholder={t('shop.filters.searchPlaceholder')}
             className="w-full border border-gray-200 bg-white py-2 pl-10 pr-3 text-sm text-gray-900 focus:border-[color:var(--brand)] focus:outline-none"
             disabled={isLoading}
           />
@@ -102,10 +107,12 @@ export function FilterSidebar({
 
       <div className="space-y-3">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
-          Categorias
+          {t('shop.filters.categories')}
         </h3>
         {categories.length === 0 ? (
-          <p className="text-sm text-gray-500">Nenhuma categoria encontrada.</p>
+          <p className="text-sm text-gray-500">
+            {t('shop.filters.emptyCategories')}
+          </p>
         ) : (
           <div className="space-y-2">
             {categories.map((category) => (
@@ -129,13 +136,13 @@ export function FilterSidebar({
 
       <div className="space-y-3">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
-          Idioma
+          {t('shop.filters.language')}
         </h3>
         <div className="space-y-2 text-sm text-gray-700">
           {[
-            { label: 'Todos', value: null },
-            { label: 'Portugues', value: 'pt' },
-            { label: 'Ingles', value: 'en' },
+            { label: t('shop.filters.languageAll'), value: null },
+            { label: t('shop.filters.languagePt'), value: 'pt' },
+            { label: t('shop.filters.languageEn'), value: 'en' },
           ].map((option) => (
             <label key={option.label} className="flex items-center gap-2">
               <input
@@ -154,7 +161,7 @@ export function FilterSidebar({
 
       <div className="space-y-3">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
-          Preco
+          {t('shop.filters.price')}
         </h3>
         <p className="text-xs text-gray-500">
           {minLabel} MZN - {maxLabel} MZN
@@ -162,7 +169,7 @@ export function FilterSidebar({
         <div className="grid gap-3 text-sm text-gray-700 md:grid-cols-2">
           <label className="flex flex-col gap-1">
             <span className="text-xs uppercase tracking-wider text-gray-500">
-              Minimo
+              {t('shop.filters.min')}
             </span>
             <input
               type="number"
@@ -176,7 +183,7 @@ export function FilterSidebar({
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-xs uppercase tracking-wider text-gray-500">
-              Maximo
+              {t('shop.filters.max')}
             </span>
             <input
               type="number"

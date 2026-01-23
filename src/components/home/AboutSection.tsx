@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-
-const aboutText =
-  'Há 5 anos, a paixão pelos livros, a irreverência e a colaboração movem a equipa da Catalogus. Posicionamo-nos como um dos principais actores do sistema literário e cultural de Moçambique, actuando no campo editorial, na comunicação cultural e na criação e implementação de projectos literários que fortalecem o sector e ampliam o número de leitores. Produzimos eventos e desenvolvemos produtos culturais que aproximam pessoas, ideias e histórias, movidas pelo sonho e pelo desejo de transformação.'
-const aboutWords = aboutText.split(' ')
+import { useTranslation } from 'react-i18next'
 
 export default function AboutSection() {
+  const { t } = useTranslation()
   const [aboutVisible, setAboutVisible] = useState(false)
   const aboutRef = useRef<HTMLDivElement | null>(null)
+  const aboutText = t('home.about.description')
+  const aboutWords = aboutText.split(' ')
 
   useEffect(() => {
     if (!aboutRef.current) return
@@ -33,7 +33,7 @@ export default function AboutSection() {
           }`}
         >
           <p className="text-xs uppercase tracking-[0.35em] text-gray-600">
-            Sobre
+            {t('home.about.label')}
           </p>
           <p className="text-2xl leading-tight text-gray-900 md:text-4xl">
             {aboutWords.map((word, index) => (
@@ -48,7 +48,7 @@ export default function AboutSection() {
             ))}
           </p>
           <a href="/sobre" className="about-link">
-            Ler mais
+            {t('home.about.cta')}
             <span className="about-link-arrow" aria-hidden="true">
               →
             </span>

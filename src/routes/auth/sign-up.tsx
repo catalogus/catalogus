@@ -155,7 +155,7 @@ function CustomerSignUpForm({ onBack }: { onBack: () => void }) {
   }, [profile, loading, submitting, navigate, redirect])
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
+    <div className="bg-white/90 backdrop-blur-sm shadow-xl p-8">
       <HomeLink />
       <button
         type="button"
@@ -188,7 +188,7 @@ function CustomerSignUpForm({ onBack }: { onBack: () => void }) {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full border border-gray-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             placeholder="Seu nome"
           />
         </div>
@@ -202,7 +202,7 @@ function CustomerSignUpForm({ onBack }: { onBack: () => void }) {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full border border-gray-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             placeholder="voce@exemplo.com"
           />
         </div>
@@ -217,7 +217,7 @@ function CustomerSignUpForm({ onBack }: { onBack: () => void }) {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full border border-gray-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             placeholder="Minimo 8 caracteres"
           />
         </div>
@@ -231,13 +231,13 @@ function CustomerSignUpForm({ onBack }: { onBack: () => void }) {
             required
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full border border-gray-300 px-3 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             placeholder="Digite novamente a senha"
           />
         </div>
 
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-700">
+          <div className=" border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
@@ -245,7 +245,7 @@ function CustomerSignUpForm({ onBack }: { onBack: () => void }) {
         <button
           type="submit"
           disabled={loading || submitting}
-          className="w-full rounded-xl bg-blue-600 text-white py-3 text-sm font-semibold hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          className="w-full  bg-blue-600 text-white py-3 text-sm font-semibold hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
         >
           {submitting ? 'A criar conta...' : 'Criar conta de cliente'}
         </button>
@@ -344,7 +344,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
   const bioMaxLength = 500
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
+    <div className="bg-white/90 backdrop-blur-sm shadow-xl p-8">
       <HomeLink />
       <button
         type="button"
@@ -380,7 +380,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
               maxLength={100}
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+              className="w-full  border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
               placeholder="Nome Apelido"
             />
           </div>
@@ -394,7 +394,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
               required
             value={formData.email}
             onChange={(e) => handleChange('email', e.target.value)}
-            className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+            className="w-full  border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
             placeholder="autor@exemplo.com"
             />
           </div>
@@ -411,7 +411,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
               minLength={8}
               value={formData.password}
               onChange={(e) => handleChange('password', e.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+              className="w-full  border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
               placeholder="Minimo 8 caracteres"
             />
           </div>
@@ -425,7 +425,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
               required
               value={formData.confirmPassword}
               onChange={(e) => handleChange('confirmPassword', e.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+              className="w-full  border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
               placeholder="Digite novamente a senha"
             />
           </div>
@@ -439,7 +439,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
             type="tel"
             value={formData.phone}
             onChange={(e) => handleChange('phone', e.target.value)}
-            className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+            className="w-full  border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
             placeholder="+258 XX XXX XXXX"
           />
         </div>
@@ -453,7 +453,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
             onChange={(e) => handleChange('bio', e.target.value)}
             maxLength={bioMaxLength}
             rows={4}
-            className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+            className="w-full  border border-gray-300 px-3 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
             placeholder="Fale sobre si e o seu trabalho..."
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -488,12 +488,12 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
         </div>
 
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-700">
+          <div className=" border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div className="bg-blue-50 border border-blue-200  p-4">
           <p className="text-sm text-blue-900">
             <strong>Nota:</strong> As contas de autor exigem aprovacao do admin. Vai receber um
             email quando a conta for revista.
@@ -503,7 +503,7 @@ function AuthorSignUpForm({ onBack }: { onBack: () => void }) {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-xl bg-green-600 text-white py-3 text-sm font-semibold hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          className="w-full  bg-green-600 text-white py-3 text-sm font-semibold hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
         >
           {submitting ? 'A criar conta...' : 'Criar conta de autor'}
         </button>

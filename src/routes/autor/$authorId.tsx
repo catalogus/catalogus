@@ -12,6 +12,7 @@ import {
   Youtube,
   UserCheck,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthProvider'
@@ -39,11 +40,11 @@ const resolveGalleryUrl = (image: GalleryImage) => {
   return ''
 }
 
-const formatDate = (value?: string | null) => {
+const formatDate = (value: string | null | undefined, locale: string) => {
   if (!value) return null
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return null
-  return date.toLocaleDateString('pt-PT', {
+  return date.toLocaleDateString(locale, {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -124,10 +125,14 @@ type ProfileAuthor = {
   role?: 'admin' | 'author' | 'customer' | null
 }
 
-const mapProfileToAuthor = (profile: ProfileAuthor): AuthorRow => ({
+const mapProfileToAuthor = (
+  profile: ProfileAuthor,
+  fallbackName: string,
+  registeredType: string,
+): AuthorRow => ({
   id: profile.id,
   wp_slug: null,
-  name: profile.name || 'Autor',
+  name: profile.name || fallbackName,
   bio: profile.bio ?? null,
   photo_url: profile.photo_url ?? null,
   photo_path: profile.photo_path ?? null,
@@ -138,12 +143,12 @@ const mapProfileToAuthor = (profile: ProfileAuthor): AuthorRow => ({
   published_works: profile.published_works ?? null,
   author_gallery: profile.author_gallery ?? null,
   featured_video: profile.featured_video ?? null,
-  author_type: profile.author_type ?? 'Autor Registrado',
+  author_type: profile.author_type ?? registeredType,
   profile_id: profile.id,
   claim_status: profile.status === 'approved' ? 'approved' : 'pending',
   profile: {
     id: profile.id,
-    name: profile.name || 'Autor',
+    name: profile.name || fallbackName,
     bio: profile.bio ?? null,
     photo_url: profile.photo_url ?? null,
     photo_path: profile.photo_path ?? null,
@@ -167,13 +172,17 @@ type AuthorResult = {
 
 function AuthorPublicPage() {
   const { authorId } = Route.useParams()
+  const { t, i18n } = useTranslation()
   const { profile, session } = useAuth()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
+  const fallbackName = t('authors.listing.fallbackName')
+  const registeredType = t('authors.listing.registeredType')
+  const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
 
   const authorQuery = useQuery<AuthorResult>({
-    queryKey: ['author', authorId],
+    queryKey: ['author', authorId, i18n.language],
     queryFn: async () => {
       const selectFields =
         `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, claim_status, profile_id,
@@ -240,7 +249,10 @@ function AuthorPublicPage() {
           .maybeSingle()
         if (profileError) throw profileError
         if (profileMatch) {
-          return { author: mapProfileToAuthor(profileMatch), isProfileOnly: true }
+          return {
+            author: mapProfileToAuthor(profileMatch, fallbackName, registeredType),
+            isProfileOnly: true,
+          }
         }
       }
       return { author: null, isProfileOnly: false }
@@ -284,10 +296,10 @@ function AuthorPublicPage() {
         queryClient.invalidateQueries({ queryKey: ['author', authorId] })
         queryClient.invalidateQueries({ queryKey: ['author', 'by-profile', profile?.id] })
 
-        toast.success('Reivindicação submetida com sucesso! Um administrador irá revisar.')
+        toast.success(t('authorDetail.toasts.claimSubmitted'))
       } catch (error: any) {
         console.error('Failed to complete pending claim:', error)
-        toast.error('Falha ao completar reivindicação. Tente novamente.')
+        toast.error(t('authorDetail.toasts.claimCompleteError'))
         localStorage.removeItem('pendingAuthorClaim')
       }
     }
@@ -310,7 +322,7 @@ function AuthorPublicPage() {
       // Store in localStorage and redirect to signup
       localStorage.setItem('pendingAuthorClaim', JSON.stringify(data))
       setIsClaimModalOpen(false)
-      toast.info('Por favor, crie uma conta para completar a reivindicação.')
+      toast.info(t('authorDetail.toasts.claimRequireAccount'))
       navigate({ to: '/author/sign-up' })
     }
   }
@@ -345,10 +357,10 @@ function AuthorPublicPage() {
       queryClient.invalidateQueries({ queryKey: ['author', authorId] })
       queryClient.invalidateQueries({ queryKey: ['author', 'by-profile', profile?.id] })
       setIsClaimModalOpen(false)
-      toast.success('Reivindicação submetida com sucesso! Um administrador irá revisar.')
+      toast.success(t('authorDetail.toasts.claimSubmitted'))
     } catch (error: any) {
       console.error('Failed to submit claim:', error)
-      toast.error('Falha ao submeter reivindicação. Tente novamente.')
+      toast.error(t('authorDetail.toasts.claimSubmitError'))
     }
   }
 
@@ -356,7 +368,7 @@ function AuthorPublicPage() {
   const isProfileOnly = authorQuery.data?.isProfileOnly ?? false
   const heroPhoto = resolvePhotoUrl(author?.photo_url, author?.photo_path)
   const socialLinks = getSocialLinks(author)
-  const birthDateLabel = formatDate(author?.birth_date)
+  const birthDateLabel = formatDate(author?.birth_date, locale)
   const embedUrl = buildEmbedUrl(author?.featured_video)
 
   // Show claim button if:
@@ -385,7 +397,7 @@ function AuthorPublicPage() {
       {authorQuery.isError && (
         <div className="container mx-auto px-4 py-24 lg:px-15">
           <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
-            Falha ao carregar o autor. Tente novamente.
+            {t('authorDetail.error')}
           </div>
         </div>
       )}
@@ -393,7 +405,7 @@ function AuthorPublicPage() {
       {!authorQuery.isLoading && !authorQuery.isError && !author && (
         <div className="container mx-auto px-4 py-24 lg:px-15">
           <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
-            Autor não encontrado.
+            {t('authorDetail.notFound')}
           </div>
         </div>
       )}
@@ -413,7 +425,7 @@ function AuthorPublicPage() {
               <div className="container mx-auto px-4 py-24 lg:px-15">
                 <div className="max-w-3xl space-y-5">
                   <p className="text-xs uppercase tracking-[0.4em] text-white/70">
-                    Autor em destaque
+                    {t('authorDetail.heroLabel')}
                   </p>
                   <h1 className="text-4xl font-semibold leading-tight md:text-6xl">
                     {author.name}
@@ -425,11 +437,11 @@ function AuthorPublicPage() {
                   )}
                   <div className="text-xs uppercase tracking-[0.3em] text-white/60">
                     <a href="/" className="hover:text-white">
-                      Home
+                      {t('authorDetail.breadcrumb.home')}
                     </a>{' '}
                     /{' '}
                     <a href="/autores" className="hover:text-white">
-                      Autores
+                      {t('authorDetail.breadcrumb.authors')}
                     </a>{' '}
                     / {author.name}
                   </div>
@@ -483,20 +495,20 @@ function AuthorPublicPage() {
                     <div className="border border-gray-200 bg-[#f8f4ef] p-6 rounded-none">
                       <div className="mb-4">
                         <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">
-                          Perfil não reivindicado
+                          {t('authorDetail.claim.unclaimedLabel')}
                         </p>
                         <p className="text-sm font-medium text-gray-900 mb-1">
-                          É você este autor?
+                          {t('authorDetail.claim.unclaimedTitle')}
                         </p>
                         <p className="text-xs text-gray-600 leading-relaxed">
-                          Reivindique este perfil para gerir as suas informações públicas.
+                          {t('authorDetail.claim.unclaimedBody')}
                         </p>
                       </div>
                       <button
                         onClick={() => setIsClaimModalOpen(true)}
                         className="w-full px-4 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-none hover:bg-gray-800 transition-colors"
                       >
-                        Reivindicar Este Perfil
+                        {t('authorDetail.claim.unclaimedCta')}
                       </button>
                     </div>
                   )}
@@ -505,13 +517,13 @@ function AuthorPublicPage() {
                     <div className="border border-amber-200 bg-[#fafafa] p-6 rounded-none">
                       <div>
                         <p className="text-xs uppercase tracking-[0.2em] text-amber-600 mb-2">
-                          Reivindicação Pendente
+                          {t('authorDetail.claim.pendingTitle')}
                         </p>
                         <p className="text-sm font-medium text-gray-900 mb-1">
-                          Em análise
+                          {t('authorDetail.claim.pendingStatus')}
                         </p>
                         <p className="text-xs text-gray-600 leading-relaxed">
-                          A sua reivindicação está a aguardar aprovação de um administrador.
+                          {t('authorDetail.claim.pendingBody')}
                         </p>
                       </div>
                     </div>
@@ -521,18 +533,18 @@ function AuthorPublicPage() {
                     <div className="border border-emerald-200 bg-[#fafafa] p-6 rounded-none">
                       <div>
                         <p className="text-xs uppercase tracking-[0.2em] text-emerald-600 mb-2">
-                          Perfil Vinculado
+                          {t('authorDetail.claim.linkedTitle')}
                         </p>
                         <p className="text-sm font-medium text-gray-900 mb-1">
-                          Este é o seu perfil de autor
+                          {t('authorDetail.claim.linkedBody')}
                         </p>
                         <p className="text-xs text-gray-600 leading-relaxed">
-                          Gerir em{' '}
+                          {t('authorDetail.claim.manage')}{' '}
                           <a
                             href="/author/profile"
                             className="underline hover:text-gray-900 font-medium"
                           >
-                            Meu Perfil
+                            {t('authorDetail.claim.myProfile')}
                           </a>
                           .
                         </p>
@@ -543,7 +555,7 @@ function AuthorPublicPage() {
                   {socialLinks.length > 0 && (
                     <div className="border border-gray-200 bg-white p-6 rounded-none">
                       <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-                        Redes sociais
+                        {t('authorDetail.socialTitle')}
                       </p>
                       <div className="mt-4 flex flex-wrap gap-3">
                         {socialLinks.map((item) => {
@@ -570,10 +582,10 @@ function AuthorPublicPage() {
                   {author.bio && (
                     <div className="border border-gray-200 bg-white p-8 rounded-none">
                       <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-                        Biografia
+                        {t('authorDetail.bio.label')}
                       </p>
                       <h2 className="mt-4 text-2xl font-semibold text-gray-900">
-                        Conheça o autor
+                        {t('authorDetail.bio.title')}
                       </h2>
                       <p className="mt-4 text-base leading-relaxed text-gray-700">
                         {author.bio}
@@ -587,10 +599,10 @@ function AuthorPublicPage() {
                         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                           <div>
                             <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-                              Obras publicadas
+                              {t('authorDetail.works.label')}
                             </p>
                             <h2 className="mt-2 text-2xl font-semibold text-gray-900">
-                              Bibliografia selecionada
+                              {t('authorDetail.works.title')}
                             </h2>
                           </div>
                         </div>
@@ -630,7 +642,7 @@ function AuthorPublicPage() {
                                         rel="noreferrer"
                                         className="text-xs uppercase tracking-[0.2em] text-gray-900 hover:underline"
                                       >
-                                        Ver obra
+                                        {t('authorDetail.works.cta')}
                                       </a>
                                     )}
                                   </div>
@@ -646,10 +658,10 @@ function AuthorPublicPage() {
                     author.author_gallery.length > 0 && (
                       <div className="border border-gray-200 bg-white p-8 rounded-none">
                         <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-                          Galeria do autor
+                          {t('authorDetail.gallery.label')}
                         </p>
                         <h2 className="mt-2 text-2xl font-semibold text-gray-900">
-                          Momentos e bastidores
+                          {t('authorDetail.gallery.title')}
                         </h2>
                         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                           {(author.author_gallery as GalleryImage[]).map(
@@ -683,17 +695,19 @@ function AuthorPublicPage() {
                   {author.featured_video && (
                     <div className="border border-gray-200 bg-white p-8 rounded-none">
                       <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
-                        Video em destaque
+                        {t('authorDetail.video.label')}
                       </p>
                       <h2 className="mt-2 text-2xl font-semibold text-gray-900">
-                        Conversa com o autor
+                        {t('authorDetail.video.title')}
                       </h2>
                       <div className="mt-6">
                         {embedUrl ? (
                           <div className="relative aspect-video w-full overflow-hidden bg-black">
                             <iframe
                               src={embedUrl}
-                              title={`Video de ${author.name}`}
+                              title={t('authorDetail.video.frameTitle', {
+                                name: author.name,
+                              })}
                               className="absolute inset-0 h-full w-full"
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                               allowFullScreen
@@ -706,7 +720,7 @@ function AuthorPublicPage() {
                             rel="noreferrer"
                             className="text-sm font-semibold text-gray-900 hover:underline"
                           >
-                            Assistir video
+                            {t('authorDetail.video.watch')}
                           </a>
                         )}
                       </div>

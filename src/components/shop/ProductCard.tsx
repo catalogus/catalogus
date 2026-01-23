@@ -1,4 +1,5 @@
 import { Link2, ShoppingCart } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useCart } from '../../lib/useCart'
 import { isInStock, truncateText } from '../../lib/shopHelpers'
@@ -32,9 +33,9 @@ type ProductCardProps = {
 const MAX_DESCRIPTION_LENGTH = 350
 const MAX_DESCRIPTION_LENGTH_COMPACT = 160
 
-const formatPrice = (value: number | null | undefined) => {
+const formatPrice = (value: number | null | undefined, locale: string) => {
   if (value === null || value === undefined || Number.isNaN(value)) return ''
-  return new Intl.NumberFormat('pt-MZ', {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'MZN',
     maximumFractionDigits: 0,
@@ -83,21 +84,25 @@ const copyText = async (value: string) => {
 }
 
 export function ProductCard({ book, compact = false }: ProductCardProps) {
+  const { t, i18n } = useTranslation()
   const { addToCart } = useCart()
   const coverUrl = coverUrlFor(book)
-  const priceLabel = formatPrice(book.price_mzn)
+  const priceLabel = formatPrice(
+    book.price_mzn,
+    i18n.language === 'en' ? 'en-US' : 'pt-MZ',
+  )
   const description = book.description || book.seo_description || ''
   const summary = description
     ? truncateText(
         description,
         compact ? MAX_DESCRIPTION_LENGTH_COMPACT : MAX_DESCRIPTION_LENGTH,
       )
-    : 'Descricao indisponivel.'
+    : t('shop.card.descriptionFallback')
   const inStock = isInStock(book.stock ?? 0)
 
   const handleAddToCart = () => {
     if (!inStock) {
-      toast.error('Este livro esta esgotado')
+      toast.error(t('shop.card.outOfStock'))
       return
     }
 
@@ -110,7 +115,7 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
       cover_url: coverUrl,
     })
 
-    toast.success('Adicionado ao carrinho')
+    toast.success(t('shop.card.addSuccess'))
   }
 
   const copyBookLink = async () => {
@@ -119,12 +124,12 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
     try {
       const copied = await copyText(href)
       if (!copied) {
-        toast.error('Nao foi possivel copiar o link')
+        toast.error(t('shop.card.copyError'))
         return
       }
-      toast.success('Link copiado')
+      toast.success(t('shop.card.copySuccess'))
     } catch {
-      toast.error('Nao foi possivel copiar o link')
+      toast.error(t('shop.card.copyError'))
     }
   }
 
@@ -141,7 +146,7 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-[0.3em] text-gray-400">
-              Sem capa
+              {t('shop.card.noCover')}
             </div>
           )}
         </div>
@@ -150,7 +155,7 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
             type="button"
             onClick={handleAddToCart}
             className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-white transition-transform hover:scale-105"
-            aria-label="Adicionar ao carrinho"
+            aria-label={t('shop.card.addToCart')}
           >
             <ShoppingCart className="h-5 w-5" />
           </button>
@@ -158,7 +163,7 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
             type="button"
             onClick={copyBookLink}
             className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-white transition-transform hover:scale-105"
-            aria-label="Copiar link do livro"
+            aria-label={t('shop.card.copyLink')}
           >
             <Link2 className="h-5 w-5" />
           </button>

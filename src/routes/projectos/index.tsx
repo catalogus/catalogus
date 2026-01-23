@@ -1,35 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 
 export const Route = createFileRoute('/projectos/')({
   component: ProjectsPage,
 })
-
-const projects = [
-  {
-    title: 'Prémio Literário Carlos Morgado',
-    slug: 'premio-literario-carlos-morgado',
-    eyebrow: 'Literatura & reconhecimento',
-    description:
-      'Instituído pela Fundação Carlos Morgado (FCM), uma organização moçambicana sem fins lucrativos que visa potencializar e promover o desenvolvimento sustentável de Moçambique e organizado pela Catalogus, plataforma de promoção de autores moçambicanos, têm como com a finalidade de contribuir para a construção e projecção de novas vozes literárias em Moçambique e celebrar a contribuição de Carlos Morgado enquanto cidadão moçambicano e defensor de causas nobres.',
-  },
-  {
-    title: 'Anonimus Podcast',
-    slug: 'anonimus-podcast',
-    eyebrow: 'Conversas culturais',
-    description:
-      'Anonimus Podcast é uma série de conversas criativas e educativas sobre cultura e pessoas, com personalidades de diferentes áreas de saber, de olhar atento sobre o que acontece em nosso torno. Da literatura à tecnologia, da arquitectura à saúde, dos movimentos urbanos às transformações estéticas, meio ambiente, pessoas e humanidade.',
-  },
-  {
-    title: 'Oficinas Criativas',
-    slug: 'oficinas-criativas',
-    eyebrow: 'Formação & prática',
-    description: '',
-  },
-]
-
-const projectNames = projects.map((project) => project.title).join(' · ')
 
 const projectVisuals = [
   {
@@ -53,6 +29,14 @@ const projectVisuals = [
 ]
 
 function ProjectsPage() {
+  const { t } = useTranslation()
+  const projects = t('projects.items', { returnObjects: true }) as Array<{
+    title: string
+    slug: string
+    eyebrow: string
+    description: string
+  }>
+
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <Header />
@@ -60,9 +44,11 @@ function ProjectsPage() {
       <main>
         <section className="bg-[#1c1b1a] text-white">
           <div className="container mx-auto px-4 py-16 lg:px-15">
-            <h1 className="text-4xl font-semibold md:text-6xl">Projectos</h1>
+            <h1 className="text-4xl font-semibold md:text-6xl">
+              {t('projects.hero.title')}
+            </h1>
             <p className="mt-4 text-lg text-white/80">
-              Conheca os nossos projectos culturais
+              {t('projects.hero.subtitle')}
             </p>
           </div>
         </section>
@@ -104,7 +90,7 @@ function ProjectsPage() {
                         {project.eyebrow}
                       </p>
                       <p className="text-sm leading-relaxed text-[#4e463e] md:text-base">
-                        {project.description || 'Detalhes em breve.'}
+                        {project.description || t('projects.fallback')}
                       </p>
                     </div>
                   </article>

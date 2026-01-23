@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { supabase } from '../../lib/supabaseClient'
 import type { PostRow } from '../../types/post'
@@ -28,11 +29,11 @@ type RelatedPost = Pick<
   categories?: CategoryLink[]
 }
 
-const formatPostDate = (value: string | null) => {
+const formatPostDate = (value: string | null, locale: string) => {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleDateString('pt-PT', {
+  return date.toLocaleDateString(locale, {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -84,10 +85,12 @@ const SidebarCard = ({ title, children }: { title: string; children: ReactNode }
 )
 
 function NewsPostDetailPage() {
+  const { t, i18n } = useTranslation()
   const { slug } = Route.useParams()
+  const language = i18n.language === 'en' ? 'en' : 'pt'
 
   const postQuery = useQuery({
-    queryKey: ['news-post', slug],
+    queryKey: ['news-post', slug, language],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('posts')
@@ -108,6 +111,7 @@ function NewsPostDetailPage() {
         `,
         )
         .eq('status', 'published')
+        .eq('language', language)
         .eq('slug', slug)
         .maybeSingle()
 
@@ -156,12 +160,13 @@ function NewsPostDetailPage() {
   })
 
   const recentPostsQuery = useQuery({
-    queryKey: ['news-posts', 'recent'],
+    queryKey: ['news-posts', 'recent', language],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('posts')
         .select('id, title, slug, featured_image_url, published_at, created_at')
         .eq('status', 'published')
+        .eq('language', language)
         .order('published_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
         .limit(4)
@@ -176,7 +181,14 @@ function NewsPostDetailPage() {
   const tagIds = post?.tags?.map((tag) => tag.id) ?? []
 
   const relatedPostsQuery = useQuery({
-    queryKey: ['news-post', slug, 'related', categoryIds.join(','), tagIds.join(',')],
+    queryKey: [
+      'news-post',
+      slug,
+      'related',
+      categoryIds.join(','),
+      tagIds.join(','),
+      language,
+    ],
     enabled: Boolean(post && (categoryIds.length || tagIds.length)),
     queryFn: async () => {
       if (!post) return [] as RelatedPost[]
@@ -218,6 +230,7 @@ function NewsPostDetailPage() {
         `,
         )
         .eq('status', 'published')
+        .eq('language', language)
         .in('id', relatedList)
         .order('published_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
@@ -237,7 +250,8 @@ function NewsPostDetailPage() {
 
   const primaryCategory = post?.categories?.[0]
   const featuredImage = post?.featured_image_url
-  const dateLabel = formatPostDate(post?.published_at ?? post?.created_at ?? null)
+  const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
+  const dateLabel = formatPostDate(post?.published_at ?? post?.created_at ?? null, locale)
   const excerpt = post?.excerpt?.trim() || buildExcerpt(post?.body)
 
   return (
@@ -277,7 +291,7 @@ function NewsPostDetailPage() {
       {postQuery.isError && (
         <div className="container mx-auto px-4 py-24 lg:px-15">
           <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
-            Falha ao carregar esta noticia. Tente novamente.
+            {t('news.detail.error')}
           </div>
         </div>
       )}
@@ -285,7 +299,7 @@ function NewsPostDetailPage() {
       {!postQuery.isLoading && !postQuery.isError && !post && (
         <div className="container mx-auto px-4 py-24 lg:px-15">
           <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
-            Noticia nao encontrada.
+            {t('news.detail.notFound')}
           </div>
         </div>
       )}
@@ -342,7 +356,7 @@ function NewsPostDetailPage() {
                     />
                   ) : (
                     <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
-                      Este post ainda nao tem conteudo publicado.
+                      {t('news.detail.noContent')}
                     </div>
                   )}
 
@@ -351,7 +365,7 @@ function NewsPostDetailPage() {
                       {post.categories && post.categories.length > 0 && (
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">
-                            Categorias
+                            {t('news.detail.categories')}
                           </span>
                           {post.categories.map((category) => (
                             <a
@@ -368,7 +382,7 @@ function NewsPostDetailPage() {
                       {post.tags && post.tags.length > 0 && (
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">
-                            Tags
+                            {t('news.detail.tags')}
                           </span>
                           {post.tags.map((tag) => (
                             <a
@@ -391,7 +405,7 @@ function NewsPostDetailPage() {
                           {post.author.photo_url ? (
                             <img
                               src={post.author.photo_url}
-                              alt={post.author.name ?? 'Autor'}
+                              alt={post.author.name ?? t('news.detail.authorLabel')}
                               className="h-full w-full object-cover"
                             />
                           ) : (
@@ -402,10 +416,10 @@ function NewsPostDetailPage() {
                         </div>
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">
-                            Autor
+                            {t('news.detail.authorLabel')}
                           </p>
                           <p className="text-lg font-semibold text-gray-900">
-                            {post.author.name ?? 'Equipe'}
+                            {post.author.name ?? t('news.detail.authorFallback')}
                           </p>
                           {post.author.email && (
                             <p className="text-sm text-gray-600">{post.author.email}</p>
@@ -435,7 +449,7 @@ function NewsPostDetailPage() {
                       <section className="space-y-6">
                         <div className="flex items-center justify-between">
                           <h2 className="text-2xl font-semibold text-gray-900">
-                            Posts relacionados
+                            {t('news.detail.related')}
                           </h2>
                         </div>
                         <div className="grid gap-6 md:grid-cols-2">
@@ -448,6 +462,7 @@ function NewsPostDetailPage() {
                               : ''
                             const relatedDate = formatPostDate(
                               related.published_at ?? related.created_at,
+                              locale,
                             )
                             return (
                               <a
@@ -490,24 +505,24 @@ function NewsPostDetailPage() {
                 </article>
 
                 <aside className="space-y-8">
-                  <SidebarCard title="Pesquisar">
+                  <SidebarCard title={t('news.detail.searchTitle')}>
                     <form action="/noticias" method="get" className="flex gap-2">
                       <input
                         type="search"
                         name="q"
-                        placeholder="Buscar..."
+                        placeholder={t('news.detail.searchPlaceholder')}
                         className="w-full border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-gray-400 focus:outline-none rounded-none"
                       />
                       <button
                         type="submit"
                         className="bg-[color:var(--brand)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#a25a2c] rounded-none"
                       >
-                        Ir
+                        {t('news.detail.searchSubmit')}
                       </button>
                     </form>
                   </SidebarCard>
 
-                  <SidebarCard title="Noticias recentes">
+                  <SidebarCard title={t('news.detail.recentTitle')}>
                     {recentPostsQuery.isLoading && (
                       <div className="space-y-3">
                         {Array.from({ length: 3 }).map((_, index) => (
@@ -519,12 +534,16 @@ function NewsPostDetailPage() {
                       </div>
                     )}
                     {recentPostsQuery.isError && (
-                      <p className="text-sm text-gray-600">Falha ao carregar noticias.</p>
+                      <p className="text-sm text-gray-600">
+                        {t('news.detail.recentError')}
+                      </p>
                     )}
                     {!recentPostsQuery.isLoading &&
                       !recentPostsQuery.isError &&
                       (recentPostsQuery.data ?? []).length === 0 && (
-                        <p className="text-sm text-gray-600">Sem noticias publicadas.</p>
+                        <p className="text-sm text-gray-600">
+                          {t('news.detail.recentEmpty')}
+                        </p>
                       )}
                     {!recentPostsQuery.isLoading &&
                       !recentPostsQuery.isError &&
@@ -543,6 +562,7 @@ function NewsPostDetailPage() {
                                 <div className="text-xs uppercase tracking-[0.2em] text-gray-500">
                                   {formatPostDate(
                                     entry.published_at ?? entry.created_at,
+                                    locale,
                                   )}
                                 </div>
                               </li>
@@ -551,7 +571,7 @@ function NewsPostDetailPage() {
                       )}
                   </SidebarCard>
 
-                  <SidebarCard title="Tags">
+                  <SidebarCard title={t('news.detail.tagsTitle')}>
                     {tagsQuery.isLoading && (
                       <div className="flex flex-wrap gap-2">
                         {Array.from({ length: 6 }).map((_, index) => (
@@ -563,12 +583,16 @@ function NewsPostDetailPage() {
                       </div>
                     )}
                     {tagsQuery.isError && (
-                      <p className="text-sm text-gray-600">Falha ao carregar tags.</p>
+                      <p className="text-sm text-gray-600">
+                        {t('news.detail.tagsError')}
+                      </p>
                     )}
                     {!tagsQuery.isLoading &&
                       !tagsQuery.isError &&
                       (tagsQuery.data ?? []).length === 0 && (
-                        <p className="text-sm text-gray-600">Sem tags disponiveis.</p>
+                        <p className="text-sm text-gray-600">
+                          {t('news.detail.tagsEmpty')}
+                        </p>
                       )}
                     {!tagsQuery.isLoading &&
                       !tagsQuery.isError &&

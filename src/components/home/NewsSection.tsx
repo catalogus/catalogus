@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { ArrowUpRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabaseClient'
 import type { PostRow } from '../../types/post'
 
@@ -10,11 +11,11 @@ type NewsPost = Pick<
   categories?: { category?: { name?: string | null; slug?: string | null } | null }[] | null
 }
 
-const formatPostDate = (value: string | null) => {
+const formatPostDate = (value: string | null, locale: string) => {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleDateString('pt-PT', {
+  return date.toLocaleDateString(locale, {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -45,8 +46,10 @@ const getCategoryBadgeClass = (value: string) => {
 }
 
 export default function NewsSection() {
+  const { t, i18n } = useTranslation()
+  const language = i18n.language === 'en' ? 'en' : 'pt'
   const postsQuery = useQuery({
-    queryKey: ['home', 'latest-posts'],
+    queryKey: ['home', 'latest-posts', language],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('posts')
@@ -62,6 +65,7 @@ export default function NewsSection() {
         `,
         )
         .eq('status', 'published')
+        .eq('language', language)
         .order('published_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
         .limit(4)
@@ -77,17 +81,17 @@ export default function NewsSection() {
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-[0.35em] text-white/60">
-              Fique a par
+              {t('home.news.label')}
             </p>
             <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-              Últimas Notícias
+              {t('home.news.title')}
             </h2>
           </div>
           <a
             href="/noticias"
             className="inline-flex items-center gap-3 border border-white/60 px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-colors hover:border-white hover:text-white rounded-none"
           >
-            Ver todas as atualizações
+            {t('home.news.cta')}
             <ArrowUpRight className="h-4 w-4" />
           </a>
         </div>
@@ -106,7 +110,7 @@ export default function NewsSection() {
 
           {postsQuery.isError && (
             <div className="border border-white/10 bg-white/5 p-6 text-sm text-white/70 rounded-none">
-              Falha ao carregar as notícias.
+              {t('home.news.error')}
             </div>
           )}
 
@@ -116,6 +120,7 @@ export default function NewsSection() {
               const href = post.slug ? `/noticias/${post.slug}` : '/noticias'
               const dateLabel = formatPostDate(
                 post.published_at ?? post.created_at,
+                i18n.language === 'en' ? 'en-US' : 'pt-PT',
               )
               const category = post.categories?.[0]?.category
               const categoryLabel = category?.name
@@ -165,7 +170,7 @@ export default function NewsSection() {
             !postsQuery.isError &&
             (postsQuery.data?.length ?? 0) === 0 && (
               <div className="border border-white/10 bg-white/5 p-6 text-sm text-white/70 rounded-none">
-                Sem noticias publicadas.
+                {t('home.news.empty')}
               </div>
             )}
         </div>

@@ -83,7 +83,7 @@ function SignInPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-black focus:outline-none"
+            className="w-full border border-gray-300 px-3 py-3 text-sm focus:border-black focus:outline-none"
             placeholder="voce@exemplo.com"
             />
           </div>
@@ -97,7 +97,7 @@ function SignInPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-black focus:outline-none"
+              className="w-full border border-gray-300 px-3 py-3 text-sm focus:border-black focus:outline-none"
               placeholder="••••••••"
             />
           </div>
@@ -111,7 +111,7 @@ function SignInPage() {
           <button
             type="submit"
             disabled={loading || submitting}
-            className="w-full rounded-xl bg-black text-white py-3 text-sm font-semibold hover:bg-gray-900 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full bg-black text-white py-3 text-sm font-semibold hover:bg-gray-900 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {submitting ? 'A entrar...' : 'Entrar'}
           </button>

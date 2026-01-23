@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link2, ShoppingCart } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { supabase } from '../../lib/supabaseClient'
 
@@ -16,9 +17,9 @@ type FeaturedBook = {
 
 const MAX_DESCRIPTION_LENGTH = 350
 
-const formatPrice = (value: number | null) => {
+const formatPrice = (value: number | null, locale: string) => {
   if (value === null || Number.isNaN(value)) return ''
-  return new Intl.NumberFormat('pt-MZ', {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'MZN',
     maximumFractionDigits: 0,
@@ -40,25 +41,6 @@ const coverUrlFor = (book: FeaturedBook) => {
 }
 
 const bookLinkFor = (book: FeaturedBook) => `/livro/${book.id}`
-
-const addToCart = (book: FeaturedBook) => {
-  if (typeof window === 'undefined') return
-  try {
-    const key = 'catalogus-cart'
-    const raw = window.localStorage.getItem(key)
-    const items = raw ? (JSON.parse(raw) as Array<{ id: string; quantity: number }>) : []
-    const existing = items.find((item) => item.id === book.id)
-    if (existing) {
-      existing.quantity += 1
-    } else {
-      items.push({ id: book.id, quantity: 1 })
-    }
-    window.localStorage.setItem(key, JSON.stringify(items))
-  } catch {
-    // Ignore storage failures and still show feedback.
-  }
-  toast.success('Adicionado ao carrinho')
-}
 
 const copyText = async (value: string) => {
   if (
@@ -90,22 +72,8 @@ const copyText = async (value: string) => {
   return success
 }
 
-const copyBookLink = async (book: FeaturedBook) => {
-  if (typeof window === 'undefined') return
-  const href = new URL(bookLinkFor(book), window.location.origin).toString()
-  try {
-    const copied = await copyText(href)
-    if (!copied) {
-      toast.error('Nao foi possivel copiar o link')
-      return
-    }
-    toast.success('Link copiado')
-  } catch {
-    toast.error('Nao foi possivel copiar o link')
-  }
-}
-
 export default function FeaturedBooksSection() {
+  const { t, i18n } = useTranslation()
   const booksQuery = useQuery({
     queryKey: ['home', 'featured-books'],
     queryFn: async () => {
@@ -128,11 +96,11 @@ export default function FeaturedBooksSection() {
       <div className="container mx-auto px-4 py-24 lg:px-15">
         <div className="space-y-4">
           <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-            Loja
+            {t('home.featuredBooks.label')}
           </p>
           <div>
             <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-              Livros em destaque
+              {t('home.featuredBooks.title')}
             </h2>
             <div className="mt-3 h-1 w-12 bg-[color:var(--brand)]" />
           </div>
@@ -153,7 +121,7 @@ export default function FeaturedBooksSection() {
 
           {booksQuery.isError && (
             <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
-              Falha ao carregar os livros em destaque.
+              {t('home.featuredBooks.error')}
             </div>
           )}
 
@@ -164,8 +132,45 @@ export default function FeaturedBooksSection() {
               const description = book.description || book.seo_description || ''
               const summary = description
                 ? truncateText(description, MAX_DESCRIPTION_LENGTH)
-                : 'Descricao indisponivel.'
-              const priceLabel = formatPrice(book.price_mzn)
+                : t('home.featuredBooks.descriptionFallback')
+              const priceLabel = formatPrice(
+                book.price_mzn,
+                i18n.language === 'en' ? 'en-US' : 'pt-MZ',
+              )
+              const handleAddToCart = () => {
+                if (typeof window === 'undefined') return
+                try {
+                  const key = 'catalogus-cart'
+                  const raw = window.localStorage.getItem(key)
+                  const items = raw
+                    ? (JSON.parse(raw) as Array<{ id: string; quantity: number }>)
+                    : []
+                  const existing = items.find((item) => item.id === book.id)
+                  if (existing) {
+                    existing.quantity += 1
+                  } else {
+                    items.push({ id: book.id, quantity: 1 })
+                  }
+                  window.localStorage.setItem(key, JSON.stringify(items))
+                } catch {
+                  // Ignore storage failures and still show feedback.
+                }
+                toast.success(t('home.featuredBooks.addSuccess'))
+              }
+              const handleCopyBookLink = async () => {
+                if (typeof window === 'undefined') return
+                const href = new URL(bookLinkFor(book), window.location.origin).toString()
+                try {
+                  const copied = await copyText(href)
+                  if (!copied) {
+                    toast.error(t('home.featuredBooks.copyError'))
+                    return
+                  }
+                  toast.success(t('home.featuredBooks.copySuccess'))
+                } catch {
+                  toast.error(t('home.featuredBooks.copyError'))
+                }
+              }
               return (
                 <div key={book.id} className="group space-y-4">
                   <div className="relative bg-[#e6e0db] rounded-none">
@@ -179,24 +184,24 @@ export default function FeaturedBooksSection() {
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-[0.3em] text-gray-400">
-                          Sem capa
+                          {t('home.featuredBooks.noCover')}
                         </div>
                       )}
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
                       <button
                         type="button"
-                        onClick={() => addToCart(book)}
+                        onClick={handleAddToCart}
                         className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-white transition-transform hover:scale-105"
-                        aria-label="Adicionar ao carrinho"
+                        aria-label={t('home.featuredBooks.addToCart')}
                       >
                         <ShoppingCart className="h-5 w-5" />
                       </button>
                       <button
                         type="button"
-                        onClick={() => copyBookLink(book)}
+                        onClick={handleCopyBookLink}
                         className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-white transition-transform hover:scale-105"
-                        aria-label="Copiar link do livro"
+                        aria-label={t('home.featuredBooks.copyLink')}
                       >
                         <Link2 className="h-5 w-5" />
                       </button>
@@ -227,7 +232,7 @@ export default function FeaturedBooksSection() {
             !booksQuery.isError &&
             (booksQuery.data?.length ?? 0) === 0 && (
               <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
-                Sem livros em destaque.
+                {t('home.featuredBooks.empty')}
               </div>
             )}
         </div>

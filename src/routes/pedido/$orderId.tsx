@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { initiateMpesaPayment } from '../../lib/mpesa'
-import { formatPrice, getOrderStatusColor, getOrderStatusLabel } from '../../lib/shopHelpers'
+import { formatPrice, getOrderStatusColor } from '../../lib/shopHelpers'
 import { supabase } from '../../lib/supabaseClient'
 
 type OrderItem = {
@@ -44,6 +45,8 @@ export const Route = createFileRoute('/pedido/$orderId')({
 
 function OrderConfirmationPage() {
   const { orderId } = Route.useParams()
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
 
   const orderQuery = useQuery({
     queryKey: ['order', orderId],
@@ -79,7 +82,9 @@ function OrderConfirmationPage() {
 
   const order = orderQuery.data
   const orderNumber = order?.order_number ?? ''
-  const statusLabel = order ? getOrderStatusLabel(order.status) : ''
+  const statusLabel = order
+    ? t(`orders.status.${order.status}`, { defaultValue: order.status })
+    : ''
   const statusColor = order ? getOrderStatusColor(order.status) : ''
 
   const mpesaQuery = useQuery({
@@ -107,7 +112,7 @@ function OrderConfirmationPage() {
       {orderQuery.isError && (
         <div className="container mx-auto px-4 py-24 lg:px-15">
           <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
-            Falha ao carregar o pedido. Tente novamente.
+            {t('orders.detail.error')}
           </div>
         </div>
       )}
@@ -115,7 +120,7 @@ function OrderConfirmationPage() {
       {!orderQuery.isLoading && !orderQuery.isError && !order && (
         <div className="container mx-auto px-4 py-24 lg:px-15">
           <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600">
-            Pedido nao encontrado.
+            {t('orders.detail.notFound')}
           </div>
         </div>
       )}
@@ -126,7 +131,7 @@ function OrderConfirmationPage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-xs uppercase tracking-wider text-gray-500">
-                  Pedido confirmado
+                  {t('orders.detail.confirmed')}
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold md:text-3xl">
                   {orderNumber}
@@ -142,13 +147,13 @@ function OrderConfirmationPage() {
             <div className="grid gap-4 text-sm text-gray-700 md:grid-cols-2">
               <div>
                 <span className="block text-xs uppercase tracking-wider text-gray-500">
-                  Cliente
+                  {t('orders.detail.customer')}
                 </span>
                 <span>{order.customer_name}</span>
               </div>
               <div>
                 <span className="block text-xs uppercase tracking-wider text-gray-500">
-                  Contacto
+                  {t('orders.detail.contact')}
                 </span>
                 <span>
                   {order.customer_email} | {order.customer_phone}
@@ -157,7 +162,9 @@ function OrderConfirmationPage() {
             </div>
 
             <div className="border-t border-gray-200 pt-4">
-              <h2 className="text-lg font-semibold text-gray-900">Itens</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {t('orders.detail.items')}
+              </h2>
               <div className="mt-4 space-y-4">
                 {(order.items ?? []).map((item) => (
                   <div key={item.id} className="flex items-start gap-3">
@@ -165,7 +172,7 @@ function OrderConfirmationPage() {
                       {resolveCoverUrl(item) ? (
                         <img
                           src={resolveCoverUrl(item) ?? ''}
-                          alt={item.book?.title ?? 'Livro'}
+                          alt={item.book?.title ?? t('orders.detail.bookFallback')}
                           className="h-full w-full object-cover"
                         />
                       ) : (
@@ -176,14 +183,14 @@ function OrderConfirmationPage() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-gray-900">
-                        {item.book?.title ?? 'Livro'}
+                        {item.book?.title ?? t('orders.detail.bookFallback')}
                       </p>
                       <p className="text-xs text-gray-600">
-                        {item.quantity} x {formatPrice(item.price)}
+                        {item.quantity} x {formatPrice(item.price, locale)}
                       </p>
                     </div>
                     <span className="text-sm font-semibold text-gray-900">
-                      {formatPrice(item.price * item.quantity)}
+                      {formatPrice(item.price * item.quantity, locale)}
                     </span>
                   </div>
                 ))}
@@ -191,19 +198,19 @@ function OrderConfirmationPage() {
             </div>
 
             <div className="flex items-center justify-between border-t border-gray-200 pt-4 text-sm text-gray-700">
-              <span>Total</span>
+              <span>{t('orders.detail.total')}</span>
               <span className="text-lg font-semibold text-gray-900">
-                {formatPrice(order.total)}
+                {formatPrice(order.total, locale)}
               </span>
             </div>
 
             <div className="border-t border-gray-200 pt-4 text-sm text-gray-700">
               <h3 className="text-xs uppercase tracking-wider text-gray-500">
-                Pagamento M-Pesa
+                {t('orders.detail.paymentTitle')}
               </h3>
               <p className="mt-2">
                 {mpesaQuery.data?.instructions ??
-                  'As instrucoes de pagamento estarao disponiveis em breve.'}
+                  t('orders.detail.paymentFallback')}
               </p>
             </div>
 
@@ -213,13 +220,13 @@ function OrderConfirmationPage() {
                 onClick={() => window.print()}
                 className="border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400"
               >
-                Imprimir pedido
+                {t('orders.detail.print')}
               </button>
               <Link
                 to="/loja"
                 className="bg-[color:var(--brand)] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white hover:bg-[#a25a2c]"
               >
-                Voltar a loja
+                {t('orders.detail.backToShop')}
               </Link>
             </div>
           </div>
