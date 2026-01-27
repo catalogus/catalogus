@@ -627,6 +627,7 @@ const pt = {
     galleryAlt: {
       cidade: 'Cidade nas Mãos — fotografia {{index}}',
       cidadeVideo: 'Cidade nas Mãos — vídeo',
+      encontro: 'Encontro com livro — fotografia {{index}}',
       suhura: 'Ninguém Matou Suhura — fotografia {{index}}',
     },
     gallery: {
@@ -678,6 +679,7 @@ const pt = {
         title: 'Encontro com livro',
         description: 'Descrição, ano, fotografias/vídeo.',
         meta: ['Em preparação'],
+        gallery: 'encontro',
       },
     ],
   },

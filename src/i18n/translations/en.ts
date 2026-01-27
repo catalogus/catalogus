@@ -627,6 +627,7 @@ const en = {
     galleryAlt: {
       cidade: 'City in Hands — photo {{index}}',
       cidadeVideo: 'City in Hands — video',
+      encontro: 'Meeting with the Book — photo {{index}}',
       suhura: 'Nobody Killed Suhura — photo {{index}}',
     },
     gallery: {
@@ -678,6 +679,7 @@ const en = {
         title: 'Meeting with the Book',
         description: 'Description, year, photos/video.',
         meta: ['In preparation'],
+        gallery: 'encontro',
       },
     ],
   },

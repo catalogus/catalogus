@@ -36,7 +36,7 @@ type ProjectTranslation = {
   title: string
   description: string
   meta: string[]
-  gallery?: 'cidade' | 'suhura'
+  gallery?: 'cidade' | 'suhura' | 'encontro'
 }
 
 const cidadeGalleryFiles = [
@@ -58,6 +58,18 @@ const suhuraGalleryFiles = [
   'P1100274.png',
   'P1100295.png',
   'P1100295n.png',
+]
+
+const encontroGalleryFiles = [
+  'ENCONTRO COM LIVRO_23 DE MARCO10.PNG',
+  'ENCONTRO COM LIVRO_23 DE MARCO11.PNG',
+  'ENCONTRO COM LIVRO_23 DE MARCO14.PNG',
+  'ENCONTRO COM LIVRO_23 DE MARCO19.PNG',
+  'ENCONTRO COM LIVRO_23 DE MARCO2.PNG',
+  'ENCONTRO COM LIVRO_23 DE MARCO22.PNG',
+  'ENCONTRO COM LIVRO_23 DE MARCO6.PNG',
+  'ENCONTRO COM LIVRO_23 DE MARCO8.PNG',
+  'ENCONTRO COM LIVRO_23 DE MARCO9.PNG',
 ]
 
 const tileLayouts = [
@@ -124,6 +136,15 @@ function ProducaoPage() {
       })),
     [i18n.language, t],
   )
+  const encontroGallery = useMemo(
+    () =>
+      encontroGalleryFiles.map((file, index) => ({
+        type: 'image',
+        src: encodeURI(`/encontro_com_livro/${file}`),
+        alt: t('production.galleryAlt.encontro', { index: index + 1 }),
+      })),
+    [i18n.language, t],
+  )
   const projects = useMemo(() => {
     const items = t('production.projects', {
       returnObjects: true,
@@ -135,9 +156,11 @@ function ProducaoPage() {
           ? cidadeGallery
           : project.gallery === 'suhura'
             ? suhuraGallery
-            : undefined,
+            : project.gallery === 'encontro'
+              ? encontroGallery
+              : undefined,
     }))
-  }, [cidadeGallery, suhuraGallery, t])
+  }, [cidadeGallery, encontroGallery, suhuraGallery, t])
   const [lightbox, setLightbox] = useState<LightboxState | null>(null)
 
   const activeItem = useMemo(() => {
