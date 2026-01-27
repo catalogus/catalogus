@@ -40,36 +40,36 @@ type ProjectTranslation = {
 }
 
 const cidadeGalleryFiles = [
-  'PAP_6350.jpg',
-  'PAP_6377.jpg',
-  '_PAP5469.jpg',
-  '_PAP5483.jpg',
-  '_PAP5494.jpg',
-  '_PAP5500.jpg',
-  '_PAP5539.jpg',
-  '_PAP5564.jpg',
-  '_PAP5580.jpg',
-  '_PAP5672.jpg',
-  '_PAP5746.jpg',
+  'PAP_6350.webp',
+  'PAP_6377.webp',
+  '_PAP5469.webp',
+  '_PAP5483.webp',
+  '_PAP5494.webp',
+  '_PAP5500.webp',
+  '_PAP5539.webp',
+  '_PAP5564.webp',
+  '_PAP5580.webp',
+  '_PAP5672.webp',
+  '_PAP5746.webp',
 ]
 
 const suhuraGalleryFiles = [
-  'P1100250.png',
-  'P1100274.png',
-  'P1100295.png',
-  'P1100295n.png',
+  'P1100250.webp',
+  'P1100274.webp',
+  'P1100295.webp',
+  'P1100295n.webp',
 ]
 
 const encontroGalleryFiles = [
-  'ENCONTRO COM LIVRO_23 DE MARCO10.PNG',
-  'ENCONTRO COM LIVRO_23 DE MARCO11.PNG',
-  'ENCONTRO COM LIVRO_23 DE MARCO14.PNG',
-  'ENCONTRO COM LIVRO_23 DE MARCO19.PNG',
-  'ENCONTRO COM LIVRO_23 DE MARCO2.PNG',
-  'ENCONTRO COM LIVRO_23 DE MARCO22.PNG',
-  'ENCONTRO COM LIVRO_23 DE MARCO6.PNG',
-  'ENCONTRO COM LIVRO_23 DE MARCO8.PNG',
-  'ENCONTRO COM LIVRO_23 DE MARCO9.PNG',
+  'ENCONTRO COM LIVRO_23 DE MARCO10.webp',
+  'ENCONTRO COM LIVRO_23 DE MARCO11.webp',
+  'ENCONTRO COM LIVRO_23 DE MARCO14.webp',
+  'ENCONTRO COM LIVRO_23 DE MARCO19.webp',
+  'ENCONTRO COM LIVRO_23 DE MARCO2.webp',
+  'ENCONTRO COM LIVRO_23 DE MARCO22.webp',
+  'ENCONTRO COM LIVRO_23 DE MARCO6.webp',
+  'ENCONTRO COM LIVRO_23 DE MARCO8.webp',
+  'ENCONTRO COM LIVRO_23 DE MARCO9.webp',
 ]
 
 const tileLayouts = [
