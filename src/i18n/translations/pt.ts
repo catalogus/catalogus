@@ -514,6 +514,15 @@ const pt = {
         },
       ],
     },
+    gallery: {
+      label: 'Galeria',
+      title: 'Momentos do nosso trabalho',
+      images: {
+        team: 'Equipa da Catalogus e momentos com a comunidade',
+        editorial: 'Sessão de consultoria e planeamento editorial',
+        workshops: 'Oficinas criativas e eventos culturais',
+      },
+    },
     services: {
       title: 'Serviços',
       items: [
@@ -617,12 +626,13 @@ const pt = {
     },
     galleryAlt: {
       cidade: 'Cidade nas Mãos — fotografia {{index}}',
+      cidadeVideo: 'Cidade nas Mãos — vídeo',
       suhura: 'Ninguém Matou Suhura — fotografia {{index}}',
     },
     gallery: {
       open: 'Abrir galeria de {{title}}',
       comingSoon: 'Em breve',
-      images: '{{count}} imagens',
+      images: '{{count}} conteúdos',
     },
     lightbox: {
       close: 'Fechar',

@@ -83,14 +83,13 @@ function AuthorSignUpPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+      <div className="max-w-md w-full bg-white border border-gray-200 p-8">
         <div className="mb-4 flex justify-center">
           <Link
             to="/"
             className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-gray-900"
           >
             <img src="/logo.svg" alt="Catalogus" className="h-4 w-auto" />
-            Pagina inicial
           </Link>
         </div>
         <div className="text-center mb-8">
@@ -115,6 +114,7 @@ function AuthorSignUpPage() {
               minLength={2}
               maxLength={100}
               placeholder="Nome Apelido"
+              className="rounded-none"
             />
           </div>
 
@@ -130,39 +130,44 @@ function AuthorSignUpPage() {
               onChange={(e) => handleChange('email', e.target.value)}
               required
               placeholder="autor@exemplo.com"
+              className="rounded-none"
             />
           </div>
 
-          {/* Password */}
-          <div className="space-y-2">
-            <Label htmlFor="password">
-              Senha <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => handleChange('password', e.target.value)}
-              required
-              minLength={8}
-              placeholder="Mínimo 8 caracteres"
-            />
-          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Password */}
+            <div className="space-y-2">
+              <Label htmlFor="password">
+                Senha <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => handleChange('password', e.target.value)}
+                required
+                minLength={8}
+                placeholder="Mínimo 8 caracteres"
+                className="rounded-none"
+              />
+            </div>
 
-          {/* Confirm Password */}
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">
-              Confirmar senha <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={(e) => handleChange('confirmPassword', e.target.value)}
-              required
-              minLength={8}
-              placeholder="Digite novamente a senha"
-            />
+            {/* Confirm Password */}
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">
+                Confirmar senha <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                required
+                minLength={8}
+                placeholder="Digite novamente a senha"
+                className="rounded-none"
+              />
+            </div>
           </div>
 
           {/* Phone */}
@@ -174,6 +179,7 @@ function AuthorSignUpPage() {
               value={formData.phone}
               onChange={(e) => handleChange('phone', e.target.value)}
               placeholder="+258 84 123 4567"
+              className="rounded-none"
             />
           </div>
 
@@ -187,7 +193,7 @@ function AuthorSignUpPage() {
               maxLength={500}
               rows={3}
               placeholder="Fale sobre si (máximo 500 caracteres)"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+              className="w-full border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
             />
             <p className="text-xs text-gray-500">
               {formData.bio.length}/500 caracteres
@@ -202,7 +208,7 @@ function AuthorSignUpPage() {
                 <img
                   src={photoPreview}
                   alt="Preview"
-                  className="h-24 w-24 rounded-lg object-cover border border-gray-200"
+                  className="h-24 w-24 object-cover border border-gray-200"
                 />
               </div>
             )}
@@ -211,6 +217,7 @@ function AuthorSignUpPage() {
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={handleFileChange}
+              className="rounded-none"
             />
             <p className="text-xs text-gray-500">
               Máximo 5MB. Formatos suportados: JPG, PNG, WEBP, GIF
@@ -218,7 +225,7 @@ function AuthorSignUpPage() {
           </div>
 
           {/* Submit */}
-          <Button type="submit" disabled={submitting} className="w-full">
+          <Button type="submit" disabled={submitting} className="w-full rounded-none">
             {submitting ? 'A criar conta...' : 'Criar conta'}
           </Button>
         </form>

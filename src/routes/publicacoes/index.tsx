@@ -66,11 +66,11 @@ function PublicationsListingPage() {
         <div className="container mx-auto px-4 lg:px-15">
           {/* Loading State */}
           {publicationsQuery.isLoading && (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 6 }).map((_, index) => (
                 <div
                   key={`skeleton-${index}`}
-                  className="h-[380px] animate-pulse rounded-lg border border-gray-200 bg-gray-100"
+                  className="h-[320px] animate-pulse rounded-lg border border-gray-200 bg-gray-100"
                 />
               ))}
             </div>
@@ -129,7 +129,7 @@ function PublicationsListingPage() {
                   {t('publications.listing.all', 'Todas as Publicações')}
                 </h2>
               )}
-              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {regularPublications.map(publication => (
                   <PublicationCard key={publication.id} publication={publication} />
                 ))}
@@ -170,15 +170,15 @@ function PublicationCard({
     >
       {/* Cover Image */}
       <div
-        className={`relative bg-gray-100 ${
+        className={`relative bg-gray-50 ${
           featured ? 'aspect-[3/4] md:w-1/2' : 'aspect-[3/4]'
-        }`}
+        }`} 
       >
         {publication.cover_url ? (
           <img
             src={publication.cover_url}
             alt={publication.title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-contain"
             loading="lazy"
           />
         ) : (
@@ -215,8 +215,10 @@ function PublicationCard({
       </div>
 
       {/* Content */}
-      <div className={`flex flex-1 flex-col p-6 ${featured ? 'md:justify-center' : ''}`}>
-        <h3 className={`font-semibold leading-snug ${featured ? 'text-2xl' : 'text-lg'}`}>
+      <div
+        className={`flex flex-1 flex-col ${featured ? 'p-6 md:justify-center' : 'p-4'}`}
+      >
+        <h3 className={`font-semibold leading-snug ${featured ? 'text-2xl' : 'text-base'}`}>
           {publication.title}
         </h3>
 

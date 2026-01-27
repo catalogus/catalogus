@@ -514,6 +514,15 @@ const en = {
         },
       ],
     },
+    gallery: {
+      label: 'Gallery',
+      title: 'Scenes from our work',
+      images: {
+        team: 'Catalogus team and community moments',
+        editorial: 'Editorial consulting and planning session',
+        workshops: 'Creative workshops and cultural events',
+      },
+    },
     services: {
       title: 'Services',
       items: [
@@ -617,12 +626,13 @@ const en = {
     },
     galleryAlt: {
       cidade: 'City in Hands — photo {{index}}',
+      cidadeVideo: 'City in Hands — video',
       suhura: 'Nobody Killed Suhura — photo {{index}}',
     },
     gallery: {
       open: 'Open gallery for {{title}}',
       comingSoon: 'Coming soon',
-      images: '{{count}} images',
+      images: '{{count}} media',
     },
     lightbox: {
       close: 'Close',

@@ -10,16 +10,25 @@ export const Route = createFileRoute('/producao/')({
 })
 
 type GalleryImage = {
+  type: 'image'
   src: string
   alt: string
 }
+
+type GalleryVideo = {
+  type: 'video'
+  src: string
+  alt: string
+}
+
+type GalleryItem = GalleryImage | GalleryVideo
 
 type Project = {
   id: string
   title: string
   description: string
   meta: string[]
-  gallery?: GalleryImage[]
+  gallery?: GalleryItem[]
 }
 
 type ProjectTranslation = {
@@ -80,24 +89,36 @@ const tagPalette = [
 ]
 
 type LightboxState = {
-  images: GalleryImage[]
+  items: GalleryItem[]
   index: number
   title: string
 }
 
 function ProducaoPage() {
   const { t, i18n } = useTranslation()
+  const cidadeVideoId = 'H0jPe_QwvpY'
+  const cidadeVideoBackgroundSrc = `https://www.youtube-nocookie.com/embed/${cidadeVideoId}?autoplay=1&mute=1&loop=1&playlist=${cidadeVideoId}&controls=0&modestbranding=1&playsinline=1&rel=0`
+  const cidadeVideoLightboxSrc = `https://www.youtube-nocookie.com/embed/${cidadeVideoId}?autoplay=1&mute=1&loop=1&playlist=${cidadeVideoId}&controls=1&modestbranding=1&playsinline=1&rel=0`
   const cidadeGallery = useMemo(
     () =>
-      cidadeGalleryFiles.map((file, index) => ({
-        src: `/cidade_nas_maos/${file}`,
-        alt: t('production.galleryAlt.cidade', { index: index + 1 }),
-      })),
-    [i18n.language, t],
+      [
+        {
+          type: 'video',
+          src: cidadeVideoLightboxSrc,
+          alt: t('production.galleryAlt.cidadeVideo'),
+        },
+        ...cidadeGalleryFiles.map((file, index) => ({
+          type: 'image',
+          src: `/cidade_nas_maos/${file}`,
+          alt: t('production.galleryAlt.cidade', { index: index + 1 }),
+        })),
+      ],
+    [cidadeVideoLightboxSrc, i18n.language, t],
   )
   const suhuraGallery = useMemo(
     () =>
       suhuraGalleryFiles.map((file, index) => ({
+        type: 'image',
         src: `/ninguem_matou_suhura/${file}`,
         alt: t('production.galleryAlt.suhura', { index: index + 1 }),
       })),
@@ -119,14 +140,14 @@ function ProducaoPage() {
   }, [cidadeGallery, suhuraGallery, t])
   const [lightbox, setLightbox] = useState<LightboxState | null>(null)
 
-  const activeImage = useMemo(() => {
+  const activeItem = useMemo(() => {
     if (!lightbox) return null
-    return lightbox.images[lightbox.index]
+    return lightbox.items[lightbox.index]
   }, [lightbox])
 
   const openLightbox = useCallback(
-    (images: GalleryImage[], index: number, title: string) => {
-      setLightbox({ images, index, title })
+    (items: GalleryItem[], index: number, title: string) => {
+      setLightbox({ items, index, title })
     },
     [],
   )
@@ -138,7 +159,7 @@ function ProducaoPage() {
   const goNext = useCallback(() => {
     setLightbox((current) => {
       if (!current) return current
-      const nextIndex = (current.index + 1) % current.images.length
+      const nextIndex = (current.index + 1) % current.items.length
       return { ...current, index: nextIndex }
     })
   }, [])
@@ -147,7 +168,7 @@ function ProducaoPage() {
     setLightbox((current) => {
       if (!current) return current
       const nextIndex =
-        (current.index - 1 + current.images.length) % current.images.length
+        (current.index - 1 + current.items.length) % current.items.length
       return { ...current, index: nextIndex }
     })
   }, [])
@@ -177,7 +198,17 @@ function ProducaoPage() {
       <Header />
 
       <main>
-        <section className="relative overflow-hidden bg-[#151311]   text-white">
+        <section className="relative overflow-hidden bg-[#151311] text-white">
+          <div className="absolute inset-0" aria-hidden="true">
+            <iframe
+              title={t('production.galleryAlt.cidadeVideo')}
+              src={cidadeVideoBackgroundSrc}
+              className="pointer-events-none absolute left-1/2 top-1/2 h-[56.25vw] w-[100vw] min-h-full min-w-[177.78vh] -translate-x-1/2 -translate-y-1/2"
+              allow="autoplay; fullscreen; picture-in-picture"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#151311]/85 via-[#151311]/70 to-[#151311]/90" />
+          </div>
           <div className="absolute -top-24 right-0 h-64 w-64 rounded-full bg-[#c07238]/30 blur-3xl" />
           <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-[#f3e2cf]/10 blur-3xl" />
           <div className="container relative mx-auto px-4 py-24 lg:px-15">
@@ -215,7 +246,8 @@ function ProducaoPage() {
               {projects.map((project, index) => {
                 const layout = tileLayouts[index % tileLayouts.length]
                 const size = layout.size
-                const coverImage = project.gallery?.[0] ?? null
+                const coverImage =
+                  project.gallery?.find((item) => item.type === 'image') ?? null
                 const hasGallery = (project.gallery?.length ?? 0) > 0
                 const gradient = tileGradients[index % tileGradients.length]
                 const titleClass =
@@ -243,7 +275,18 @@ function ProducaoPage() {
                     }`}
                     aria-label={t('production.gallery.open', { title: project.title })}
                   >
-                    {coverImage ? (
+                    {project.id === 'cidade-nas-maos' ? (
+                      <div className="absolute inset-0">
+                        <iframe
+                          title={t('production.galleryAlt.cidadeVideo')}
+                          src={cidadeVideoBackgroundSrc}
+                          className="pointer-events-none absolute left-1/2 top-1/2 h-[140%] w-[140%] -translate-x-1/2 -translate-y-1/2"
+                          allow="autoplay; fullscreen; picture-in-picture"
+                          aria-hidden="true"
+                          loading="lazy"
+                        />
+                      </div>
+                    ) : coverImage ? (
                       <img
                         src={coverImage.src}
                         alt={coverImage.alt}
@@ -303,7 +346,7 @@ function ProducaoPage() {
       </main>
       <Footer />
 
-      {lightbox && activeImage && (
+      {lightbox && activeItem && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 py-6"
           role="dialog"
@@ -324,13 +367,26 @@ function ProducaoPage() {
             </button>
 
             <div className="relative overflow-hidden bg-black">
-              <img
-                src={activeImage.src}
-                alt={activeImage.alt}
-                className="h-[70vh] w-full object-contain"
-              />
+              {activeItem.type === 'video' ? (
+                <div className="relative h-[70vh] w-full">
+                  <iframe
+                    key={activeItem.src}
+                    title={activeItem.alt}
+                    src={activeItem.src}
+                    className="absolute inset-0 h-full w-full"
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <img
+                  src={activeItem.src}
+                  alt={activeItem.alt}
+                  className="h-[70vh] w-full object-contain"
+                />
+              )}
 
-              {lightbox.images.length > 1 && (
+              {lightbox.items.length > 1 && (
                 <>
                   <button
                     type="button"
@@ -355,7 +411,7 @@ function ProducaoPage() {
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs uppercase tracking-[0.35em] text-white/70">
               <span>{lightbox.title}</span>
               <span>
-                {lightbox.index + 1} / {lightbox.images.length}
+                {lightbox.index + 1} / {lightbox.items.length}
               </span>
             </div>
           </div>
