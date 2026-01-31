@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { DashboardLayout } from '../../components/admin/layout'
-import { AdminGuard } from '../../components/admin/AdminGuard'
+import { withAdminGuard } from '../../components/admin/withAdminGuard'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthProvider'
 import { Button } from '../../components/ui/button'
@@ -19,7 +19,7 @@ import { CheckCircle2, XCircle } from 'lucide-react'
 import type { AuthorRow, ClaimStatus } from '../../types/author'
 
 export const Route = createFileRoute('/admin/author-claims')({
-  component: AdminAuthorClaimsPage,
+  component: withAdminGuard(AdminAuthorClaimsPage),
 })
 
 type ClaimRow = AuthorRow & {
@@ -177,9 +177,8 @@ function AdminAuthorClaimsPage() {
   }
 
   return (
-    <AdminGuard>
-      <DashboardLayout>
-        <div className="space-y-6">
+    <DashboardLayout>
+      <div className="space-y-6">
           {/* Header */}
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Author Claims</h1>
@@ -347,8 +346,7 @@ function AdminAuthorClaimsPage() {
               </Table>
             )}
           </div>
-        </div>
-      </DashboardLayout>
-    </AdminGuard>
+      </div>
+    </DashboardLayout>
   )
 }

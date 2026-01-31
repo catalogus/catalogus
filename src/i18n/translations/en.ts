@@ -635,6 +635,7 @@ const en = {
       cidadeVideo: 'City in Hands — video',
       encontro: 'Meeting with the Book — photo {{index}}',
       suhura: 'Nobody Killed Suhura — photo {{index}}',
+      como: 'Like a Drop of Sun — photo {{index}}',
     },
     gallery: {
       open: 'Open gallery for {{title}}',
@@ -672,6 +673,7 @@ const en = {
         title: 'Like a Drop of Sun',
         description: 'Description, year, photos/video.',
         meta: ['In preparation'],
+        gallery: 'como',
       },
       {
         id: 'coloquio-ninguem-matou-suhura',
@@ -688,6 +690,15 @@ const en = {
         gallery: 'encontro',
       },
     ],
+  },
+  admin: {
+    posts: {
+      filters: {
+        languageAll: 'All languages',
+        languagePortuguese: 'Portuguese',
+        languageEnglish: 'English',
+      },
+    },
   },
 }
 

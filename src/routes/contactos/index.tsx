@@ -13,7 +13,7 @@ export const Route = createFileRoute('/contactos/')({
 
 // Maputo coordinates
 const MAPS_EMBED_URL =
-  'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3587.123456789!2d32.5732!3d-25.9692!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjXCsDU4JzA5LjEiUyAzMsKwMzQnMjMuNSJF!5e0!3m2!1sen!2smz!4v1234567890'
+  'https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d448.38230452918225!2d32.5733279!3d-25.9661238!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1ee69b3e2e0a2e25%3A0xc67761a4a41f64c9!2sDEZAINE!5e0!3m2!1sen!2smz!4v1769515561453!5m2!1sen!2smz'
 
 function ContactosPage() {
   const { t } = useTranslation()

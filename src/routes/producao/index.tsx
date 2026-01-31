@@ -36,7 +36,7 @@ type ProjectTranslation = {
   title: string
   description: string
   meta: string[]
-  gallery?: 'cidade' | 'suhura' | 'encontro'
+  gallery?: 'cidade' | 'suhura' | 'encontro' | 'como'
 }
 
 const cidadeGalleryFiles = [
@@ -70,6 +70,38 @@ const encontroGalleryFiles = [
   'ENCONTRO COM LIVRO_23 DE MARCO6.webp',
   'ENCONTRO COM LIVRO_23 DE MARCO8.webp',
   'ENCONTRO COM LIVRO_23 DE MARCO9.webp',
+]
+
+const comoGalleryFiles = [
+  'IMG_0232.JPG',
+  'IMG_0236.JPG',
+  'IMG_0246.JPG',
+  'IMG_0257.JPG',
+  'IMG_0275.JPG',
+  'IMG_0276.JPG',
+  'IMG_0277.JPG',
+  'IMG_0285.JPG',
+  'IMG_0286.JPG',
+  'IMG_0291.JPG',
+  'IMG_0292.JPG',
+  'IMG_0294.JPG',
+  'IMG_0295.JPG',
+  'IMG_0298.JPG',
+  'IMG_0300.JPG',
+  'IMG_0301.JPG',
+  'IMG_0302.JPG',
+  'IMG_0308.JPG',
+  'IMG_0311.JPG',
+  'IMG_0317.JPG',
+  'IMG_0324.JPG',
+  'IMG_0326.JPG',
+  'IMG_0335.JPG',
+  'IMG_0349.JPG',
+  'IMG_0354.JPG',
+  'IMG_0359.JPG',
+  'WhatsApp Image 2023-09-16 at 14.59.56 (1).jpeg',
+  'WhatsApp Image 2023-09-16 at 14.59.56.jpeg',
+  'WhatsApp Image 2023-09-16 at 14.59.57.jpeg',
 ]
 
 const tileLayouts = [
@@ -145,6 +177,15 @@ function ProducaoPage() {
       })),
     [i18n.language, t],
   )
+  const comoGallery = useMemo(
+    () =>
+      comoGalleryFiles.map((file, index) => ({
+        type: 'image',
+        src: encodeURI(`/como_uma_gota_de_sal/${file}`),
+        alt: t('production.galleryAlt.como', { index: index + 1 }),
+      })),
+    [i18n.language, t],
+  )
   const projects = useMemo(() => {
     const items = t('production.projects', {
       returnObjects: true,
@@ -153,14 +194,16 @@ function ProducaoPage() {
       ...project,
       gallery:
         project.gallery === 'cidade'
-          ? cidadeGallery
-          : project.gallery === 'suhura'
-            ? suhuraGallery
-            : project.gallery === 'encontro'
-              ? encontroGallery
-              : undefined,
+      ? cidadeGallery
+      : project.gallery === 'suhura'
+        ? suhuraGallery
+        : project.gallery === 'encontro'
+          ? encontroGallery
+          : project.gallery === 'como'
+            ? comoGallery
+            : undefined,
     }))
-  }, [cidadeGallery, encontroGallery, suhuraGallery, t])
+  }, [cidadeGallery, encontroGallery, suhuraGallery, comoGallery, t])
   const [lightbox, setLightbox] = useState<LightboxState | null>(null)
 
   const activeItem = useMemo(() => {

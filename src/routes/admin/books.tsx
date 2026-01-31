@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { DashboardLayout } from '../../components/admin/layout'
-import { AdminGuard } from '../../components/admin/AdminGuard'
+import { withAdminGuard } from '../../components/admin/withAdminGuard'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthProvider'
 import { Button } from '../../components/ui/button'
@@ -42,7 +42,7 @@ import {
 import { MoreHorizontal } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/books')({
-  component: AdminBooksPage,
+  component: withAdminGuard(AdminBooksPage),
 })
 
 type BookRow = {
@@ -278,13 +278,12 @@ function AdminBooksPage() {
   })
 
   return (
-    <AdminGuard>
-      <DashboardLayout
-        userRole={profile?.role ?? 'admin'}
-        userName={userName}
-        userEmail={userEmail}
-        onSignOut={signOut}
-      >
+    <DashboardLayout
+      userRole={profile?.role ?? 'admin'}
+      userName={userName}
+      userEmail={userEmail}
+      onSignOut={signOut}
+    >
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
@@ -581,7 +580,6 @@ function AdminBooksPage() {
             </DialogContent>
           </Dialog>
         </div>
-      </DashboardLayout>
-    </AdminGuard>
+    </DashboardLayout>
   )
 }

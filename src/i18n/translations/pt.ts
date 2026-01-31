@@ -635,6 +635,7 @@ const pt = {
       cidadeVideo: 'Cidade nas Mãos — vídeo',
       encontro: 'Encontro com livro — fotografia {{index}}',
       suhura: 'Ninguém Matou Suhura — fotografia {{index}}',
+      como: 'Como uma gota de sol — fotografia {{index}}',
     },
     gallery: {
       open: 'Abrir galeria de {{title}}',
@@ -672,6 +673,7 @@ const pt = {
         title: 'Como uma gota de sol',
         description: 'Descrição, ano, fotografias/vídeo.',
         meta: ['Em preparação'],
+        gallery: 'como',
       },
       {
         id: 'coloquio-ninguem-matou-suhura',
@@ -688,6 +690,15 @@ const pt = {
         gallery: 'encontro',
       },
     ],
+  },
+  admin: {
+    posts: {
+      filters: {
+        languageAll: 'Todos os idiomas',
+        languagePortuguese: 'Português',
+        languageEnglish: 'English',
+      },
+    },
   },
 }
 

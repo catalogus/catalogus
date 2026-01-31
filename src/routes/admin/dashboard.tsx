@@ -1,12 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { DashboardLayout } from '../../components/admin/layout'
-import { AdminGuard } from '../../components/admin/AdminGuard'
+import { withAdminGuard } from '../../components/admin/withAdminGuard'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthProvider'
 
 export const Route = createFileRoute('/admin/dashboard')({
-  component: AdminDashboardPage,
+  component: withAdminGuard(AdminDashboardPage),
 })
 
 function AdminDashboardPage() {
@@ -48,64 +48,62 @@ function AdminDashboardPage() {
   })
 
   return (
-    <AdminGuard>
-      <DashboardLayout
-        userRole={profile?.role ?? 'admin'}
-        userName={userName}
-        userEmail={userEmail}
-        onSignOut={signOut}
-      >
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm uppercase text-gray-500">Overview</p>
-              <h1 className="text-2xl font-semibold text-gray-900">
-                Catalogus dashboard
-              </h1>
-              <p className="text-sm text-gray-500">
-                Quick snapshot of orders, books, and authors.
+    <DashboardLayout
+      userRole={profile?.role ?? 'admin'}
+      userName={userName}
+      userEmail={userEmail}
+      onSignOut={signOut}
+    >
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm uppercase text-gray-500">Overview</p>
+            <h1 className="text-2xl font-semibold text-gray-900">
+              Catalogus dashboard
+            </h1>
+            <p className="text-sm text-gray-500">
+              Quick snapshot of orders, books, and authors.
+            </p>
+          </div>
+          {metricsQuery.isFetching && (
+            <span className="text-xs text-gray-500">Updating…</span>
+          )}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            {
+              label: 'Orders today',
+              value:
+                metricsQuery.data?.ordersToday?.toString() ??
+                (metricsQuery.isLoading ? '…' : '0'),
+            },
+            {
+              label: 'Active books',
+              value:
+                metricsQuery.data?.activeBooks?.toString() ??
+                (metricsQuery.isLoading ? '…' : '0'),
+            },
+            {
+              label: 'Authors',
+              value:
+                metricsQuery.data?.authorsCount?.toString() ??
+                (metricsQuery.isLoading ? '…' : '0'),
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-2xl border border-gray-200 p-4 bg-gray-50"
+            >
+              <p className="text-xs uppercase tracking-wide text-gray-500">
+                {item.label}
+              </p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {item.value}
               </p>
             </div>
-            {metricsQuery.isFetching && (
-              <span className="text-xs text-gray-500">Updating…</span>
-            )}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              {
-                label: 'Orders today',
-                value:
-                  metricsQuery.data?.ordersToday?.toString() ??
-                  (metricsQuery.isLoading ? '…' : '0'),
-              },
-              {
-                label: 'Active books',
-                value:
-                  metricsQuery.data?.activeBooks?.toString() ??
-                  (metricsQuery.isLoading ? '…' : '0'),
-              },
-              {
-                label: 'Authors',
-                value:
-                  metricsQuery.data?.authorsCount?.toString() ??
-                  (metricsQuery.isLoading ? '…' : '0'),
-              },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-2xl border border-gray-200 p-4 bg-gray-50"
-              >
-                <p className="text-xs uppercase tracking-wide text-gray-500">
-                  {item.label}
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {item.value}
-                </p>
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
-      </DashboardLayout>
-    </AdminGuard>
+      </div>
+    </DashboardLayout>
   )
 }

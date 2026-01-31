@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { DashboardLayout } from '../../components/admin/layout'
-import { AdminGuard } from '../../components/admin/AdminGuard'
+import { withAdminGuard } from '../../components/admin/withAdminGuard'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthProvider'
 import { Button } from '../../components/ui/button'
@@ -53,10 +54,11 @@ import {
 } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/posts')({
-  component: AdminPostsPage,
+  component: withAdminGuard(AdminPostsPage),
 })
 
 function AdminPostsPage() {
+  const { t } = useTranslation()
   const { profile, session, signOut } = useAuth()
   const userName = profile?.name ?? session?.user.email ?? 'Admin'
   const userEmail = session?.user.email ?? ''
@@ -100,6 +102,7 @@ function AdminPostsPage() {
     sort_by: 'newest',
     page: 1,
     per_page: 20,
+    language: 'pt',
   })
 
   const categoriesQuery = useQuery({
@@ -182,6 +185,10 @@ function AdminPostsPage() {
       )
     }
 
+    if (activeFilters.language && activeFilters.language !== 'all') {
+      query = query.eq('language', activeFilters.language)
+    }
+
     switch (activeFilters.sort_by) {
       case 'oldest':
         query = query.order('created_at', { ascending: true })
@@ -242,6 +249,7 @@ function AdminPostsPage() {
     filters.search,
     filters.category_id,
     filters.tag_id,
+    filters.language,
     filters.sort_by,
     filters.page,
     filters.per_page,
@@ -919,15 +927,16 @@ function AdminPostsPage() {
   }
 
   const clearFilters = () => {
-    setFilters({
-      search: '',
-      status: 'published',
-      category_id: undefined,
-      tag_id: undefined,
-      sort_by: 'newest',
-      page: 1,
-      per_page: 20,
-    })
+      setFilters({
+        search: '',
+        status: 'published',
+        category_id: undefined,
+        tag_id: undefined,
+        sort_by: 'newest',
+        page: 1,
+        per_page: 20,
+        language: 'pt',
+      })
   }
 
   const statusColors: Record<PostStatus, string> = {
@@ -947,14 +956,13 @@ function AdminPostsPage() {
   const isEditing = showForm
 
   return (
-    <AdminGuard>
-      <DashboardLayout
-        userRole={profile?.role ?? 'admin'}
-        userName={userName}
-        userEmail={userEmail}
-        onSignOut={signOut}
-      >
-        <div className="space-y-4">
+    <DashboardLayout
+      userRole={profile?.role ?? 'admin'}
+      userName={userName}
+      userEmail={userEmail}
+      onSignOut={signOut}
+    >
+      <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm uppercase text-gray-500">Content</p>
@@ -1106,7 +1114,7 @@ function AdminPostsPage() {
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
               <div className="relative lg:col-span-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -1137,6 +1145,22 @@ function AdminPostsPage() {
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
                 <option value="trash">Trash</option>
+              </select>
+
+              <select
+                value={filters.language ?? 'all'}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    language: e.target.value as 'all' | 'pt' | 'en',
+                    page: 1,
+                  }))
+                }
+                className="w-full rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
+              >
+                <option value="all">{t('admin.posts.filters.languageAll')}</option>
+                <option value="pt">{t('admin.posts.filters.languagePortuguese')}</option>
+                <option value="en">{t('admin.posts.filters.languageEnglish')}</option>
               </select>
 
               <select
@@ -1536,8 +1560,7 @@ function AdminPostsPage() {
               </Dialog>
             </>
           )}
-        </div>
-      </DashboardLayout>
-    </AdminGuard>
+      </div>
+    </DashboardLayout>
   )
 }

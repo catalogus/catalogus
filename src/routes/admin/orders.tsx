@@ -2,13 +2,13 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { DashboardLayout } from '../../components/admin/layout'
-import { AdminGuard } from '../../components/admin/AdminGuard'
+import { withAdminGuard } from '../../components/admin/withAdminGuard'
 import { StatusBadge } from '../../components/admin/ui/StatusBadge'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthProvider'
 
 export const Route = createFileRoute('/admin/orders')({
-  component: AdminOrdersPage,
+  component: withAdminGuard(AdminOrdersPage),
 })
 
 type OrderRow = {
@@ -104,13 +104,12 @@ function AdminOrdersPage() {
   }
 
   return (
-    <AdminGuard>
-      <DashboardLayout
-        userRole={profile?.role ?? 'admin'}
-        userName={userName}
-        userEmail={userEmail}
-            onSignOut={signOut}
-      >
+    <DashboardLayout
+      userRole={profile?.role ?? 'admin'}
+      userName={userName}
+      userEmail={userEmail}
+      onSignOut={signOut}
+    >
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
@@ -236,7 +235,6 @@ function AdminOrdersPage() {
             )}
           </div>
         </div>
-      </DashboardLayout>
-    </AdminGuard>
+    </DashboardLayout>
   )
 }

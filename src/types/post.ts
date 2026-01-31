@@ -97,6 +97,7 @@ export type PostsFilterParams = {
   status?: PostStatus | 'all'
   category_id?: string
   tag_id?: string
+  language?: 'all' | 'pt' | 'en'
   author_id?: string
   featured?: boolean
   sort_by?: 'newest' | 'oldest' | 'title_asc' | 'title_desc' | 'featured'
