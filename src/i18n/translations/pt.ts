@@ -40,6 +40,7 @@ const pt = {
       projects: 'Projectos',
       services: 'Serviços',
       news: 'Noticias',
+      social: 'Redes Sociais',
       platform: 'Plataforma',
     },
     links: {
@@ -52,6 +53,11 @@ const pt = {
       about: 'Sobre nós',
       contacts: 'Contactos',
       literaryMap: 'Mapa Literario',
+      whatsapp: 'Converse connosco',
+      facebookSocial: 'Facebook',
+      instagram: 'Instagram',
+      linkedin: 'LinkedIn',
+      youtube: 'YouTube',
     },
     legal: {
       legalInfo: 'Informação Legal',

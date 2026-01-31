@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { ExternalLink } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { CATALOGUS_SOCIAL_LINKS } from '../lib/socialLinks.tsx'
 
 type FooterLink = {
   labelKey: string
@@ -30,10 +31,12 @@ const footerColumns: FooterColumn[] = [
     ],
   },
   {
-    titleKey: 'footer.columns.news',
-    links: [
-      { labelKey: 'footer.links.events', href: '/noticias' },
-    ],
+    titleKey: 'footer.columns.social',
+    links: CATALOGUS_SOCIAL_LINKS.map((link) => ({
+      labelKey: link.labelKey,
+      href: link.href,
+      external: true,
+    })),
   },
   {
     titleKey: 'footer.columns.platform',
@@ -41,6 +44,7 @@ const footerColumns: FooterColumn[] = [
       { labelKey: 'footer.links.about', href: '/sobre' },
       { labelKey: 'footer.links.contacts', href: '/contactos' },
       { labelKey: 'footer.links.literaryMap', href: '/publicacoes' },
+      { labelKey: 'footer.links.events', href: '/noticias' },
     ],
   },
 ]

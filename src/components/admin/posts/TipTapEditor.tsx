@@ -232,7 +232,9 @@ export function TipTapEditor({
       </div>
 
       {/* Editor content */}
-      <EditorContent editor={editor} />
+      <div className="max-h-[60vh] overflow-y-auto">
+        <EditorContent editor={editor} />
+      </div>
     </div>
   )
 }

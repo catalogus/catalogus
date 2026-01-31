@@ -40,6 +40,7 @@ const en = {
       projects: 'Projects',
       services: 'Services',
       news: 'News',
+      social: 'Socials',
       platform: 'Platform',
     },
     links: {
@@ -52,6 +53,11 @@ const en = {
       about: 'About us',
       contacts: 'Contacts',
       literaryMap: 'Literary Map',
+      whatsapp: 'Chat on WhatsApp',
+      facebookSocial: 'Facebook',
+      instagram: 'Instagram',
+      linkedin: 'LinkedIn',
+      youtube: 'YouTube',
     },
     legal: {
       legalInfo: 'Legal Information',

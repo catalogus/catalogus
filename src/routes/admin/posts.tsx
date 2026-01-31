@@ -8,13 +8,6 @@ import { useAuth } from '../../contexts/AuthProvider'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '../../components/ui/sheet'
-import {
   Table,
   TableBody,
   TableCaption,
@@ -55,6 +48,8 @@ import {
   ChevronRight,
   Trash2,
   CheckSquare,
+  ArrowLeft,
+  Languages,
 } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/posts')({
@@ -87,10 +82,15 @@ function AdminPostsPage() {
     }
   }
 
+  const WRITE_TIMEOUT = 30_000
+  const RELATION_TIMEOUT = 25_000
+
   const [showForm, setShowForm] = useState(false)
   const [editingPost, setEditingPost] = useState<PostRow | null>(null)
   const [detailPost, setDetailPost] = useState<PostRow | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [activePostId, setActivePostId] = useState<string | null>(null)
+  const [isTranslating, setIsTranslating] = useState(false)
 
   const [filters, setFilters] = useState<PostsFilterParams>({
     search: '',
@@ -599,7 +599,7 @@ function AdminPostsPage() {
         console.log('Updating existing post...')
         const { error } = await withTimeout(
           supabase.from('posts').update(base).eq('id', payload.id),
-          15_000,
+          WRITE_TIMEOUT,
           'Post update',
         )
         if (error) {
@@ -610,7 +610,7 @@ function AdminPostsPage() {
       } else {
         console.log('Inserting new post...')
         base.id = resolvedPostId
-        await withTimeout(insertPostViaRest(base), 15_000, 'Post insert')
+        await withTimeout(insertPostViaRest(base), WRITE_TIMEOUT, 'Post insert')
         postId = resolvedPostId
         console.log('Insert completed', { postId })
       }
@@ -623,7 +623,7 @@ function AdminPostsPage() {
         try {
           await withTimeout(
             supabase.from('post_categories_map').delete().eq('post_id', postId),
-            15_000,
+            RELATION_TIMEOUT,
             'Post categories cleanup',
           )
           if (payload.category_ids && payload.category_ids.length > 0) {
@@ -634,7 +634,7 @@ function AdminPostsPage() {
                   category_id,
                 })),
               ),
-              15_000,
+              RELATION_TIMEOUT,
               'Post categories assign',
             )
             if (error) throw error
@@ -647,7 +647,7 @@ function AdminPostsPage() {
         try {
           await withTimeout(
             supabase.from('post_tags_map').delete().eq('post_id', postId),
-            15_000,
+            RELATION_TIMEOUT,
             'Post tags cleanup',
           )
           if (payload.tag_ids && payload.tag_ids.length > 0) {
@@ -658,7 +658,7 @@ function AdminPostsPage() {
                   tag_id,
                 })),
               ),
-              15_000,
+              RELATION_TIMEOUT,
               'Post tags assign',
             )
             if (error) throw error
@@ -671,15 +671,11 @@ function AdminPostsPage() {
 
       await updateRelations()
 
-      if (!payload.source_post_id && payload.status !== 'trash') {
-        void triggerTranslation(postId)
-      }
+      return postId
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] })
       queryClient.invalidateQueries({ queryKey: statusCountsKey })
-      setShowForm(false)
-      setEditingPost(null)
       toast.success('Post saved')
     },
     onError: (err: any) => {
@@ -721,6 +717,30 @@ function AdminPostsPage() {
     },
     onError: (err: any) => toast.error(err.message ?? 'Failed to move to trash'),
   })
+
+  const handleTranslate = async (values: PostFormValues, file?: File | null) => {
+    setIsTranslating(true)
+    try {
+      const postId = await upsertPost.mutateAsync({
+        ...values,
+        id: activePostId ?? editingPost?.id ?? undefined,
+        file,
+        source_post_id: editingPost?.source_post_id ?? null,
+      })
+      if (!postId) {
+        toast.error('Please save the post before translating.')
+        return
+      }
+      setActivePostId(postId)
+      await triggerTranslation(postId)
+      toast.success('Translation started')
+    } catch (error) {
+      console.error('Translate failed:', error)
+      toast.error('Failed to start translation')
+    } finally {
+      setIsTranslating(false)
+    }
+  }
 
   const restoreFromTrash = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -924,6 +944,8 @@ function AdminPostsPage() {
     failed: 'bg-red-100 text-red-800',
   }
 
+  const isEditing = showForm
+
   return (
     <AdminGuard>
       <DashboardLayout
@@ -938,17 +960,117 @@ function AdminPostsPage() {
               <p className="text-sm uppercase text-gray-500">Content</p>
               <h1 className="text-2xl font-semibold text-gray-900">Posts</h1>
             </div>
-            <Button
-              onClick={() => {
-                setEditingPost(null)
-                setShowForm(true)
-              }}
-            >
-              New Post
-            </Button>
+            {!isEditing && (
+              <Button
+                onClick={() => {
+                  setEditingPost(null)
+                  setActivePostId(null)
+                  setShowForm(true)
+                }}
+              >
+                New Post
+              </Button>
+            )}
           </div>
 
-          <div className="rounded-2xl border border-gray-200 p-4 bg-white space-y-4">
+          {isEditing ? (
+            <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+              <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-200 px-6 py-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowForm(false)
+                      setEditingPost(null)
+                      setActivePostId(null)
+                    }}
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to posts
+                  </Button>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      {editingPost ? 'Edit post' : 'New post'}
+                    </p>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {editingPost?.title ?? 'Draft'}
+                    </h2>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gray-500">
+                  <Languages className="h-4 w-4" />
+                  <span>
+                    {editingPost?.language === 'en' ? 'English' : 'Português'}
+                  </span>
+                  {editingPost?.translation_status && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 ${
+                        translationStatusColors[editingPost.translation_status] ??
+                        'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {editingPost.translation_status}
+                    </span>
+                  )}
+                </div>
+                </div>
+              </div>
+
+              <div className="p-6">
+                <PostForm
+                  initial={
+                    editingPost
+                      ? {
+                          title: editingPost.title,
+                          slug: editingPost.slug,
+                          excerpt: editingPost.excerpt ?? '',
+                          body: editingPost.body ?? '',
+                          featured_image_url:
+                            editingPost.featured_image_url ?? '',
+                          featured_image_path:
+                            editingPost.featured_image_path ?? '',
+                          author_id: editingPost.author_id ?? currentUserId,
+                          status: editingPost.status,
+                          published_at: editingPost.published_at,
+                          featured: editingPost.featured,
+                          language: editingPost.language as 'pt' | 'en',
+                          category_ids:
+                            editingPost.categories?.map((c) => c.id) ?? [],
+                          tag_ids: editingPost.tags?.map((t) => t.id) ?? [],
+                          new_tags: [],
+                        }
+                      : undefined
+                  }
+                  submitting={upsertPost.isPending}
+                  translating={isTranslating}
+                  onSubmit={async (vals, file) => {
+                    const postId = await upsertPost.mutateAsync({
+                      ...vals,
+                      id: activePostId ?? editingPost?.id,
+                      file,
+                      source_post_id: editingPost?.source_post_id ?? null,
+                    })
+                    if (postId) {
+                      setActivePostId(postId)
+                    }
+                  }}
+                  onTranslate={handleTranslate}
+                  categories={categoriesQuery.data ?? []}
+                  tags={tagsQuery.data ?? []}
+                  onCreateTag={(name) => createTag.mutateAsync(name)}
+                  currentUserId={currentUserId}
+                  onCancel={() => {
+                    setShowForm(false)
+                    setEditingPost(null)
+                    setActivePostId(null)
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-gray-200 p-4 bg-white space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               {[
                 { label: 'Published', value: 'published', count: statusCounts.published },
@@ -1063,405 +1185,357 @@ function AdminPostsPage() {
                 Clear Filters
               </Button>
             )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              {
-                label: 'Published',
-                count: statusCountsQuery.isLoading ? '…' : statusCounts.published,
-              },
-              {
-                label: 'Drafts',
-                count: statusCountsQuery.isLoading ? '…' : statusCounts.draft,
-              },
-              {
-                label: 'Trash',
-                count: statusCountsQuery.isLoading ? '…' : statusCounts.trash,
-              },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-2xl border border-gray-200 bg-white px-4 py-3"
-              >
-                <p className="text-xs uppercase text-gray-500">{item.label}</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {item.count}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {selectedIds.size > 0 && (
-            <div className="rounded-2xl border border-gray-200 p-3 bg-blue-50 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <CheckSquare className="h-4 w-4 text-blue-600" />
-                <span className="font-medium text-blue-900">
-                  {selectedIds.size} selected
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                {filters.status === 'draft' && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => bulkPublish.mutate(Array.from(selectedIds))}
-                  >
-                    Publish
-                  </Button>
-                )}
-                {filters.status !== 'trash' && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => bulkSetFeatured.mutate(Array.from(selectedIds))}
-                    >
-                      Set Featured
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => moveToTrash.mutate(Array.from(selectedIds))}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Move to Trash
-                    </Button>
-                  </>
-                )}
-                {filters.status === 'trash' && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => restoreFromTrash.mutate(Array.from(selectedIds))}
-                    >
-                      Restore
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => deletePosts.mutate(Array.from(selectedIds))}
-                    >
-                      Delete Permanently
-                    </Button>
-                  </>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setSelectedIds(new Set())}
-                >
-                  Cancel
-                </Button>
-              </div>
             </div>
           )}
 
-          <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
-            {postsQuery.isLoading ? (
-              <p className="text-sm text-gray-500 p-4">Loading posts...</p>
-            ) : postsQuery.isError ? (
-              <p className="text-sm text-rose-600 p-4">
-                Failed to load posts. Check connection or permissions.
-              </p>
-            ) : (postsQuery.data?.posts.length ?? 0) === 0 ? (
-              <div className="p-8 text-center space-y-3">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {emptyStateConfig[filters.status]?.title ?? 'No posts yet'}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {emptyStateConfig[filters.status]?.description ??
-                    'Create your first post to get started.'}
-                </p>
-                {emptyStateConfig[filters.status]?.action && (
-                  <Button
-                    onClick={() => {
-                      setEditingPost(null)
-                      setShowForm(true)
-                    }}
+          {!isEditing && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  {
+                    label: 'Published',
+                    count: statusCountsQuery.isLoading ? '…' : statusCounts.published,
+                  },
+                  {
+                    label: 'Drafts',
+                    count: statusCountsQuery.isLoading ? '…' : statusCounts.draft,
+                  },
+                  {
+                    label: 'Trash',
+                    count: statusCountsQuery.isLoading ? '…' : statusCounts.trash,
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-2xl border border-gray-200 bg-white px-4 py-3"
                   >
-                    {emptyStateConfig[filters.status].action}
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">
-                        <input
-                          type="checkbox"
-                          checked={
-                            selectedIds.size === postsQuery.data?.posts.length &&
-                            selectedIds.size > 0
-                          }
-                          onChange={handleSelectAll}
-                          className="h-4 w-4 rounded border-gray-300"
-                        />
-                      </TableHead>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Author</TableHead>
-                      <TableHead>Categories</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Translation</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead className="w-16">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {postsQuery.data?.posts.map((post) => (
-                      <TableRow
-                        key={post.id}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => setDetailPost(post)}
-                      >
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(post.id)}
-                            onChange={() => handleSelectOne(post.id)}
-                            className="h-4 w-4 rounded border-gray-300"
-                          />
-                        </TableCell>
-                        <TableCell className="font-medium text-gray-900">
-                          <div className="flex items-center gap-2">
-                            {post.title}
-                            {post.featured && <span className="text-xs">*</span>}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          {post.author?.name ?? 'Unknown'}
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          {post.categories?.map((c) => c.name).join(', ') || '-'}
-                        </TableCell>
-                        <TableCell>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                              statusColors[post.status]
-                            }`}
-                          >
-                            {post.status}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {post.translation_status ? (
-                            <span
-                              className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                                translationStatusColors[post.translation_status] ??
-                                'bg-gray-100 text-gray-800'
-                              }`}
-                            >
-                              {post.translation_status}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-gray-400">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-gray-600 text-sm">
-                          {new Date(post.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => setDetailPost(post)}>
-                                View
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setEditingPost(post)
-                                  setShowForm(true)
-                                }}
-                              >
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  toggleFeatured.mutate({
-                                    id: post.id,
-                                    featured: !post.featured,
-                                  })
-                                }
-                              >
-                                {post.featured ? 'Unfeature' : 'Mark Featured'}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              {post.status === 'draft' && (
-                                <DropdownMenuItem
-                                  onClick={() => bulkPublish.mutate([post.id])}
-                                >
-                                  Publish
-                                </DropdownMenuItem>
-                              )}
-                              {post.status !== 'trash' ? (
-                                <DropdownMenuItem
-                                  onClick={() => moveToTrash.mutate([post.id])}
-                                >
-                                  Move to Trash
-                                </DropdownMenuItem>
-                              ) : (
-                                <>
-                                  <DropdownMenuItem
-                                    onClick={() => restoreFromTrash.mutate([post.id])}
-                                  >
-                                    Restore to Draft
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    className="text-destructive focus:text-destructive"
-                                    onClick={() => deletePost.mutate(post.id)}
-                                  >
-                                    Delete Permanently
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-700">
-                        Showing {((filters.page ?? 1) - 1) * (filters.per_page ?? 20) + 1}{' '}
-                        to{' '}
-                        {Math.min(
-                          (filters.page ?? 1) * (filters.per_page ?? 20),
-                          postsQuery.data?.total ?? 0,
-                        )}{' '}
-                        of {postsQuery.data?.total ?? 0} results
-                      </span>
-                      <select
-                        value={filters.per_page}
-                        onChange={(e) =>
-                          setFilters((prev) => ({
-                            ...prev,
-                            per_page: Number(e.target.value),
-                            page: 1,
-                          }))
-                        }
-                        className="rounded border border-gray-300 px-2 py-1 text-sm"
-                      >
-                        <option value={10}>10 per page</option>
-                        <option value={20}>20 per page</option>
-                        <option value={50}>50 per page</option>
-                        <option value={100}>100 per page</option>
-                      </select>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          setFilters((prev) => ({
-                            ...prev,
-                            page: Math.max(1, (prev.page ?? 1) - 1),
-                          }))
-                        }
-                        disabled={(filters.page ?? 1) <= 1}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        Previous
-                      </Button>
-                      <span className="text-sm text-gray-700">
-                        Page {filters.page} of {totalPages}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          setFilters((prev) => ({
-                            ...prev,
-                            page: Math.min(totalPages, (prev.page ?? 1) + 1),
-                          }))
-                        }
-                        disabled={(filters.page ?? 1) >= totalPages}
-                      >
-                        Next
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <p className="text-xs uppercase text-gray-500">{item.label}</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {item.count}
+                    </p>
                   </div>
-                )}
-              </>
-            )}
-          </div>
-
-          <Sheet open={showForm} onOpenChange={setShowForm}>
-            <SheetContent className="w-full sm:max-w-3xl px-4 overflow-hidden">
-              <SheetHeader>
-                <SheetTitle>{editingPost ? 'Edit Post' : 'New Post'}</SheetTitle>
-                <SheetDescription>
-                  Create and manage blog posts with rich content.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="pt-4 max-h-[85vh] overflow-y-auto pr-2">
-                <PostForm
-                  initial={
-                    editingPost
-                      ? {
-                          title: editingPost.title,
-                          slug: editingPost.slug,
-                          excerpt: editingPost.excerpt ?? '',
-                          body: editingPost.body ?? '',
-                          featured_image_url:
-                            editingPost.featured_image_url ?? '',
-                          featured_image_path:
-                            editingPost.featured_image_path ?? '',
-                          author_id: editingPost.author_id ?? currentUserId,
-                          status: editingPost.status,
-                          published_at: editingPost.published_at,
-                          featured: editingPost.featured,
-                          language: editingPost.language as 'pt' | 'en',
-                          category_ids:
-                            editingPost.categories?.map((c) => c.id) ?? [],
-                          tag_ids: editingPost.tags?.map((t) => t.id) ?? [],
-                          new_tags: [],
-                        }
-                      : undefined
-                  }
-                  submitting={upsertPost.isPending}
-                  onSubmit={async (vals, file) => {
-                    await upsertPost.mutateAsync({
-                      ...vals,
-                      id: editingPost?.id,
-                      file,
-                      source_post_id: editingPost?.source_post_id ?? null,
-                    })
-                  }}
-                  categories={categoriesQuery.data ?? []}
-                  tags={tagsQuery.data ?? []}
-                  onCreateTag={(name) => createTag.mutateAsync(name)}
-                  currentUserId={currentUserId}
-                  onCancel={() => {
-                    setShowForm(false)
-                    setEditingPost(null)
-                  }}
-                />
+                ))}
               </div>
-            </SheetContent>
-          </Sheet>
 
-          <Dialog open={!!detailPost} onOpenChange={() => setDetailPost(null)}>
-            <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{detailPost?.title ?? 'Post Detail'}</DialogTitle>
-              </DialogHeader>
-              {detailPost && <PostDetail post={detailPost} />}
-            </DialogContent>
-          </Dialog>
+              {selectedIds.size > 0 && (
+                <div className="rounded-2xl border border-gray-200 p-3 bg-blue-50 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckSquare className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium text-blue-900">
+                      {selectedIds.size} selected
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {filters.status === 'draft' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => bulkPublish.mutate(Array.from(selectedIds))}
+                      >
+                        Publish
+                      </Button>
+                    )}
+                    {filters.status !== 'trash' && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => bulkSetFeatured.mutate(Array.from(selectedIds))}
+                        >
+                          Set Featured
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => moveToTrash.mutate(Array.from(selectedIds))}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Move to Trash
+                        </Button>
+                      </>
+                    )}
+                    {filters.status === 'trash' && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => restoreFromTrash.mutate(Array.from(selectedIds))}
+                        >
+                          Restore
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => deletePosts.mutate(Array.from(selectedIds))}
+                        >
+                          Delete Permanently
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setSelectedIds(new Set())}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+                {postsQuery.isLoading ? (
+                  <p className="text-sm text-gray-500 p-4">Loading posts...</p>
+                ) : postsQuery.isError ? (
+                  <p className="text-sm text-rose-600 p-4">
+                    Failed to load posts. Check connection or permissions.
+                  </p>
+                ) : (postsQuery.data?.posts.length ?? 0) === 0 ? (
+                  <div className="p-8 text-center space-y-3">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {emptyStateConfig[filters.status]?.title ?? 'No posts yet'}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {emptyStateConfig[filters.status]?.description ??
+                        'Create your first post to get started.'}
+                    </p>
+                    {emptyStateConfig[filters.status]?.action && (
+                      <Button
+                        onClick={() => {
+                          setEditingPost(null)
+                          setActivePostId(null)
+                          setShowForm(true)
+                        }}
+                      >
+                        {emptyStateConfig[filters.status].action}
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">
+                            <input
+                              type="checkbox"
+                              checked={
+                                selectedIds.size === postsQuery.data?.posts.length &&
+                                selectedIds.size > 0
+                              }
+                              onChange={handleSelectAll}
+                              className="h-4 w-4 rounded border-gray-300"
+                            />
+                          </TableHead>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Author</TableHead>
+                          <TableHead>Categories</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Translation</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead className="w-16">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {postsQuery.data?.posts.map((post) => (
+                          <TableRow
+                            key={post.id}
+                            className="cursor-pointer hover:bg-gray-50"
+                            onClick={() => setDetailPost(post)}
+                          >
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={selectedIds.has(post.id)}
+                                onChange={() => handleSelectOne(post.id)}
+                                className="h-4 w-4 rounded border-gray-300"
+                              />
+                            </TableCell>
+                            <TableCell className="font-medium text-gray-900">
+                              <div className="flex items-center gap-2">
+                                {post.title}
+                                {post.featured && <span className="text-xs">*</span>}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-gray-600">
+                              {post.author?.name ?? 'Unknown'}
+                            </TableCell>
+                            <TableCell className="text-gray-600">
+                              {post.categories?.map((c) => c.name).join(', ') || '-'}
+                            </TableCell>
+                            <TableCell>
+                              <span
+                                className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                                  statusColors[post.status]
+                                }`}
+                              >
+                                {post.status}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              {post.translation_status ? (
+                                <span
+                                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                                    translationStatusColors[post.translation_status] ??
+                                    'bg-gray-100 text-gray-800'
+                                  }`}
+                                >
+                                  {post.translation_status}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-gray-400">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-gray-600 text-sm">
+                              {new Date(post.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => setDetailPost(post)}>
+                                    View
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setEditingPost(post)
+                                      setActivePostId(post.id)
+                                      setShowForm(true)
+                                    }}
+                                  >
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      toggleFeatured.mutate({
+                                        id: post.id,
+                                        featured: !post.featured,
+                                      })
+                                    }
+                                  >
+                                    {post.featured ? 'Unfeature' : 'Mark Featured'}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  {post.status === 'draft' && (
+                                    <DropdownMenuItem
+                                      onClick={() => bulkPublish.mutate([post.id])}
+                                    >
+                                      Publish
+                                    </DropdownMenuItem>
+                                  )}
+                                  {post.status !== 'trash' ? (
+                                    <DropdownMenuItem
+                                      onClick={() => moveToTrash.mutate([post.id])}
+                                    >
+                                      Move to Trash
+                                    </DropdownMenuItem>
+                                  ) : (
+                                    <>
+                                      <DropdownMenuItem
+                                        onClick={() => restoreFromTrash.mutate([post.id])}
+                                      >
+                                        Restore to Draft
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        className="text-destructive focus:text-destructive"
+                                        onClick={() => deletePost.mutate(post.id)}
+                                      >
+                                        Delete Permanently
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-700">
+                            Showing {((filters.page ?? 1) - 1) * (filters.per_page ?? 20) + 1}{' '}
+                            to{' '}
+                            {Math.min(
+                              (filters.page ?? 1) * (filters.per_page ?? 20),
+                              postsQuery.data?.total ?? 0,
+                            )}{' '}
+                            of {postsQuery.data?.total ?? 0} results
+                          </span>
+                          <select
+                            value={filters.per_page}
+                            onChange={(e) =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                per_page: Number(e.target.value),
+                                page: 1,
+                              }))
+                            }
+                            className="rounded border border-gray-300 px-2 py-1 text-sm"
+                          >
+                            <option value={10}>10 per page</option>
+                            <option value={20}>20 per page</option>
+                            <option value={50}>50 per page</option>
+                            <option value={100}>100 per page</option>
+                          </select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                page: Math.max(1, (prev.page ?? 1) - 1),
+                              }))
+                            }
+                            disabled={(filters.page ?? 1) <= 1}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                            Previous
+                          </Button>
+                          <span className="text-sm text-gray-700">
+                            Page {filters.page} of {totalPages}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                page: Math.min(totalPages, (prev.page ?? 1) + 1),
+                              }))
+                            }
+                            disabled={(filters.page ?? 1) >= totalPages}
+                          >
+                            Next
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <Dialog open={!!detailPost} onOpenChange={() => setDetailPost(null)}>
+                <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{detailPost?.title ?? 'Post Detail'}</DialogTitle>
+                  </DialogHeader>
+                  {detailPost && <PostDetail post={detailPost} />}
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
         </div>
       </DashboardLayout>
     </AdminGuard>

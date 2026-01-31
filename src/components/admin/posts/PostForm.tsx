@@ -13,8 +13,10 @@ type TagOption = Tag
 type PostFormProps = {
   initial?: Partial<PostFormValues>
   onSubmit: (values: PostFormValues, file?: File | null) => Promise<void> | void
+  onTranslate?: (values: PostFormValues, file?: File | null) => Promise<void> | void
   onCancel: () => void
   submitting?: boolean
+  translating?: boolean
   categories: CategoryOption[]
   tags: TagOption[]
   onCreateTag?: (name: string) => Promise<TagOption>
@@ -41,8 +43,10 @@ const defaultValues: PostFormValues = {
 export function PostForm({
   initial,
   onSubmit,
+  onTranslate,
   onCancel,
   submitting = false,
+  translating = false,
   categories,
   tags,
   onCreateTag,
@@ -65,6 +69,7 @@ export function PostForm({
   const [newTagName, setNewTagName] = useState('')
   const [addingTag, setAddingTag] = useState(false)
   const [isOptimizingImage, setIsOptimizingImage] = useState(false)
+  const [tagSearch, setTagSearch] = useState('')
   const [optimizationStats, setOptimizationStats] = useState<{
     originalSizeMB: string
     optimizedSizeMB: string
@@ -117,6 +122,31 @@ export function PostForm({
     }
   }
 
+  const handleTranslate = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!onTranslate) return
+
+    const slug =
+      values.slug ||
+      values.title
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+
+    const finalValues: PostFormValues = {
+      ...values,
+      slug,
+    }
+
+    try {
+      await onTranslate(finalValues, file)
+    } catch (error) {
+      console.error('Translate error:', error)
+    }
+  }
+
   const addTag = async () => {
     if (!onCreateTag) return
     const name = newTagName.trim()
@@ -150,9 +180,46 @@ export function PostForm({
   }
 
   const categoriesTree = buildCategoryTree(categories)
+  const selectedTags = localTags.filter((tag) => values.tag_ids.includes(tag.id))
+  const tagSearchLower = tagSearch.trim().toLowerCase()
+  const filteredTags = tagSearchLower
+    ? localTags.filter((tag) => tag.name.toLowerCase().includes(tagSearchLower))
+    : localTags
 
   return (
     <form className="space-y-6" onSubmit={(e) => handleSubmit(e)}>
+      {/* Action Buttons */}
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          Cancel
+        </Button>
+        {onTranslate && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleTranslate}
+            disabled={submitting || translating}
+          >
+            {translating ? 'Translating…' : 'Translate'}
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={(e) => handleSubmit(e, 'draft')}
+          disabled={submitting}
+        >
+          Save as Draft
+        </Button>
+        <Button
+          type="button"
+          onClick={(e) => handleSubmit(e, 'published')}
+          disabled={submitting}
+        >
+          {submitting ? 'Publishing…' : 'Publish'}
+        </Button>
+      </div>
+
       {/* Title */}
       <div className="space-y-2">
         <Label htmlFor="title">Title</Label>
@@ -163,20 +230,6 @@ export function PostForm({
           onChange={(e) => handleChange('title', e.target.value)}
           placeholder="Enter post title"
         />
-      </div>
-
-      {/* Slug */}
-      <div className="space-y-2">
-        <Label htmlFor="slug">Slug</Label>
-        <Input
-          id="slug"
-          value={values.slug}
-          onChange={(e) => handleChange('slug', e.target.value)}
-          placeholder="Auto-generated from title"
-        />
-        <p className="text-xs text-gray-500">
-          Leave blank to auto-generate from title
-        </p>
       </div>
 
       {/* Content Editor */}
@@ -321,34 +374,66 @@ export function PostForm({
       <div className="space-y-2">
         <Label>Tags</Label>
         <p className="text-xs text-gray-500">
-          Select existing tags or create new ones.
+          Search and select tags. Large lists are easier to manage here.
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {localTags.map((tag) => {
-            const checked = values.tag_ids.includes(tag.id)
-            return (
-              <label
-                key={tag.id}
-                className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50"
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={(e) => {
-                    const next = e.target.checked
-                      ? [...values.tag_ids, tag.id]
-                      : values.tag_ids.filter((id) => id !== tag.id)
-                    handleChange('tag_ids', next)
-                  }}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <span className="text-gray-900">{tag.name}</span>
-              </label>
-            )
-          })}
-          {localTags.length === 0 && (
-            <p className="text-xs text-gray-500 col-span-full">No tags yet.</p>
-          )}
+        <div className="rounded-lg border border-gray-200 bg-white p-3 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {selectedTags.length > 0 ? (
+              selectedTags.map((tag) => (
+                <button
+                  key={tag.id}
+                  type="button"
+                  onClick={() =>
+                    handleChange(
+                      'tag_ids',
+                      values.tag_ids.filter((id) => id !== tag.id),
+                    )
+                  }
+                  className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs text-gray-700 hover:border-gray-400"
+                >
+                  #{tag.name}
+                  <span className="text-gray-400">×</span>
+                </button>
+              ))
+            ) : (
+              <p className="text-xs text-gray-500">No tags selected.</p>
+            )}
+          </div>
+
+          <Input
+            placeholder="Search tags..."
+            value={tagSearch}
+            onChange={(e) => setTagSearch(e.target.value)}
+          />
+
+          <div className="max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white">
+            {filteredTags.length > 0 ? (
+              filteredTags.map((tag) => {
+                const checked = values.tag_ids.includes(tag.id)
+                return (
+                  <label
+                    key={tag.id}
+                    className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => {
+                        const next = e.target.checked
+                          ? [...values.tag_ids, tag.id]
+                          : values.tag_ids.filter((id) => id !== tag.id)
+                        handleChange('tag_ids', next)
+                      }}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <span className="text-gray-900">{tag.name}</span>
+                  </label>
+                )
+              })
+            ) : (
+              <p className="px-3 py-2 text-xs text-gray-500">No matching tags.</p>
+            )}
+          </div>
         </div>
         {onCreateTag && (
           <div className="flex items-center gap-2 pt-2">
@@ -434,27 +519,6 @@ export function PostForm({
         </label>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
-        <Button type="button" variant="ghost" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={(e) => handleSubmit(e, 'draft')}
-          disabled={submitting}
-        >
-          Save as Draft
-        </Button>
-        <Button
-          type="button"
-          onClick={(e) => handleSubmit(e, 'published')}
-          disabled={submitting}
-        >
-          {submitting ? 'Publishing…' : 'Publish'}
-        </Button>
-      </div>
     </form>
   )
 }

@@ -5,16 +5,11 @@ import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { cn } from '@/lib/utils'
+import { CATALOGUS_SOCIAL_LINKS } from '../../lib/socialLinks.tsx'
 
 export const Route = createFileRoute('/contactos/')({
   component: ContactosPage,
 })
-
-const socialLinks = [
-  { name: 'Facebook', href: 'https://facebook.com/catalogus' },
-  { name: 'Instagram', href: 'https://instagram.com/catalogus' },
-  { name: 'LinkedIn', href: 'https://linkedin.com/company/catalogus' },
-]
 
 // Maputo coordinates
 const MAPS_EMBED_URL =
@@ -92,21 +87,6 @@ function ContactosPage() {
                 <p className="mt-6 max-w-md text-base leading-relaxed text-gray-600 md:text-lg">
                   {t('contact.hero.subtitle')}
                 </p>
-
-                {/* Social Links */}
-                <div className="mt-12 flex gap-6">
-                  {socialLinks.map((link) => (
-                    <a
-                      key={link.name}
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-medium text-gray-900 transition-colors hover:text-[#c07238]"
-                    >
-                      {link.name}
-                    </a>
-                  ))}
-                </div>
               </div>
 
               {/* Right Column - Contact Info Grid */}
@@ -157,6 +137,29 @@ function ContactosPage() {
                       <p key={line} className="text-base font-semibold text-gray-900">
                         {line}
                       </p>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Social Media */}
+                <div className="sm:col-span-2">
+                  <p className="text-xs uppercase tracking-[0.4em] text-gray-400">
+                    {t('footer.columns.social')}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {CATALOGUS_SOCIAL_LINKS.map((link) => (
+                      <a
+                        key={link.name}
+                        href={link.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2  border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:border-[#c07238]/60 hover:text-gray-900"
+                      >
+                        <span className="grid h-6 w-6 place-items-center rounded-full border border-gray-200 bg-white text-gray-900">
+                          <link.Icon className="h-3.5 w-3.5" />
+                        </span>
+                        <span>{t(link.labelKey)}</span>
+                      </a>
                     ))}
                   </div>
                 </div>
