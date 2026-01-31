@@ -37,6 +37,13 @@ exception
   when duplicate_object then null;
 end $$;
 
+do $$
+begin
+  create type public.translation_status as enum ('pending', 'review', 'failed');
+exception
+  when duplicate_object then null;
+end $$;
+
 -- Tables
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
@@ -149,17 +156,28 @@ create index if not exists order_items_order_idx on public.order_items (order_id
 create table if not exists public.posts (
   id uuid primary key default gen_random_uuid(),
   title text not null,
-  slug text not null unique,
+  slug text not null,
   excerpt text,
   body text,
   status content_status not null default 'draft',
+  previous_status content_status,
   language language_code not null default 'pt',
   published_at timestamptz,
+  author_id uuid references public.profiles(id) on delete set null,
+  translation_group_id uuid not null default gen_random_uuid(),
+  source_post_id uuid references public.posts(id) on delete set null,
+  translation_status public.translation_status,
+  translation_source_hash text,
+  translated_at timestamptz,
+  translation_error text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 create index if not exists posts_status_idx on public.posts (status);
 create index if not exists posts_language_idx on public.posts (language);
+create unique index if not exists posts_language_slug_unique on public.posts (language, slug);
+create index if not exists posts_translation_group_idx on public.posts (translation_group_id);
+create index if not exists posts_source_post_idx on public.posts (source_post_id);
 
 create table if not exists public.partners (
   id uuid primary key default gen_random_uuid(),

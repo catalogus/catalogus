@@ -1,6 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { type ReactNode } from 'react'
+import { type ReactNode, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { supabase } from '../../lib/supabaseClient'
@@ -14,6 +14,8 @@ type CategoryLink = {
   id: string
   name: string
   slug: string
+  slug_base?: string
+  name_base?: string
 }
 
 type TagLink = {
@@ -87,7 +89,14 @@ const SidebarCard = ({ title, children }: { title: string; children: ReactNode }
 function NewsPostDetailPage() {
   const { t, i18n } = useTranslation()
   const { slug } = Route.useParams()
+  const navigate = useNavigate()
   const language = i18n.language === 'en' ? 'en' : 'pt'
+  const isEnglish = language === 'en'
+  const lastResolvedPostRef = useRef<{
+    translation_group_id?: string | null
+    slug?: string
+    language?: string
+  } | null>(null)
 
   const postQuery = useQuery({
     queryKey: ['news-post', slug, language],
@@ -99,6 +108,7 @@ function NewsPostDetailPage() {
           id,
           title,
           slug,
+          language,
           excerpt,
           body,
           featured_image_url,
@@ -106,8 +116,9 @@ function NewsPostDetailPage() {
           created_at,
           author_id,
           view_count,
-          categories:post_categories_map(category:post_categories(id, name, slug)),
-          tags:post_tags_map(tag:post_tags(id, name, slug))
+          translation_group_id,
+          categories:post_categories_map(category:post_categories(id, name, slug, name_en, slug_en)),
+          tags:post_tags_map(tag:post_tags(id, name, slug, name_en, slug_en))
         `,
         )
         .eq('status', 'published')
@@ -134,27 +145,82 @@ function NewsPostDetailPage() {
         }
       }
 
+      const localizedCategories = categories.map((category: any) => ({
+        ...category,
+        name: isEnglish ? category.name_en ?? category.name : category.name,
+        slug: isEnglish ? category.slug_en ?? category.slug : category.slug,
+        slug_base: category.slug,
+        name_base: category.name,
+      }))
+
+      const localizedTags = tags.map((tag: any) => ({
+        ...tag,
+        name: isEnglish ? tag.name_en ?? tag.name : tag.name,
+        slug: isEnglish ? tag.slug_en ?? tag.slug : tag.slug,
+      }))
+
       return {
         ...data,
-        categories,
-        tags,
+        categories: localizedCategories,
+        tags: localizedTags,
         author,
       } as PostRow
     },
     staleTime: 60_000,
   })
 
+  useEffect(() => {
+    if (!postQuery.data) return
+    lastResolvedPostRef.current = {
+      translation_group_id: postQuery.data.translation_group_id ?? postQuery.data.id,
+      slug: postQuery.data.slug,
+      language: postQuery.data.language,
+    }
+  }, [postQuery.data])
+
+  useEffect(() => {
+    const lastResolved = lastResolvedPostRef.current
+    if (!lastResolved?.translation_group_id) return
+    if (!lastResolved.language) return
+    if (lastResolved.language === language) return
+
+    let cancelled = false
+
+    const resolveTranslation = async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('slug, language')
+        .eq('translation_group_id', lastResolved.translation_group_id)
+        .eq('language', language)
+        .maybeSingle()
+      if (cancelled || error || !data?.slug) return
+      if (data.slug !== slug) {
+        navigate({ to: '/noticias/$slug', params: { slug: data.slug } })
+      }
+    }
+
+    void resolveTranslation()
+    return () => {
+      cancelled = true
+    }
+  }, [language, navigate, slug])
+
   const tagsQuery = useQuery({
     queryKey: ['post-tags', 'public'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('post_tags')
-        .select('id, name, slug')
+        .select('id, name, slug, name_en, slug_en')
         .eq('is_active', true)
         .order('name', { ascending: true })
         .limit(12)
       if (error) throw error
-      return (data ?? []) as TagLink[]
+      const localized = (data ?? []).map((tag: any) => ({
+        ...tag,
+        name: isEnglish ? tag.name_en ?? tag.name : tag.name,
+        slug: isEnglish ? tag.slug_en ?? tag.slug : tag.slug,
+      }))
+      return localized as TagLink[]
     },
     staleTime: 60_000,
   })
@@ -226,7 +292,7 @@ function NewsPostDetailPage() {
           featured_image_url,
           published_at,
           created_at,
-          categories:post_categories_map(category:post_categories(name, slug))
+          categories:post_categories_map(category:post_categories(name, slug, name_en, slug_en))
         `,
         )
         .eq('status', 'published')
@@ -238,12 +304,22 @@ function NewsPostDetailPage() {
 
       if (error) throw error
 
-      return (data ?? []).map((entry: any) => ({
-        ...entry,
-        categories:
+      return (data ?? []).map((entry: any) => {
+        const relatedCategories =
           entry.categories?.map((categoryEntry: any) => categoryEntry.category).filter(Boolean) ??
-          [],
-      })) as RelatedPost[]
+          []
+        const localizedCategories = relatedCategories.map((category: any) => ({
+          ...category,
+          name: isEnglish ? category.name_en ?? category.name : category.name,
+          slug: isEnglish ? category.slug_en ?? category.slug : category.slug,
+          slug_base: category.slug,
+          name_base: category.name,
+        }))
+        return {
+          ...entry,
+          categories: localizedCategories,
+        }
+      }) as RelatedPost[]
     },
     staleTime: 60_000,
   })
@@ -322,7 +398,12 @@ function NewsPostDetailPage() {
                 <div className="max-w-3xl space-y-5">
                   {primaryCategory && (
                     <span
-                      className={`${getCategoryBadgeClass(primaryCategory.slug || primaryCategory.name)} inline-flex px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] rounded-none`}
+                      className={`${getCategoryBadgeClass(
+                        primaryCategory.slug_base ||
+                          primaryCategory.slug ||
+                          primaryCategory.name_base ||
+                          primaryCategory.name,
+                      )} inline-flex px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] rounded-none`}
                     >
                       {primaryCategory.name}
                     </span>
@@ -457,7 +538,10 @@ function NewsPostDetailPage() {
                             const relatedCategory = related.categories?.[0]
                             const relatedCategoryClass = relatedCategory
                               ? getCategoryBadgeClass(
-                                  relatedCategory.slug || relatedCategory.name,
+                                  relatedCategory.slug_base ||
+                                    relatedCategory.slug ||
+                                    relatedCategory.name_base ||
+                                    relatedCategory.name,
                                 )
                               : ''
                             const relatedDate = formatPostDate(

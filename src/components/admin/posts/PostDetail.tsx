@@ -13,6 +13,12 @@ const statusColors: Record<string, string> = {
   trash: 'bg-red-100 text-red-800',
 }
 
+const translationStatusColors: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-800',
+  review: 'bg-blue-100 text-blue-800',
+  failed: 'bg-red-100 text-red-800',
+}
+
 const formatDate = (dateStr: string | null) => {
   if (!dateStr) return 'Not set'
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -84,7 +90,7 @@ export function PostDetail({ post }: PostDetailProps) {
           <div>
             <p className="text-xs text-gray-500">Views</p>
             <p className="font-medium text-gray-900">
-              {post.view_count.toLocaleString()}
+              {(post.view_count ?? 0).toLocaleString()}
             </p>
           </div>
         </div>
@@ -168,6 +174,24 @@ export function PostDetail({ post }: PostDetailProps) {
           <strong>Language:</strong>{' '}
           {post.language === 'pt' ? 'Português' : 'English'}
         </p>
+        {post.translation_status && (
+          <p>
+            <strong>Translation:</strong>{' '}
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                translationStatusColors[post.translation_status] ??
+                'bg-gray-100 text-gray-800'
+              }`}
+            >
+              {post.translation_status}
+            </span>
+          </p>
+        )}
+        {post.source_post_id && (
+          <p>
+            <strong>Source Post:</strong> {post.source_post_id}
+          </p>
+        )}
         <p>
           <strong>Post Type:</strong> {post.post_type}
         </p>

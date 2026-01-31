@@ -7,6 +7,9 @@ export type Category = {
   name: string
   slug: string
   description?: string | null
+  name_en?: string | null
+  slug_en?: string | null
+  description_en?: string | null
   parent_id?: string | null
   order_weight: number
   is_active: boolean
@@ -26,6 +29,9 @@ export type Tag = {
   name: string
   slug: string
   description?: string | null
+  name_en?: string | null
+  slug_en?: string | null
+  description_en?: string | null
   is_active: boolean
   created_at: string
   updated_at: string
@@ -64,6 +70,12 @@ export type PostRow = {
   published_at: string | null
   featured: boolean
   language: string
+  translation_group_id?: string | null
+  source_post_id?: string | null
+  translation_status?: 'pending' | 'review' | 'failed' | null
+  translation_source_hash?: string | null
+  translated_at?: string | null
+  translation_error?: string | null
   view_count: number
   post_type: string
   created_at: string

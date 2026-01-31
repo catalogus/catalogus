@@ -39,6 +39,7 @@ type NewsPost = {
 function NewsListingPage() {
   const { t, i18n } = useTranslation()
   const language = i18n.language === 'en' ? 'en' : 'pt'
+  const isEnglish = language === 'en'
   const { q, categoria, tag } = Route.useSearch()
 
   // Query for featured post (hero spotlight)
@@ -53,7 +54,7 @@ function NewsListingPage() {
           title,
           slug,
           featured_image_url,
-          categories:post_categories_map(category:post_categories(name, slug))
+          categories:post_categories_map(category:post_categories(name, slug, name_en, slug_en))
         `,
         )
         .eq('status', 'published')
@@ -98,12 +99,12 @@ function NewsListingPage() {
         featured_image_url,
         published_at,
         created_at,
-        categories:post_categories_map${categoria ? '!inner' : ''}(category:post_categories${categoria ? '!inner' : ''}(name, slug))
+        categories:post_categories_map${categoria ? '!inner' : ''}(category:post_categories${categoria ? '!inner' : ''}(name, slug, name_en, slug_en))
       `
 
       // If tag filter is active, add tags with inner join
       if (tag) {
-        selectQuery += `,tags:post_tags_map!inner(tag:post_tags!inner(name, slug))`
+        selectQuery += `,tags:post_tags_map!inner(tag:post_tags!inner(name, slug, name_en, slug_en))`
       }
 
       let query = supabase
@@ -126,12 +127,14 @@ function NewsListingPage() {
 
       // Apply category filter using nested relationship
       if (categoria) {
-        query = query.eq('categories.category.slug', categoria)
+        const categoryField = isEnglish ? 'categories.category.slug_en' : 'categories.category.slug'
+        query = query.eq(categoryField, categoria)
       }
 
       // Apply tag filter using nested relationship
       if (tag) {
-        query = query.eq('tags.tag.slug', tag)
+        const tagField = isEnglish ? 'tags.tag.slug_en' : 'tags.tag.slug'
+        query = query.eq(tagField, tag)
       }
 
       // Pagination
@@ -166,6 +169,11 @@ function NewsListingPage() {
   const allPosts = postsQuery.data?.pages.flatMap((page) => page.posts) ?? []
   const featuredPost = featuredPostQuery.data
   const featuredCategory = featuredPost?.categories?.[0]?.category
+  const featuredCategoryLabel = featuredCategory
+    ? isEnglish
+      ? featuredCategory.name_en ?? featuredCategory.name
+      : featuredCategory.name
+    : null
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -198,7 +206,7 @@ function NewsListingPage() {
                 <span
                   className={`${getCategoryBadgeClass(featuredCategory.slug || featuredCategory.name || '')} inline-flex px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] rounded-none`}
                 >
-                  {featuredCategory.name}
+                  {featuredCategoryLabel}
                 </span>
               ) : (
                 <p className="text-xs uppercase tracking-[0.4em] text-white/70">
@@ -281,10 +289,15 @@ function NewsListingPage() {
                     )
                     const excerpt =
                       post.excerpt?.trim() || buildExcerpt(post.body)
+                    const categoryLabel = category
+                      ? isEnglish
+                        ? category.name_en ?? category.name
+                        : category.name
+                      : null
                     const categoryClass = category?.slug
                       ? getCategoryBadgeClass(category.slug)
-                      : category?.name
-                        ? getCategoryBadgeClass(category.name)
+                      : categoryLabel
+                        ? getCategoryBadgeClass(categoryLabel)
                         : ''
 
                     return (
@@ -313,7 +326,7 @@ function NewsListingPage() {
                           <span
                             className={`${categoryClass} absolute left-4 top-4 rounded-none px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em]`}
                           >
-                            {category.name}
+                            {categoryLabel}
                           </span>
                         )}
 

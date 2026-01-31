@@ -148,10 +148,17 @@ function AdminPostsPage() {
           author_id,
           status,
           published_at,
+          view_count,
           created_at,
           updated_at,
           featured,
           language,
+          translation_group_id,
+          source_post_id,
+          translation_status,
+          translation_source_hash,
+          translated_at,
+          translation_error,
           previous_status,
           author:profiles!posts_author_id_fkey(
             id,
@@ -503,10 +510,39 @@ function AdminPostsPage() {
     }
   }
 
+  type UpsertPostPayload = PostFormValues & {
+    id?: string
+    file?: File | null
+    source_post_id?: string | null
+  }
+
+  const triggerTranslation = async (postId: string) => {
+    try {
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession()
+      const accessToken = sessionData?.session?.access_token
+      if (sessionError || !accessToken) {
+        toast.error('Session expired. Please sign in again to translate posts.')
+        return
+      }
+      const { error } = await supabase.functions.invoke('translate-post', {
+        body: { post_id: postId },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+      if (error) {
+        console.warn('Translation invoke failed:', error)
+        toast.warning('Post saved, but translation failed to start.')
+      }
+    } catch (error) {
+      console.warn('Translation invoke error:', error)
+      toast.warning('Post saved, but translation failed to start.')
+    }
+  }
+
   const upsertPost = useMutation({
-    mutationFn: async (
-      payload: PostFormValues & { id?: string; file?: File | null },
-    ) => {
+    mutationFn: async (payload: UpsertPostPayload) => {
       const bodyLength = (payload.body ?? '').length
       const fileSize = payload.file?.size ?? 0
       console.log('upsertPost mutation started', {
@@ -633,7 +669,11 @@ function AdminPostsPage() {
         }
       }
 
-      void updateRelations()
+      await updateRelations()
+
+      if (!payload.source_post_id && payload.status !== 'trash') {
+        void triggerTranslation(postId)
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] })
@@ -876,6 +916,12 @@ function AdminPostsPage() {
     scheduled: 'bg-blue-100 text-blue-800',
     pending: 'bg-yellow-100 text-yellow-800',
     trash: 'bg-red-100 text-red-800',
+  }
+
+  const translationStatusColors: Record<string, string> = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    review: 'bg-blue-100 text-blue-800',
+    failed: 'bg-red-100 text-red-800',
   }
 
   return (
@@ -1159,6 +1205,7 @@ function AdminPostsPage() {
                       <TableHead>Author</TableHead>
                       <TableHead>Categories</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Translation</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead className="w-16">Actions</TableHead>
                     </TableRow>
@@ -1198,6 +1245,20 @@ function AdminPostsPage() {
                           >
                             {post.status}
                           </span>
+                        </TableCell>
+                        <TableCell>
+                          {post.translation_status ? (
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                                translationStatusColors[post.translation_status] ??
+                                'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {post.translation_status}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400">-</span>
+                          )}
                         </TableCell>
                         <TableCell className="text-gray-600 text-sm">
                           {new Date(post.created_at).toLocaleDateString()}
@@ -1377,6 +1438,7 @@ function AdminPostsPage() {
                       ...vals,
                       id: editingPost?.id,
                       file,
+                      source_post_id: editingPost?.source_post_id ?? null,
                     })
                   }}
                   categories={categoriesQuery.data ?? []}

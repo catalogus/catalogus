@@ -48,6 +48,7 @@ const getCategoryBadgeClass = (value: string) => {
 export default function NewsSection() {
   const { t, i18n } = useTranslation()
   const language = i18n.language === 'en' ? 'en' : 'pt'
+  const isEnglish = language === 'en'
   const postsQuery = useQuery({
     queryKey: ['home', 'latest-posts', language],
     queryFn: async () => {
@@ -61,7 +62,7 @@ export default function NewsSection() {
           featured_image_url,
           published_at,
           created_at,
-          categories:post_categories_map(category:post_categories(name, slug))
+          categories:post_categories_map(category:post_categories(name, slug, name_en, slug_en))
         `,
         )
         .eq('status', 'published')
@@ -123,7 +124,11 @@ export default function NewsSection() {
                 i18n.language === 'en' ? 'en-US' : 'pt-PT',
               )
               const category = post.categories?.[0]?.category
-              const categoryLabel = category?.name
+              const categoryLabel = category
+                ? isEnglish
+                  ? category.name_en ?? category.name
+                  : category.name
+                : null
               const categoryClass = category?.slug
                 ? getCategoryBadgeClass(category.slug)
                 : categoryLabel
