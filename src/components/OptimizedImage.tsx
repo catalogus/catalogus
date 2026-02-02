@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import { publicSupabase } from '../lib/supabasePublic'
 
 interface OptimizedImageProps {
   src: string | null | undefined
@@ -41,7 +41,7 @@ export function OptimizedImage({
     }
 
     // Otherwise, get public URL from Supabase Storage
-    const { data } = supabase.storage.from(bucket).getPublicUrl(src)
+    const { data } = publicSupabase.storage.from(bucket).getPublicUrl(src)
     setImageSrc(data.publicUrl)
   }, [src, bucket])
 

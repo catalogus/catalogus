@@ -7,46 +7,24 @@ import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { FilterSidebar } from '../../components/shop/FilterSidebar'
 import { ProductCard, type ProductCardBook } from '../../components/shop/ProductCard'
-import { supabase } from '../../lib/supabaseClient'
-import { useShopMetadata, shopKeys, type PriceRange } from '../../lib/queries/shopQueries'
+import { publicSupabase } from '../../lib/supabasePublic'
+import { useShopMetadata, type PriceRange } from '../../lib/queries/shopQueries'
 
 export const Route = createFileRoute('/loja/')({
-  component: ShopListingPage,
-  beforeLoad: async ({ context }) => {
-    const queryClient = context.queryClient
+  loader: async () => {
+    const { data: metaData, error: metaError } = await publicSupabase.rpc(
+      'get_shop_metadata',
+    )
+    if (metaError) throw metaError
+    const metadata = {
+      categories: (metaData?.categories || []) as string[],
+      priceRange: (metaData?.priceRange || { min: 0, max: 10000 }) as PriceRange,
+    }
 
-    // Prefetch shop metadata using query factory
-    queryClient.prefetchQuery({
-      queryKey: shopKeys.metadata(),
-      queryFn: async () => {
-        const { data, error } = await supabase.rpc('get_shop_metadata')
-        if (error) throw error
-        return {
-          categories: (data?.categories || []) as string[],
-          priceRange: (data?.priceRange || { min: 0, max: 10000 }) as PriceRange,
-        }
-      },
-      staleTime: 300_000,
-    })
-
-    // Prefetch first page of books
-    queryClient.prefetchInfiniteQuery({
-      queryKey: [
-        'books',
-        'shop',
-        {
-          search: '',
-          selectedCategories: [],
-          language: null,
-          selectedPrice: { min: 0, max: 0 },
-          sortBy: 'newest',
-        },
-      ],
-      queryFn: async () => {
-        const { data, error } = await supabase
-          .from('books')
-          .select(
-            `
+    const { data, error } = await publicSupabase
+      .from('books')
+      .select(
+        `
             id,
             title,
             slug,
@@ -60,31 +38,29 @@ export const Route = createFileRoute('/loja/')({
             language,
             authors:authors_books(author:authors(id, name, wp_slug))
           `,
-          )
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-          .range(0, 11)
+      )
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .range(0, 11)
 
-        if (error) throw error
+    if (error) throw error
 
-        const books =
-          data?.map((entry: any) => ({
-            ...entry,
-            authors:
-              entry.authors?.map((a: any) => ({
-                author: a.author,
-              })) ?? [],
-          })) ?? []
+    const books =
+      data?.map((entry: any) => ({
+        ...entry,
+        authors:
+          entry.authors?.map((a: any) => ({
+            author: a.author,
+          })) ?? [],
+      })) ?? []
 
-        return {
-          books,
-          hasMore: books.length === 12,
-        }
-      },
-      initialPageParam: 1,
-      staleTime: 60_000,
-    })
+    return {
+      metadata,
+      initialBooks: books as ProductCardBook[],
+      hasMore: books.length === 12,
+    }
   },
+  component: ShopListingPage,
 })
 
 type SortOption = 'newest' | 'oldest' | 'price-asc' | 'price-desc' | 'title'
@@ -94,16 +70,19 @@ const PAGE_SIZE = 12
 
 function ShopListingPage() {
   const { t } = useTranslation()
+  const loaderData = Route.useLoaderData()
   const [search, setSearch] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [language, setLanguage] = useState<string | null>(null)
-  const [selectedPrice, setSelectedPrice] = useState<PriceRange>({ min: 0, max: 0 })
+  const [selectedPrice, setSelectedPrice] = useState<PriceRange>(
+    loaderData.metadata.priceRange ?? DEFAULT_PRICE_RANGE,
+  )
   const [sortBy, setSortBy] = useState<SortOption>('newest')
   const [showFilters, setShowFilters] = useState(false)
   const priceRangeRef = useRef<PriceRange>(DEFAULT_PRICE_RANGE)
 
   // Use query factory hook
-  const metadataQuery = useShopMetadata()
+  const metadataQuery = useShopMetadata(loaderData.metadata)
   const categories = metadataQuery.data?.categories ?? []
   const priceRange = metadataQuery.data?.priceRange ?? DEFAULT_PRICE_RANGE
 
@@ -133,7 +112,7 @@ function ShopListingPage() {
       },
     ],
     queryFn: async ({ pageParam = 1 }) => {
-      let query = supabase
+      let query = publicSupabase
         .from('books')
         .select(
           `
@@ -221,6 +200,23 @@ function ShopListingPage() {
     getNextPageParam: (lastPage, allPages) =>
       lastPage.hasMore ? allPages.length + 1 : undefined,
     initialPageParam: 1,
+    initialData:
+      !search.trim() &&
+      selectedCategories.length === 0 &&
+      !language &&
+      sortBy === 'newest' &&
+      selectedPrice.min === priceRange.min &&
+      selectedPrice.max === priceRange.max
+        ? {
+            pages: [
+              {
+                books: loaderData.initialBooks,
+                hasMore: loaderData.hasMore,
+              },
+            ],
+            pageParams: [1],
+          }
+        : undefined,
     staleTime: 60_000,
   })
 

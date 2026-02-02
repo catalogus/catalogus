@@ -1,9 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
 import { Suspense, lazy } from 'react'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
-import { supabase } from '../../lib/supabaseClient'
+import { publicSupabase } from '../../lib/supabasePublic'
 import type { Publication, PublicationPage } from '../../types/publication'
 
 // Lazy load the flipbook viewer for better initial load
@@ -17,65 +16,46 @@ export const Route = createFileRoute('/publicacoes/$slug')({
   validateSearch: (search: Record<string, unknown>) => ({
     page: typeof search.page === 'string' ? parseInt(search.page, 10) : 1,
   }),
+  loader: async ({ params }) => {
+    try {
+      const { data, error } = await publicSupabase
+        .from('publications')
+        .select('*')
+        .eq('slug', params.slug)
+        .eq('is_active', true)
+        .single()
+
+      if (error) throw error
+      const publication = data as Publication
+
+      const { data: pagesData, error: pagesError } = await publicSupabase
+        .from('publication_pages')
+        .select('*')
+        .eq('publication_id', publication.id)
+        .order('page_number', { ascending: true })
+
+      if (pagesError) throw pagesError
+
+      return {
+        publication,
+        pages: (pagesData ?? []) as PublicationPage[],
+        hasError: false,
+      }
+    } catch (error) {
+      console.error('Publication loader failed:', error)
+      return { publication: null, pages: [] as PublicationPage[], hasError: true }
+    }
+  },
   component: PublicationViewerPage,
 })
 
 function PublicationViewerPage() {
   const { t } = useTranslation()
-  const { slug } = Route.useParams()
   const { page: initialPage } = Route.useSearch()
-
-  // Fetch publication metadata
-  const publicationQuery = useQuery({
-    queryKey: ['publication', slug],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('publications')
-        .select('*')
-        .eq('slug', slug)
-        .eq('is_active', true)
-        .single()
-
-      if (error) throw error
-      return data as Publication
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  })
-
-  // Fetch publication pages
-  const pagesQuery = useQuery({
-    queryKey: ['publication-pages', publicationQuery.data?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('publication_pages')
-        .select('*')
-        .eq('publication_id', publicationQuery.data!.id)
-        .order('page_number', { ascending: true })
-
-      if (error) throw error
-      return data as PublicationPage[]
-    },
-    enabled: !!publicationQuery.data?.id,
-    staleTime: 5 * 60 * 1000,
-  })
-
-  // Loading state
-  if (publicationQuery.isLoading) {
-    return (
-      <div className="flex h-screen flex-col bg-gray-900">
-        <Header />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center text-white">
-            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/20 border-t-white" />
-            <p>{t('publications.viewer.loading', 'A carregar publicação...')}</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const { publication, pages, hasError } = Route.useLoaderData()
 
   // Error state - publication not found
-  if (publicationQuery.isError || !publicationQuery.data) {
+  if (hasError || !publication) {
     return (
       <div className="flex h-screen flex-col bg-gray-900">
         <Header />
@@ -115,9 +95,6 @@ function PublicationViewerPage() {
     )
   }
 
-  const publication = publicationQuery.data
-  const pages = pagesQuery.data ?? []
-
   return (
     <div className="flex h-screen flex-col bg-gray-900">
       {/* Minimal header for viewer */}
@@ -151,14 +128,7 @@ function PublicationViewerPage() {
 
       {/* Flipbook viewer */}
       <main className="flex-1 min-h-0 overflow-hidden">
-        {pagesQuery.isLoading ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-center text-white">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/20 border-t-white" />
-              <p>{t('publications.viewer.loadingPages', 'A carregar páginas...')}</p>
-            </div>
-          </div>
-        ) : pages.length === 0 ? (
+        {pages.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <div className="text-center text-white">
               <svg

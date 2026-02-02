@@ -6,7 +6,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react'
-import { supabase } from './supabaseClient'
+import { publicSupabase } from './supabasePublic'
 import { calculateCartTotal } from './shopHelpers'
 
 export type CartItem = {
@@ -53,7 +53,7 @@ async function hydrateCart(
 
   const bookIds = storedItems.map((item) => item.id)
 
-  const { data, error } = await supabase
+  const { data, error } = await publicSupabase
     .from('books')
     .select('id, title, slug, price_mzn, stock, cover_url, cover_path')
     .in('id', bookIds)
@@ -68,7 +68,7 @@ async function hydrateCart(
   const books = data?.map((book) => {
     let coverUrl = book.cover_url
     if (!coverUrl && book.cover_path) {
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = publicSupabase.storage
         .from('covers')
         .getPublicUrl(book.cover_path)
       coverUrl = urlData.publicUrl

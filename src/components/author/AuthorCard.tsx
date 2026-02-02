@@ -7,7 +7,7 @@ import {
   Twitter,
   Youtube,
 } from 'lucide-react'
-import { supabase } from '../../lib/supabaseClient'
+import { publicSupabase } from '../../lib/supabasePublic'
 import type { SocialLinks } from '../../types/author'
 
 export type AuthorCardData = {
@@ -25,7 +25,7 @@ export type AuthorCardData = {
 const resolvePhotoUrl = (photoUrl?: string | null, photoPath?: string | null) => {
   if (photoUrl) return photoUrl
   if (photoPath) {
-    return supabase.storage.from('author-photos').getPublicUrl(photoPath).data
+    return publicSupabase.storage.from('author-photos').getPublicUrl(photoPath).data
       .publicUrl
   }
   return null

@@ -1,8 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
 import { Link2, ShoppingCart } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { supabase } from '../../lib/supabaseClient'
 
 type FeaturedBook = {
   id: string
@@ -29,15 +27,6 @@ const formatPrice = (value: number | null, locale: string) => {
 const truncateText = (value: string, maxLength: number) => {
   if (value.length <= maxLength) return value
   return `${value.slice(0, maxLength).trimEnd()}...`
-}
-
-const coverUrlFor = (book: FeaturedBook) => {
-  if (book.cover_url) return book.cover_url
-  if (book.cover_path) {
-    return supabase.storage.from('covers').getPublicUrl(book.cover_path).data
-      .publicUrl
-  }
-  return null
 }
 
 const bookLinkFor = (book: FeaturedBook) => `/livro/${book.id}`
@@ -72,24 +61,16 @@ const copyText = async (value: string) => {
   return success
 }
 
-export default function FeaturedBooksSection() {
+type FeaturedBooksSectionProps = {
+  books: FeaturedBook[]
+  hasError?: boolean
+}
+
+export default function FeaturedBooksSection({
+  books,
+  hasError = false,
+}: FeaturedBooksSectionProps) {
   const { t, i18n } = useTranslation()
-  const booksQuery = useQuery({
-    queryKey: ['home', 'featured-books'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('books')
-        .select(
-          'id, title, slug, price_mzn, description, seo_description, cover_url, cover_path, featured, is_active',
-        )
-        .eq('featured', true)
-        .eq('is_active', true)
-        .limit(4)
-      if (error) throw error
-      return (data ?? []) as FeaturedBook[]
-    },
-    staleTime: 60_000,
-  })
 
   return (
     <section className="bg-white text-gray-900">
@@ -107,28 +88,15 @@ export default function FeaturedBooksSection() {
         </div>
 
         <div className="mt-12 grid gap-8 md:grid-cols-2 xl:grid-cols-4">
-          {booksQuery.isLoading &&
-            Array.from({ length: 4 }).map((_, index) => (
-              <div key={`featured-book-skeleton-${index}`} className="space-y-5">
-                <div className="bg-[#e6e0db] p-10 rounded-none">
-                  <div className="aspect-[3/4] w-full bg-white/60 animate-pulse" />
-                </div>
-                <div className="h-5 w-3/4 bg-gray-200 animate-pulse" />
-                <div className="h-12 w-full bg-gray-100 animate-pulse" />
-                <div className="h-5 w-1/3 bg-gray-200 animate-pulse" />
-              </div>
-            ))}
-
-          {booksQuery.isError && (
+          {hasError && (
             <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
               {t('home.featuredBooks.error')}
             </div>
           )}
 
-          {!booksQuery.isLoading &&
-            !booksQuery.isError &&
-            (booksQuery.data ?? []).map((book) => {
-              const coverUrl = coverUrlFor(book)
+          {!hasError &&
+            books.map((book) => {
+              const coverUrl = book.cover_url
               const description = book.description || book.seo_description || ''
               const summary = description
                 ? truncateText(description, MAX_DESCRIPTION_LENGTH)
@@ -228,9 +196,7 @@ export default function FeaturedBooksSection() {
               )
             })}
 
-          {!booksQuery.isLoading &&
-            !booksQuery.isError &&
-            (booksQuery.data?.length ?? 0) === 0 && (
+          {!hasError && books.length === 0 && (
               <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
                 {t('home.featuredBooks.empty')}
               </div>

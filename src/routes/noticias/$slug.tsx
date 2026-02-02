@@ -3,10 +3,183 @@ import { useQuery } from '@tanstack/react-query'
 import { type ReactNode, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
-import { supabase } from '../../lib/supabaseClient'
+import { publicSupabase } from '../../lib/supabasePublic'
 import type { PostRow } from '../../types/post'
 
 export const Route = createFileRoute('/noticias/$slug')({
+  loader: async ({ params }) => {
+    const language: 'pt' | 'en' = 'pt'
+    const isEnglish = language === 'en'
+
+    const { data, error } = await publicSupabase
+      .from('posts')
+      .select(
+        `
+          id,
+          title,
+          slug,
+          language,
+          excerpt,
+          body,
+          featured_image_url,
+          published_at,
+          created_at,
+          author_id,
+          view_count,
+          translation_group_id,
+          categories:post_categories_map(category:post_categories(id, name, slug, name_en, slug_en)),
+          tags:post_tags_map(tag:post_tags(id, name, slug, name_en, slug_en))
+        `,
+      )
+      .eq('status', 'published')
+      .eq('language', language)
+      .eq('slug', params.slug)
+      .maybeSingle()
+
+    if (error) throw error
+    if (!data) {
+      return {
+        post: null as PostRow | null,
+        tags: [] as TagLink[],
+        recentPosts: [] as RelatedPost[],
+        relatedPosts: [] as RelatedPost[],
+        language,
+      }
+    }
+
+    const categories =
+      data.categories?.map((entry: any) => entry.category).filter(Boolean) ?? []
+    const tags = data.tags?.map((entry: any) => entry.tag).filter(Boolean) ?? []
+
+    let author = null
+    if (data.author_id) {
+      const { data: profile, error: profileError } = await publicSupabase
+        .from('profiles')
+        .select('id, name, email, photo_url')
+        .eq('id', data.author_id)
+        .maybeSingle()
+      if (!profileError) {
+        author = profile
+      }
+    }
+
+    const localizedCategories = categories.map((category: any) => ({
+      ...category,
+      name: isEnglish ? category.name_en ?? category.name : category.name,
+      slug: isEnglish ? category.slug_en ?? category.slug : category.slug,
+      slug_base: category.slug,
+      name_base: category.name,
+    }))
+
+    const localizedTags = tags.map((tag: any) => ({
+      ...tag,
+      name: isEnglish ? tag.name_en ?? tag.name : tag.name,
+      slug: isEnglish ? tag.slug_en ?? tag.slug : tag.slug,
+    }))
+
+    const post = {
+      ...data,
+      categories: localizedCategories,
+      tags: localizedTags,
+      author,
+    } as PostRow
+
+    const { data: tagData, error: tagError } = await publicSupabase
+      .from('post_tags')
+      .select('id, name, slug, name_en, slug_en')
+      .eq('is_active', true)
+      .order('name', { ascending: true })
+      .limit(12)
+    if (tagError) throw tagError
+    const tagsList = (tagData ?? []).map((tag: any) => ({
+      ...tag,
+      name: isEnglish ? tag.name_en ?? tag.name : tag.name,
+      slug: isEnglish ? tag.slug_en ?? tag.slug : tag.slug,
+    })) as TagLink[]
+
+    const { data: recentData, error: recentError } = await publicSupabase
+      .from('posts')
+      .select('id, title, slug, featured_image_url, published_at, created_at')
+      .eq('status', 'published')
+      .eq('language', language)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
+      .limit(4)
+    if (recentError) throw recentError
+    const recentPosts = (recentData ?? []) as RelatedPost[]
+
+    const categoryIds = localizedCategories.map((category: any) => category.id)
+    const tagIds = localizedTags.map((tag: any) => tag.id)
+
+    let relatedPosts: RelatedPost[] = []
+    if (categoryIds.length || tagIds.length) {
+      const relatedIds = new Set<string>()
+
+      if (categoryIds.length > 0) {
+        const { data: categoryMatches, error: categoryError } = await publicSupabase
+          .from('post_categories_map')
+          .select('post_id')
+          .in('category_id', categoryIds)
+        if (categoryError) throw categoryError
+        categoryMatches?.forEach((entry: any) => relatedIds.add(entry.post_id))
+      }
+
+      if (tagIds.length > 0) {
+        const { data: tagMatches, error: tagError } = await publicSupabase
+          .from('post_tags_map')
+          .select('post_id')
+          .in('tag_id', tagIds)
+        if (tagError) throw tagError
+        tagMatches?.forEach((entry: any) => relatedIds.add(entry.post_id))
+      }
+
+      relatedIds.delete(post.id)
+      const relatedList = Array.from(relatedIds)
+      if (relatedList.length > 0) {
+        const { data: relatedData, error: relatedError } = await publicSupabase
+          .from('posts')
+          .select(
+            `
+          id,
+          title,
+          slug,
+          featured_image_url,
+          published_at,
+          created_at,
+          categories:post_categories_map(category:post_categories(name, slug, name_en, slug_en))
+        `,
+          )
+          .eq('status', 'published')
+          .eq('language', language)
+          .in('id', relatedList)
+          .order('published_at', { ascending: false, nullsFirst: false })
+          .order('created_at', { ascending: false })
+          .limit(3)
+
+        if (relatedError) throw relatedError
+
+        relatedPosts =
+          (relatedData ?? []).map((entry: any) => {
+            const relatedCategories =
+              entry.categories?.map((categoryEntry: any) => categoryEntry.category).filter(Boolean) ??
+              []
+            const localizedRelated = relatedCategories.map((category: any) => ({
+              ...category,
+              name: isEnglish ? category.name_en ?? category.name : category.name,
+              slug: isEnglish ? category.slug_en ?? category.slug : category.slug,
+              slug_base: category.slug,
+              name_base: category.name,
+            }))
+            return {
+              ...entry,
+              categories: localizedRelated,
+            }
+          }) ?? []
+      }
+    }
+
+    return { post, tags: tagsList, recentPosts, relatedPosts, language }
+  },
   component: NewsPostDetailPage,
 })
 
@@ -92,16 +265,22 @@ function NewsPostDetailPage() {
   const navigate = useNavigate()
   const language = i18n.language === 'en' ? 'en' : 'pt'
   const isEnglish = language === 'en'
+  const loaderData = Route.useLoaderData()
   const lastResolvedPostRef = useRef<{
     translation_group_id?: string | null
     slug?: string
     language?: string
   } | null>(null)
 
+  const initialPost =
+    loaderData.language === language && loaderData.post?.slug === slug
+      ? loaderData.post
+      : undefined
+
   const postQuery = useQuery({
     queryKey: ['news-post', slug, language],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await publicSupabase
         .from('posts')
         .select(
           `
@@ -135,7 +314,7 @@ function NewsPostDetailPage() {
 
       let author = null
       if (data.author_id) {
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile, error: profileError } = await publicSupabase
           .from('profiles')
           .select('id, name, email, photo_url')
           .eq('id', data.author_id)
@@ -166,6 +345,7 @@ function NewsPostDetailPage() {
         author,
       } as PostRow
     },
+    initialData: initialPost,
     staleTime: 60_000,
   })
 
@@ -187,7 +367,7 @@ function NewsPostDetailPage() {
     let cancelled = false
 
     const resolveTranslation = async () => {
-      const { data, error } = await supabase
+      const { data, error } = await publicSupabase
         .from('posts')
         .select('slug, language')
         .eq('translation_group_id', lastResolved.translation_group_id)
@@ -208,7 +388,7 @@ function NewsPostDetailPage() {
   const tagsQuery = useQuery({
     queryKey: ['post-tags', 'public'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await publicSupabase
         .from('post_tags')
         .select('id, name, slug, name_en, slug_en')
         .eq('is_active', true)
@@ -222,13 +402,14 @@ function NewsPostDetailPage() {
       }))
       return localized as TagLink[]
     },
+    initialData: loaderData.language === language ? loaderData.tags : undefined,
     staleTime: 60_000,
   })
 
   const recentPostsQuery = useQuery({
     queryKey: ['news-posts', 'recent', language],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await publicSupabase
         .from('posts')
         .select('id, title, slug, featured_image_url, published_at, created_at')
         .eq('status', 'published')
@@ -239,6 +420,7 @@ function NewsPostDetailPage() {
       if (error) throw error
       return (data ?? []) as RelatedPost[]
     },
+    initialData: loaderData.language === language ? loaderData.recentPosts : undefined,
     staleTime: 60_000,
   })
 
@@ -261,7 +443,7 @@ function NewsPostDetailPage() {
       const relatedIds = new Set<string>()
 
       if (categoryIds.length > 0) {
-        const { data, error } = await supabase
+        const { data, error } = await publicSupabase
           .from('post_categories_map')
           .select('post_id')
           .in('category_id', categoryIds)
@@ -270,7 +452,7 @@ function NewsPostDetailPage() {
       }
 
       if (tagIds.length > 0) {
-        const { data, error } = await supabase
+        const { data, error } = await publicSupabase
           .from('post_tags_map')
           .select('post_id')
           .in('tag_id', tagIds)
@@ -282,7 +464,7 @@ function NewsPostDetailPage() {
       const relatedList = Array.from(relatedIds)
       if (relatedList.length === 0) return [] as RelatedPost[]
 
-      const { data, error } = await supabase
+      const { data, error } = await publicSupabase
         .from('posts')
         .select(
           `
@@ -321,6 +503,10 @@ function NewsPostDetailPage() {
         }
       }) as RelatedPost[]
     },
+    initialData:
+      loaderData.language === language && loaderData.post?.slug === slug
+        ? loaderData.relatedPosts
+        : undefined,
     staleTime: 60_000,
   })
 

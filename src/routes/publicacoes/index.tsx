@@ -1,22 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
-import { supabase } from '../../lib/supabaseClient'
+import { publicSupabase } from '../../lib/supabasePublic'
 import type { Publication } from '../../types/publication'
 
 export const Route = createFileRoute('/publicacoes/')({
-  component: PublicationsListingPage,
-})
-
-function PublicationsListingPage() {
-  const { t } = useTranslation()
-
-  const publicationsQuery = useQuery({
-    queryKey: ['publications', 'listing'],
-    queryFn: async () => {
-      const { data, error } = await supabase
+  loader: async () => {
+    try {
+      const { data, error } = await publicSupabase
         .from('publications')
         .select('*')
         .eq('is_active', true)
@@ -24,12 +16,19 @@ function PublicationsListingPage() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      return data as Publication[]
-    },
-    staleTime: 60_000,
-  })
+      return { publications: (data ?? []) as Publication[], hasError: false }
+    } catch (error) {
+      console.error('Publications loader failed:', error)
+      return { publications: [] as Publication[], hasError: true }
+    }
+  },
+  component: PublicationsListingPage,
+})
 
-  const publications = publicationsQuery.data ?? []
+function PublicationsListingPage() {
+  const { t } = useTranslation()
+  const { publications, hasError } = Route.useLoaderData()
+
   const featuredPublications = publications.filter(p => p.is_featured)
   const regularPublications = publications.filter(p => !p.is_featured)
 
@@ -64,29 +63,15 @@ function PublicationsListingPage() {
       {/* Main Content */}
       <main className="py-20">
         <div className="container mx-auto px-4 lg:px-15">
-          {/* Loading State */}
-          {publicationsQuery.isLoading && (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div
-                  key={`skeleton-${index}`}
-                  className="h-[320px] animate-pulse rounded-lg border border-gray-200 bg-gray-100"
-                />
-              ))}
-            </div>
-          )}
-
           {/* Error State */}
-          {publicationsQuery.isError && (
+          {hasError && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
               {t('publications.listing.error', 'Erro ao carregar publicações.')}
             </div>
           )}
 
           {/* Empty State */}
-          {!publicationsQuery.isLoading &&
-            !publicationsQuery.isError &&
-            publications.length === 0 && (
+          {!hasError && publications.length === 0 && (
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-12 text-center">
                 <svg
                   className="mx-auto h-16 w-16 text-gray-400"

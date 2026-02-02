@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useCart } from '../../lib/useCart'
 import { isInStock, truncateText } from '../../lib/shopHelpers'
-import { supabase } from '../../lib/supabaseClient'
+import { publicSupabase } from '../../lib/supabasePublic'
 import { BookCover } from '../OptimizedImage'
 
 export type ProductCardBook = {
@@ -45,7 +45,7 @@ const formatPrice = (value: number | null | undefined, locale: string) => {
 const coverUrlFor = (book: ProductCardBook) => {
   if (book.cover_url) return book.cover_url
   if (book.cover_path) {
-    return supabase.storage.from('covers').getPublicUrl(book.cover_path).data
+    return publicSupabase.storage.from('covers').getPublicUrl(book.cover_path).data
       .publicUrl
   }
   return null

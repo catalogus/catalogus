@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { buildExcerpt, formatPostDate } from '../../lib/newsHelpers'
 import { formatPrice, truncateText } from '../../lib/shopHelpers'
-import { supabase } from '../../lib/supabaseClient'
+import { publicSupabase } from '../../lib/supabasePublic'
 import { AuthorCard, type AuthorCardData } from '../author/AuthorCard'
 
 export type SearchBook = {
@@ -37,7 +37,7 @@ export type SearchPost = {
 const coverUrlFor = (book: SearchBook) => {
   if (book.cover_url) return book.cover_url
   if (book.cover_path) {
-    return supabase.storage.from('covers').getPublicUrl(book.cover_path).data
+    return publicSupabase.storage.from('covers').getPublicUrl(book.cover_path).data
       .publicUrl
   }
   return null

@@ -14,10 +14,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
   })
 }
 
-if (!isBrowser) {
-  console.warn('Supabase client initialized on the server. Auth sessions will be unavailable.')
-}
-
 export const supabase = createClient(
   supabaseUrl ?? 'https://placeholder.supabase.co',
   supabaseAnonKey ?? 'placeholder-key',

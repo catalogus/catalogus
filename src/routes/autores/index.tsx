@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { AuthorCard } from '../../components/author/AuthorCard'
-import { supabase } from '../../lib/supabaseClient'
+import { publicSupabase } from '../../lib/supabasePublic'
 import {
   Globe,
   Linkedin,
@@ -19,6 +19,85 @@ import {
 import type { SocialLinks } from '../../types/author'
 
 export const Route = createFileRoute('/autores/')({
+  loader: async () => {
+    const { data: featuredData, error: featuredError } = await publicSupabase
+      .from('authors')
+      .select(
+        `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id,
+          profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, bio, social_links)`,
+      )
+      .eq('featured', true)
+
+    if (featuredError) throw featuredError
+    const featuredAuthor = featuredData?.length
+      ? getMergedAuthorData(featuredData[Math.floor(Math.random() * featuredData.length)] as AuthorData)
+      : null
+
+    const { data: authorsData, error: authorsError } = await publicSupabase
+      .from('authors')
+      .select(
+        `id, wp_slug, name, author_type, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id,
+          profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, bio, social_links)`,
+      )
+      .order('name', { ascending: true })
+      .neq('id', featuredAuthor?.id || '00000000-0000-0000-0000-000000000000')
+      .range(0, 11)
+
+    if (authorsError) throw authorsError
+    const authors = ((authorsData ?? []) as AuthorData[]).map(getMergedAuthorData)
+
+    const { data: profiles, error: profilesError } = await publicSupabase
+      .from('profiles')
+      .select('id, name, bio, photo_url, photo_path, social_links, phone')
+      .eq('role', 'author')
+      .in('status', ['pending', 'approved'])
+      .order('name', { ascending: true })
+
+    if (profilesError) throw profilesError
+
+    const { data: linkedAuthors, error: linkedError } = await publicSupabase
+      .from('authors')
+      .select('profile_id')
+      .not('profile_id', 'is', null)
+
+    if (linkedError) throw linkedError
+
+    const linkedProfileIds = new Set(
+      linkedAuthors?.map((a) => a.profile_id).filter(Boolean) || [],
+    )
+
+    const standaloneProfiles = (profiles || []).filter((p) => !linkedProfileIds.has(p.id))
+
+    const standaloneAuthors = standaloneProfiles.map((profile) => ({
+      id: profile.id,
+      wp_slug: null,
+      name: profile.name || 'Autor',
+      author_type: 'Autor registado',
+      bio: profile.bio || null,
+      photo_url: profile.photo_url || null,
+      photo_path: profile.photo_path || null,
+      social_links: profile.social_links || null,
+      residence_city: null,
+      province: null,
+      claim_status: 'approved' as const,
+      profile_id: profile.id,
+      profile: {
+        id: profile.id,
+        name: profile.name || 'Autor',
+        photo_url: profile.photo_url || null,
+        photo_path: profile.photo_path || null,
+        bio: profile.bio || null,
+        social_links: profile.social_links || null,
+      },
+    })) as AuthorData[]
+
+    return {
+      featuredAuthor,
+      authors,
+      authorsHasMore: authors.length === 12,
+      standaloneAuthors,
+    }
+  },
   component: AutoresListingPage,
 })
 
@@ -67,7 +146,7 @@ const resolvePhotoUrl = (
 ) => {
   if (photoUrl) return photoUrl
   if (photoPath) {
-    return supabase.storage.from('author-photos').getPublicUrl(photoPath).data
+    return publicSupabase.storage.from('author-photos').getPublicUrl(photoPath).data
       .publicUrl
   }
   return null
@@ -103,6 +182,7 @@ const getSocialLinks = (author: AuthorData) => {
 
 function AutoresListingPage() {
   const { t, i18n } = useTranslation()
+  const loaderData = Route.useLoaderData()
   const [searchQuery, setSearchQuery] = useState('')
   const trimmedSearch = searchQuery.trim()
   const hasSearch = trimmedSearch.length > 0
@@ -111,7 +191,7 @@ function AutoresListingPage() {
   const featuredAuthorQuery = useQuery({
     queryKey: ['authors', 'featured-spotlight'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await publicSupabase
         .from('authors')
         .select(
           `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id,
@@ -127,6 +207,7 @@ function AutoresListingPage() {
       const author = data[randomIndex] as AuthorData
       return getMergedAuthorData(author)
     },
+    initialData: loaderData.featuredAuthor ?? null,
     staleTime: 60_000,
   })
 
@@ -140,7 +221,7 @@ function AutoresListingPage() {
       const from = hasSearch ? 0 : (pageParam - 1) * pageSize
       const to = hasSearch ? searchLimit - 1 : from + pageSize - 1
 
-      let query = supabase
+      let query = publicSupabase
         .from('authors')
         .select(
           `id, wp_slug, name, author_type, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id,
@@ -168,6 +249,14 @@ function AutoresListingPage() {
       return lastPage.hasMore ? allPages.length + 1 : undefined
     },
     initialPageParam: 1,
+    initialData: !hasSearch
+      ? {
+          pages: [
+            { authors: loaderData.authors, hasMore: loaderData.authorsHasMore },
+          ],
+          pageParams: [1],
+        }
+      : undefined,
     staleTime: 60_000,
     // Remove enabled restriction - query starts immediately and refetches when featured ID available
   })
@@ -176,7 +265,7 @@ function AutoresListingPage() {
   const standaloneAuthorsQuery = useQuery({
     queryKey: ['authors', 'standalone', trimmedSearch, i18n.language],
     queryFn: async () => {
-      let query = supabase
+      let query = publicSupabase
         .from('profiles')
         .select('id, name, bio, photo_url, photo_path, social_links, phone')
         .eq('role', 'author')
@@ -193,7 +282,7 @@ function AutoresListingPage() {
       if (profilesError) throw profilesError
 
       // Get all profile IDs that are already linked to author records
-      const { data: linkedAuthors, error: linkedError } = await supabase
+      const { data: linkedAuthors, error: linkedError } = await publicSupabase
         .from('authors')
         .select('profile_id')
         .not('profile_id', 'is', null)
@@ -233,6 +322,7 @@ function AutoresListingPage() {
         },
       })) as AuthorData[]
     },
+    initialData: !hasSearch ? loaderData.standaloneAuthors : undefined,
     staleTime: 60_000,
   })
 

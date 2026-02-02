@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { supabase } from '../supabaseClient'
+import { publicSupabase } from '../supabasePublic'
 
 // Query key factory for shop
 export const shopKeys = {
@@ -20,17 +20,18 @@ export type ShopMetadata = {
 const DEFAULT_PRICE_RANGE: PriceRange = { min: 0, max: 10000 }
 
 // Reusable shop metadata query hook
-export const useShopMetadata = () => {
+export const useShopMetadata = (initialData?: ShopMetadata) => {
   return useQuery({
     queryKey: shopKeys.metadata(),
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_shop_metadata')
+      const { data, error } = await publicSupabase.rpc('get_shop_metadata')
       if (error) throw error
       return {
         categories: (data?.categories || []) as string[],
         priceRange: (data?.priceRange || DEFAULT_PRICE_RANGE) as PriceRange,
       } as ShopMetadata
     },
+    initialData,
     staleTime: 300_000, // 5 minutes
   })
 }

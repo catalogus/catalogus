@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { supabase } from '../supabaseClient'
+import { publicSupabase } from '../supabasePublic'
 import type { ProductCardBook } from '../../components/shop/ProductCard'
 
 // Query key factory for books
@@ -37,14 +37,14 @@ export type BookDetail = {
 }
 
 // Reusable book query hook
-export const useBook = (bookId: string) => {
+export const useBook = (bookId: string, initialData?: BookDetail | null) => {
   return useQuery({
     queryKey: bookKeys.detail(bookId),
     queryFn: async () => {
       const selectFields =
         'id, title, slug, price_mzn, stock, description, seo_description, cover_url, cover_path, isbn, publisher, category, language, authors:authors_books(author:authors(id, name, wp_slug))'
 
-      const { data: bySlug, error: slugError } = await supabase
+      const { data: bySlug, error: slugError } = await publicSupabase
         .from('books')
         .select(selectFields)
         .eq('slug', bookId)
@@ -54,7 +54,7 @@ export const useBook = (bookId: string) => {
       if (slugError) throw slugError
       if (bySlug) return bySlug as BookDetail
 
-      const { data: byId, error: idError } = await supabase
+      const { data: byId, error: idError } = await publicSupabase
         .from('books')
         .select(selectFields)
         .eq('id', bookId)
@@ -64,18 +64,23 @@ export const useBook = (bookId: string) => {
       if (idError) throw idError
       return (byId as BookDetail | null) ?? null
     },
+    initialData,
     staleTime: 60_000,
   })
 }
 
 // Reusable related books query hook
-export const useRelatedBooks = (bookId: string, category: string | null | undefined) => {
+export const useRelatedBooks = (
+  bookId: string,
+  category: string | null | undefined,
+  initialData?: ProductCardBook[],
+) => {
   return useQuery({
     queryKey: ['related-books', bookId, category],
     queryFn: async () => {
       if (!category) return []
 
-      const { data, error } = await supabase
+      const { data, error } = await publicSupabase
         .from('books')
         .select(
           `
@@ -110,6 +115,7 @@ export const useRelatedBooks = (bookId: string, category: string | null | undefi
         })) ?? []
       ) as ProductCardBook[]
     },
+    initialData,
     staleTime: 60_000,
   })
 }

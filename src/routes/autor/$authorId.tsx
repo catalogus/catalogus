@@ -15,19 +15,96 @@ import {
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { supabase } from '../../lib/supabaseClient'
+import { publicSupabase } from '../../lib/supabasePublic'
 import { useAuth } from '../../contexts/AuthProvider'
 import { toast } from 'sonner'
 import { ClaimAuthorModal } from '../../components/author/ClaimAuthorModal'
 import type { AuthorRow, GalleryImage, PublishedWork, SocialLinks } from '../../types/author'
 
 export const Route = createFileRoute('/autor/$authorId')({
+  loader: async ({ params }) => {
+    const { authorId } = params
+    const selectFields =
+      `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, claim_status, profile_id,
+        profile:profiles!authors_profile_id_fkey(id, name, bio, photo_url, photo_path, social_links)`
+
+    const { data: bySlug, error: slugError } = await publicSupabase
+      .from('authors')
+      .select(selectFields)
+      .eq('wp_slug', authorId)
+      .maybeSingle()
+    if (slugError) throw slugError
+    if (bySlug) {
+      const author = bySlug as AuthorRow
+      if (author.claim_status === 'approved' && author.profile) {
+        return {
+          author: {
+            ...author,
+            name: author.profile.name || author.name,
+            bio: author.profile.bio || author.bio,
+            photo_url: author.profile.photo_url || author.photo_url,
+            photo_path: author.profile.photo_path || author.photo_path,
+            social_links: author.profile.social_links || author.social_links,
+          },
+          isProfileOnly: false,
+          language: 'pt' as const,
+        }
+      }
+      return { author, isProfileOnly: false, language: 'pt' as const }
+    }
+
+    if (isUuid(authorId)) {
+      const { data: byId, error: idError } = await publicSupabase
+        .from('authors')
+        .select(selectFields)
+        .eq('id', authorId)
+        .maybeSingle()
+      if (idError) throw idError
+      if (byId) {
+        const author = byId as AuthorRow
+        if (author.claim_status === 'approved' && author.profile) {
+          return {
+            author: {
+              ...author,
+              name: author.profile.name || author.name,
+              bio: author.profile.bio || author.bio,
+              photo_url: author.profile.photo_url || author.photo_url,
+              photo_path: author.profile.photo_path || author.photo_path,
+              social_links: author.profile.social_links || author.social_links,
+            },
+            isProfileOnly: false,
+            language: 'pt' as const,
+          }
+        }
+        return { author, isProfileOnly: false, language: 'pt' as const }
+      }
+
+      const { data: profileMatch, error: profileError } = await publicSupabase
+        .from('profiles')
+        .select(
+          'id, name, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type, status, role',
+        )
+        .eq('id', authorId)
+        .eq('role', 'author')
+        .maybeSingle()
+      if (profileError) throw profileError
+      if (profileMatch) {
+        return {
+          author: mapProfileToAuthor(profileMatch, 'Autor', 'Autor registado'),
+          isProfileOnly: true,
+          language: 'pt' as const,
+        }
+      }
+    }
+    return { author: null, isProfileOnly: false, language: 'pt' as const }
+  },
   component: AuthorPublicPage,
 })
 
 const resolvePhotoUrl = (photoUrl?: string | null, photoPath?: string | null) => {
   if (photoUrl) return photoUrl
   if (photoPath) {
-    return supabase.storage.from('author-photos').getPublicUrl(photoPath).data.publicUrl
+    return publicSupabase.storage.from('author-photos').getPublicUrl(photoPath).data.publicUrl
   }
   return null
 }
@@ -35,7 +112,7 @@ const resolvePhotoUrl = (photoUrl?: string | null, photoPath?: string | null) =>
 const resolveGalleryUrl = (image: GalleryImage) => {
   if (image.url) return image.url
   if (image.path) {
-    return supabase.storage.from('author-photos').getPublicUrl(image.path).data.publicUrl
+    return publicSupabase.storage.from('author-photos').getPublicUrl(image.path).data.publicUrl
   }
   return ''
 }
@@ -173,6 +250,7 @@ type AuthorResult = {
 function AuthorPublicPage() {
   const { authorId } = Route.useParams()
   const { t, i18n } = useTranslation()
+  const loaderData = Route.useLoaderData()
   const { profile, session } = useAuth()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -180,6 +258,7 @@ function AuthorPublicPage() {
   const fallbackName = t('authors.listing.fallbackName')
   const registeredType = t('authors.listing.registeredType')
   const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
+  const currentLanguage = i18n.language === 'en' ? 'en' : 'pt'
 
   const authorQuery = useQuery<AuthorResult>({
     queryKey: ['author', authorId, i18n.language],
@@ -188,7 +267,7 @@ function AuthorPublicPage() {
         `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, claim_status, profile_id,
         profile:profiles!authors_profile_id_fkey(id, name, bio, photo_url, photo_path, social_links)`
 
-      const { data: bySlug, error: slugError } = await supabase
+      const { data: bySlug, error: slugError } = await publicSupabase
         .from('authors')
         .select(selectFields)
         .eq('wp_slug', authorId)
@@ -214,7 +293,7 @@ function AuthorPublicPage() {
       }
 
       if (isUuid(authorId)) {
-        const { data: byId, error: idError } = await supabase
+        const { data: byId, error: idError } = await publicSupabase
           .from('authors')
           .select(selectFields)
           .eq('id', authorId)
@@ -239,7 +318,7 @@ function AuthorPublicPage() {
           return { author, isProfileOnly: false }
         }
 
-        const { data: profileMatch, error: profileError } = await supabase
+        const { data: profileMatch, error: profileError } = await publicSupabase
           .from('profiles')
           .select(
             'id, name, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type, status, role',
@@ -257,6 +336,11 @@ function AuthorPublicPage() {
       }
       return { author: null, isProfileOnly: false }
     },
+    initialData:
+      loaderData.language === currentLanguage ? {
+        author: loaderData.author,
+        isProfileOnly: loaderData.isProfileOnly,
+      } : undefined,
     staleTime: 60_000,
   })
 

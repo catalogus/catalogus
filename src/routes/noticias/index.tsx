@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
-import { supabase } from '../../lib/supabaseClient'
+import { publicSupabase } from '../../lib/supabasePublic'
 import {
   formatPostDate,
   getCategoryBadgeClass,
@@ -16,6 +16,98 @@ export const Route = createFileRoute('/noticias/')({
     categoria: typeof search.categoria === 'string' ? search.categoria : undefined,
     tag: typeof search.tag === 'string' ? search.tag : undefined,
   }),
+  loader: async ({ search }) => {
+    const language: 'pt' | 'en' = 'pt'
+    const isEnglish = language === 'en'
+    const { q, categoria, tag } = search as {
+      q?: string
+      categoria?: string
+      tag?: string
+    }
+
+    const { data: featuredData, error: featuredError } = await publicSupabase
+      .from('posts')
+      .select(
+        `
+          id,
+          title,
+          slug,
+          featured_image_url,
+          categories:post_categories_map(category:post_categories(name, slug, name_en, slug_en))
+        `,
+      )
+      .eq('status', 'published')
+      .eq('language', language)
+      .eq('featured', true)
+
+    if (featuredError) throw featuredError
+    const featuredPost = featuredData?.length
+      ? (featuredData[Math.floor(Math.random() * featuredData.length)] as NewsPost)
+      : null
+
+    let selectQuery = `
+        id,
+        title,
+        slug,
+        excerpt,
+        body,
+        featured_image_url,
+        published_at,
+        created_at,
+        categories:post_categories_map${categoria ? '!inner' : ''}(category:post_categories${categoria ? '!inner' : ''}(name, slug, name_en, slug_en))
+      `
+
+    if (tag) {
+      selectQuery += `,tags:post_tags_map!inner(tag:post_tags!inner(name, slug, name_en, slug_en))`
+    }
+
+    let query = publicSupabase
+      .from('posts')
+      .select(selectQuery)
+      .eq('status', 'published')
+      .eq('language', language)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
+
+    if (featuredPost?.id) {
+      query = query.neq('id', featuredPost.id)
+    }
+
+    if (q) {
+      query = query.or(`title.ilike.%${q}%,excerpt.ilike.%${q}%`)
+    }
+
+    if (categoria) {
+      const categoryField = isEnglish ? 'categories.category.slug_en' : 'categories.category.slug'
+      query = query.eq(categoryField, categoria)
+    }
+
+    if (tag) {
+      const tagField = isEnglish ? 'tags.tag.slug_en' : 'tags.tag.slug'
+      query = query.eq(tagField, tag)
+    }
+
+    const from = 0
+    const to = 5
+    const { data, error } = await query.range(from, to)
+    if (error) throw error
+
+    const posts: NewsPost[] =
+      data?.map((entry: any) => ({
+        ...entry,
+        categories:
+          entry.categories?.map((c: any) => ({
+            category: c.category,
+          })) ?? [],
+      })) ?? []
+
+    return {
+      featuredPost,
+      posts,
+      hasMore: posts.length === 6,
+      language,
+    }
+  },
   component: NewsListingPage,
 })
 
@@ -41,42 +133,10 @@ function NewsListingPage() {
   const language = i18n.language === 'en' ? 'en' : 'pt'
   const isEnglish = language === 'en'
   const { q, categoria, tag } = Route.useSearch()
+  const loaderData = Route.useLoaderData()
 
-  // Query for featured post (hero spotlight)
-  const featuredPostQuery = useQuery({
-    queryKey: ['news-posts', 'featured-spotlight', language],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('posts')
-        .select(
-          `
-          id,
-          title,
-          slug,
-          featured_image_url,
-          categories:post_categories_map(category:post_categories(name, slug, name_en, slug_en))
-        `,
-        )
-        .eq('status', 'published')
-        .eq('language', language)
-        .eq('featured', true)
-
-      if (error) throw error
-      if (!data || data.length === 0) return null
-
-      // Randomly select one featured post for spotlight
-      const randomIndex = Math.floor(Math.random() * data.length)
-      const post = data[randomIndex]
-      return {
-        ...post,
-        categories:
-          post.categories?.map((c: any) => ({
-            category: c.category,
-          })) ?? [],
-      } as NewsPost
-    },
-    staleTime: 60_000,
-  })
+  const initialFeaturedPost =
+    loaderData.language === language ? loaderData.featuredPost : null
 
   const postsQuery = useInfiniteQuery({
     queryKey: [
@@ -85,7 +145,7 @@ function NewsListingPage() {
       q,
       categoria,
       tag,
-      featuredPostQuery.data?.id,
+      initialFeaturedPost?.id,
       language,
     ],
     queryFn: async ({ pageParam = 1 }) => {
@@ -107,7 +167,7 @@ function NewsListingPage() {
         selectQuery += `,tags:post_tags_map!inner(tag:post_tags!inner(name, slug, name_en, slug_en))`
       }
 
-      let query = supabase
+      let query = publicSupabase
         .from('posts')
         .select(selectQuery)
         .eq('status', 'published')
@@ -116,8 +176,8 @@ function NewsListingPage() {
         .order('created_at', { ascending: false })
 
       // Exclude hero post to avoid duplication
-      if (featuredPostQuery.data?.id) {
-        query = query.neq('id', featuredPostQuery.data.id)
+      if (initialFeaturedPost?.id) {
+        query = query.neq('id', initialFeaturedPost.id)
       }
 
       // Apply search filter
@@ -162,12 +222,20 @@ function NewsListingPage() {
       return lastPage.hasMore ? allPages.length + 1 : undefined
     },
     initialPageParam: 1,
+    initialData:
+      loaderData.language === language
+        ? {
+            pages: [
+              { posts: loaderData.posts, hasMore: loaderData.hasMore },
+            ],
+            pageParams: [1],
+          }
+        : undefined,
     staleTime: 60_000,
-    enabled: featuredPostQuery.isSuccess, // Wait for featured query
   })
 
   const allPosts = postsQuery.data?.pages.flatMap((page) => page.posts) ?? []
-  const featuredPost = featuredPostQuery.data
+  const featuredPost = initialFeaturedPost
   const featuredCategory = featuredPost?.categories?.[0]?.category
   const featuredCategoryLabel = featuredCategory
     ? isEnglish

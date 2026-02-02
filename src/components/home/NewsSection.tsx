@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { ArrowUpRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { supabase } from '../../lib/supabaseClient'
+import { publicSupabase } from '../../lib/supabasePublic'
 import type { PostRow } from '../../types/post'
 
 type NewsPost = Pick<
@@ -45,14 +45,24 @@ const getCategoryBadgeClass = (value: string) => {
   return categoryBadgeClasses[key] ?? 'bg-[#c6f36d] text-black'
 }
 
-export default function NewsSection() {
+type NewsSectionProps = {
+  initialPosts: NewsPost[]
+  initialLanguage: 'pt' | 'en'
+  hasError?: boolean
+}
+
+export default function NewsSection({
+  initialPosts,
+  initialLanguage,
+  hasError = false,
+}: NewsSectionProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.language === 'en' ? 'en' : 'pt'
   const isEnglish = language === 'en'
   const postsQuery = useQuery({
     queryKey: ['home', 'latest-posts', language],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await publicSupabase
         .from('posts')
         .select(
           `
@@ -73,8 +83,10 @@ export default function NewsSection() {
       if (error) throw error
       return (data ?? []) as NewsPost[]
     },
+    initialData: language === initialLanguage ? initialPosts : undefined,
     staleTime: 60_000,
   })
+  const posts = postsQuery.data ?? []
 
   return (
     <section className="bg-[#050505] text-white">
@@ -98,26 +110,15 @@ export default function NewsSection() {
         </div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {postsQuery.isLoading && (
-            <>
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div
-                  key={`news-skeleton-${index}`}
-                  className="h-[420px] bg-white/5 border border-white/10 rounded-none animate-pulse"
-                />
-              ))}
-            </>
-          )}
-
-          {postsQuery.isError && (
+          {hasError || postsQuery.isError ? (
             <div className="border border-white/10 bg-white/5 p-6 text-sm text-white/70 rounded-none">
               {t('home.news.error')}
             </div>
-          )}
+          ) : null}
 
-          {!postsQuery.isLoading &&
+          {!hasError &&
             !postsQuery.isError &&
-            (postsQuery.data ?? []).map((post) => {
+            posts.map((post) => {
               const href = post.slug ? `/noticias/${post.slug}` : '/noticias'
               const dateLabel = formatPostDate(
                 post.published_at ?? post.created_at,
@@ -171,9 +172,7 @@ export default function NewsSection() {
               )
             })}
 
-          {!postsQuery.isLoading &&
-            !postsQuery.isError &&
-            (postsQuery.data?.length ?? 0) === 0 && (
+          {!hasError && !postsQuery.isError && posts.length === 0 && (
               <div className="border border-white/10 bg-white/5 p-6 text-sm text-white/70 rounded-none">
                 {t('home.news.empty')}
               </div>

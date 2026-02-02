@@ -11,7 +11,7 @@ import {
   type SearchPost,
 } from '../../components/search/SearchResultCards'
 import { buildSearchOrFilter, normalizeSearchTerm } from '../../lib/searchHelpers'
-import { supabase } from '../../lib/supabaseClient'
+import { publicSupabase } from '../../lib/supabasePublic'
 import type { SocialLinks } from '../../types/author'
 
 // Helper to merge profile data when claim is approved
@@ -32,6 +32,104 @@ export const Route = createFileRoute('/pesquisa/')({
   validateSearch: (search: Record<string, unknown>) => ({
     q: typeof search.q === 'string' ? search.q : undefined,
   }),
+  loader: async ({ search }) => {
+    const query = normalizeSearchTerm(search.q)
+    const language: 'pt' | 'en' = 'pt'
+
+    if (!query) {
+      return { results: { books: [], authors: [], posts: [] }, query, language }
+    }
+
+    const authorTokens = query.split(/\s+/).filter(Boolean)
+
+    const booksQuery = publicSupabase
+      .from('books')
+      .select(
+        `
+          id,
+          title,
+          slug,
+          price_mzn,
+          cover_url,
+          cover_path,
+          description,
+          seo_description,
+          authors:authors_books(author:authors(id, name, wp_slug))
+        `,
+      )
+      .eq('is_active', true)
+      .or(buildSearchOrFilter(['title', 'description', 'seo_description'], query))
+      .order('created_at', { ascending: false })
+      .limit(6)
+
+    let authorsQuery = publicSupabase
+      .from('authors')
+      .select(
+        `
+          id,
+          name,
+          wp_slug,
+          author_type,
+          photo_url,
+          photo_path,
+          social_links,
+          residence_city,
+          province,
+          claim_status,
+          profile_id,
+          profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, bio, social_links)
+        `,
+      )
+      .order('name', { ascending: true })
+      .limit(6)
+
+    if (authorTokens.length > 0) {
+      authorTokens.forEach((token) => {
+        const trimmedToken = token.length >= 4 ? token.slice(0, token.length - 1) : token
+        authorsQuery = authorsQuery.ilike('name', `%${trimmedToken}%`)
+      })
+    }
+
+    const postsQuery = publicSupabase
+      .from('posts')
+      .select(
+        `
+          id,
+          title,
+          slug,
+          excerpt,
+          featured_image_url,
+          published_at,
+          created_at
+        `,
+      )
+      .eq('status', 'published')
+      .eq('language', language)
+      .or(buildSearchOrFilter(['title', 'excerpt'], query))
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
+      .limit(6)
+
+    const [booksResult, authorsResult, postsResult] = await Promise.all([
+      booksQuery,
+      authorsQuery,
+      postsQuery,
+    ])
+
+    if (booksResult.error) throw booksResult.error
+    if (authorsResult.error) throw authorsResult.error
+    if (postsResult.error) throw postsResult.error
+
+    return {
+      results: {
+        books: (booksResult.data ?? []) as SearchBook[],
+        authors: (authorsResult.data ?? []).map(getMergedAuthorData),
+        posts: (postsResult.data ?? []) as SearchPost[],
+      },
+      query,
+      language,
+    }
+  },
   component: SearchResultsPage,
 })
 
@@ -44,9 +142,11 @@ type SearchResults = {
 function SearchResultsPage() {
   const { t, i18n } = useTranslation()
   const { q } = Route.useSearch()
+  const loaderData = Route.useLoaderData()
   const query = normalizeSearchTerm(q)
   const authorTokens = query.split(/\s+/).filter(Boolean)
   const language = i18n.language === 'en' ? 'en' : 'pt'
+  const initialData = loaderData.language === language ? loaderData.results : undefined
 
   const resultsQuery = useQuery({
     queryKey: ['search', query, language],
@@ -55,7 +155,7 @@ function SearchResultsPage() {
         return { books: [], authors: [], posts: [] }
       }
 
-      const booksQuery = supabase
+      const booksQuery = publicSupabase
         .from('books')
         .select(
           `
@@ -75,7 +175,7 @@ function SearchResultsPage() {
         .order('created_at', { ascending: false })
         .limit(6)
 
-      let authorsQuery = supabase
+      let authorsQuery = publicSupabase
         .from('authors')
         .select(
           `
@@ -104,7 +204,7 @@ function SearchResultsPage() {
         })
       }
 
-      const postsQuery = supabase
+      const postsQuery = publicSupabase
         .from('posts')
         .select(
           `
@@ -140,6 +240,7 @@ function SearchResultsPage() {
         posts: (postsResult.data ?? []) as SearchPost[],
       }
     },
+    initialData,
     enabled: query.length > 0,
     staleTime: 60_000,
   })

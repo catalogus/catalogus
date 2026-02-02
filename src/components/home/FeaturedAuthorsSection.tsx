@@ -1,7 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
 import { Facebook, Globe, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { supabase } from '../../lib/supabaseClient'
 import type { SocialLinks } from '../../types/author'
 
 type FeaturedAuthor = {
@@ -23,50 +21,6 @@ type FeaturedAuthor = {
   } | null
 }
 
-// Helper to merge profile data when claim is approved
-const getMergedAuthorData = (author: FeaturedAuthor): FeaturedAuthor => {
-  if (author.claim_status === 'approved' && author.profile) {
-    return {
-      ...author,
-      name: author.profile.name || author.name,
-      photo_url: author.profile.photo_url || author.photo_url,
-      photo_path: author.profile.photo_path || author.photo_path,
-      social_links: author.profile.social_links || author.social_links,
-    }
-  }
-  return author
-}
-
-const photoUrlFor = (author: FeaturedAuthor) => {
-  if (author.photo_url) return author.photo_url
-  if (author.photo_path) {
-    return supabase.storage.from('author-photos').getPublicUrl(author.photo_path)
-      .data.publicUrl
-  }
-  return null
-}
-
-const fetchAuthors = async (useFeatured: boolean) => {
-  const selectFields = useFeatured
-    ? `id, wp_slug, name, author_type, photo_url, photo_path, social_links, featured, claim_status, profile_id,
-       profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, social_links)`
-    : `id, wp_slug, name, author_type, photo_url, photo_path, social_links, claim_status, profile_id,
-       profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, social_links)`
-  let query = supabase
-    .from('authors')
-    .select(selectFields)
-    .order('created_at', { ascending: false })
-    .limit(10)
-
-  if (useFeatured) {
-    query = query.eq('featured', true)
-  }
-
-  const { data, error } = await query
-  if (error) throw error
-  return ((data ?? []) as FeaturedAuthor[]).map(getMergedAuthorData)
-}
-
 const getSocialLinks = (author: FeaturedAuthor) => {
   const links = author.social_links ?? {}
   return [
@@ -79,22 +33,16 @@ const getSocialLinks = (author: FeaturedAuthor) => {
   ].filter((item) => item.href)
 }
 
-export default function FeaturedAuthorsSection() {
+type FeaturedAuthorsSectionProps = {
+  authors: FeaturedAuthor[]
+  hasError?: boolean
+}
+
+export default function FeaturedAuthorsSection({
+  authors,
+  hasError = false,
+}: FeaturedAuthorsSectionProps) {
   const { t } = useTranslation()
-  const authorsQuery = useQuery({
-    queryKey: ['home', 'featured-authors'],
-    queryFn: async () => {
-      try {
-        return await fetchAuthors(true)
-      } catch (error: any) {
-        if (error?.code === '42703' || /featured/i.test(error?.message ?? '')) {
-          return await fetchAuthors(false)
-        }
-        throw error
-      }
-    },
-    staleTime: 60_000,
-  })
 
   return (
     <section className="bg-[#f4efe9] text-gray-900">
@@ -120,25 +68,15 @@ export default function FeaturedAuthorsSection() {
         </div>
 
         <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {authorsQuery.isLoading &&
-            Array.from({ length: 10 }).map((_, index) => (
-              <div key={`featured-author-skeleton-${index}`} className="space-y-4">
-                <div className="aspect-[4/5] w-full bg-gray-100 animate-pulse" />
-                <div className="h-5 w-2/3 bg-gray-200 animate-pulse" />
-                <div className="h-4 w-1/3 bg-gray-100 animate-pulse" />
-              </div>
-            ))}
-
-          {authorsQuery.isError && (
+          {hasError && (
             <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
               {t('home.featuredAuthors.error')}
             </div>
           )}
 
-          {!authorsQuery.isLoading &&
-            !authorsQuery.isError &&
-            (authorsQuery.data ?? []).map((author) => {
-              const photoUrl = photoUrlFor(author)
+          {!hasError &&
+            authors.map((author) => {
+              const photoUrl = author.photo_url
               const typeLabel = author.author_type || t('home.featuredAuthors.typeFallback')
               const socialLinks = getSocialLinks(author)
               const authorHref = `/autor/${author.wp_slug || author.id}`
@@ -193,9 +131,7 @@ export default function FeaturedAuthorsSection() {
               )
             })}
 
-          {!authorsQuery.isLoading &&
-            !authorsQuery.isError &&
-            (authorsQuery.data?.length ?? 0) === 0 && (
+          {!hasError && authors.length === 0 && (
               <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
                 {t('home.featuredAuthors.empty')}
               </div>
