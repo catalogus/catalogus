@@ -74,11 +74,13 @@ function AdminBooksPage() {
   const userName = profile?.name ?? session?.user.email ?? 'Admin'
   const userEmail = session?.user.email ?? ''
   const queryClient = useQueryClient()
+  const authKey = session?.user.id ?? 'anon'
+  const canQuery = !!session?.access_token
   const [showForm, setShowForm] = useState(false)
   const [editingBook, setEditingBook] = useState<BookRow | null>(null)
   const [detailBook, setDetailBook] = useState<BookRow | null>(null)
   const authorsQuery = useQuery({
-    queryKey: ['admin', 'authors', 'list'],
+    queryKey: ['admin', 'authors', 'list', authKey],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('authors')
@@ -88,10 +90,11 @@ function AdminBooksPage() {
       return data as Array<{ id: string; name: string; photo_path: string | null }>
     },
     staleTime: 60_000,
+    enabled: canQuery,
   })
 
   const booksQuery = useQuery({
-    queryKey: ['admin', 'books'],
+    queryKey: ['admin', 'books', authKey],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('books')
@@ -103,6 +106,7 @@ function AdminBooksPage() {
       return data as BookRow[]
     },
     staleTime: 30_000,
+    enabled: canQuery,
   })
 
   const toggleActive = useMutation({

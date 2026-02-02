@@ -548,11 +548,11 @@ const pt = {
     },
     info: {
       general: 'Informações gerais',
-      editorial: 'Editorial',
+      editorial: 'Celular/WhatsApp',
       address: 'Morada',
     },
     address: {
-      lines: ['Maputo, Moçambique', 'Av. 24 de Julho, 1234'],
+      lines: ['Av. Karl Max, 995', 'Maputo'],
     },
     quick: {
       email: 'Email',

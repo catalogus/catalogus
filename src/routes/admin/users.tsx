@@ -76,6 +76,8 @@ function AdminUsersPage() {
   const userName = profile?.name ?? session?.user.email ?? 'Admin'
   const userEmail = session?.user.email ?? ''
   const queryClient = useQueryClient()
+  const authKey = session?.user.id ?? 'anon'
+  const canQuery = !!session?.access_token
 
   const [showForm, setShowForm] = useState(false)
   const [formValues, setFormValues] = useState<UserFormValues>(emptyUserValues)
@@ -86,7 +88,7 @@ function AdminUsersPage() {
   })
 
   const usersQuery = useQuery({
-    queryKey: ['admin', 'users', filters],
+    queryKey: ['admin', 'users', authKey, filters],
     queryFn: async () => {
       let query = supabase
         .from('profiles')
@@ -112,10 +114,11 @@ function AdminUsersPage() {
       return (data as UserRow[]) ?? []
     },
     staleTime: 30_000,
+    enabled: canQuery,
   })
 
   const adminCountQuery = useQuery({
-    queryKey: ['admin', 'users', 'admin-count'],
+    queryKey: ['admin', 'users', 'admin-count', authKey],
     queryFn: async () => {
       const { count, error } = await supabase
         .from('profiles')
@@ -125,6 +128,7 @@ function AdminUsersPage() {
       return count ?? 0
     },
     staleTime: 30_000,
+    enabled: canQuery,
   })
 
   const adminCount = adminCountQuery.data ?? 0

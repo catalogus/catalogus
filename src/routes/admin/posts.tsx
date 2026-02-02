@@ -63,10 +63,12 @@ function AdminPostsPage() {
   const userName = profile?.name ?? session?.user.email ?? 'Admin'
   const userEmail = session?.user.email ?? ''
   const currentUserId = session?.user.id ?? ''
+  const authKey = session?.user.id ?? 'anon'
+  const canQuery = !!session?.access_token
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
   const queryClient = useQueryClient()
-  const statusCountsKey = ['admin', 'posts', 'status-counts'] as const
+  const statusCountsKey = ['admin', 'posts', 'status-counts', authKey] as const
 
   const withTimeout = async <T,>(promise: Promise<T>, ms: number, label: string) => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null
@@ -106,7 +108,7 @@ function AdminPostsPage() {
   })
 
   const categoriesQuery = useQuery({
-    queryKey: ['admin', 'post-categories'],
+    queryKey: ['admin', 'post-categories', authKey],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('post_categories')
@@ -117,10 +119,11 @@ function AdminPostsPage() {
       return data as Category[]
     },
     staleTime: 60_000,
+    enabled: canQuery,
   })
 
   const tagsQuery = useQuery({
-    queryKey: ['admin', 'post-tags'],
+    queryKey: ['admin', 'post-tags', authKey],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('post_tags')
@@ -131,10 +134,11 @@ function AdminPostsPage() {
       return data as Tag[]
     },
     staleTime: 60_000,
+    enabled: canQuery,
   })
 
   const buildPostsQueryKey = (activeFilters: PostsFilterParams) =>
-    ['admin', 'posts', activeFilters] as const
+    ['admin', 'posts', authKey, activeFilters] as const
 
   const fetchPosts = useCallback(async (activeFilters: PostsFilterParams) => {
     let query = supabase
@@ -232,9 +236,11 @@ function AdminPostsPage() {
     queryKey: postsQueryKey,
     queryFn: () => fetchPosts(filters),
     staleTime: 30_000,
+    enabled: canQuery,
   })
 
   useEffect(() => {
+    if (!canQuery) return
     const statuses: PostStatus[] = ['published', 'draft', 'trash']
     statuses.forEach((status) => {
       if (status === filters.status) return
@@ -253,6 +259,7 @@ function AdminPostsPage() {
     filters.sort_by,
     filters.page,
     filters.per_page,
+    canQuery,
     queryClient,
     fetchPosts,
   ])
@@ -315,6 +322,7 @@ function AdminPostsPage() {
       return Object.fromEntries(entries) as Record<PostStatus, number>
     },
     staleTime: 30_000,
+    enabled: canQuery,
   })
 
   const totalPages = Math.ceil(

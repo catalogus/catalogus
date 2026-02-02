@@ -59,6 +59,8 @@ function AdminPublicationsPage() {
   const userName = profile?.name ?? session?.user.email ?? 'Admin'
   const userEmail = session?.user.email ?? ''
   const queryClient = useQueryClient()
+  const authKey = session?.user.id ?? 'anon'
+  const canQuery = !!session?.access_token
 
   const [showForm, setShowForm] = useState(false)
   const [editingPublication, setEditingPublication] = useState<Publication | null>(null)
@@ -68,7 +70,7 @@ function AdminPublicationsPage() {
   })
 
   const publicationsQuery = useQuery({
-    queryKey: ['admin', 'publications'],
+    queryKey: ['admin', 'publications', authKey],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('publications')
@@ -78,6 +80,7 @@ function AdminPublicationsPage() {
       return data as Publication[]
     },
     staleTime: 30_000,
+    enabled: canQuery,
   })
 
   const toggleActive = useMutation({

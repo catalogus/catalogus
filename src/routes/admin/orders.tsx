@@ -28,9 +28,11 @@ function AdminOrdersPage() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const authKey = session?.user.id ?? 'anon'
+  const canQuery = !!session?.access_token
 
   const ordersQuery = useInfiniteQuery({
-    queryKey: ['admin', 'orders', { search, status: statusFilter }],
+    queryKey: ['admin', 'orders', authKey, { search, status: statusFilter }],
     queryFn: async ({ pageParam = 1 }) => {
       const from = (pageParam - 1) * 20
       const to = from + 19
@@ -65,6 +67,7 @@ function AdminOrdersPage() {
       lastPage.hasMore ? allPages.length + 1 : undefined,
     initialPageParam: 1,
     staleTime: 10_000,
+    enabled: canQuery,
   })
 
   const allOrders = ordersQuery.data?.pages.flatMap((page) => page.orders) ?? []

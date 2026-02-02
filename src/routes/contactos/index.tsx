@@ -18,22 +18,25 @@ const MAPS_EMBED_URL =
 function ContactosPage() {
   const { t } = useTranslation()
   const addressLines = t('contact.address.lines', { returnObjects: true }) as string[]
+  const formatTel = (value: string) => value.replace(/[^\d+]/g, '')
   const contactInfo = {
     general: {
       label: t('contact.info.general'),
-      email: 'geral@catalogus.co.mz',
-      phone: '+258 84 123 4567',
+      email: 'info@catalogus.co.mz',
+      phones: [] as string[],
     },
     editorial: {
       label: t('contact.info.editorial'),
-      email: 'editorial@catalogus.co.mz',
-      phone: '+258 84 765 4321',
+      email: '',
+      phones: ['+258 87 000 9194', '+258 84 748 3011'],
     },
     address: {
       label: t('contact.info.address'),
       lines: addressLines,
     },
   }
+  const phoneNumbers =
+    contactInfo.general.phones.length > 0 ? contactInfo.general.phones : contactInfo.editorial.phones
   const subjectOptions = [
     { value: '', label: t('contact.form.subjectPlaceholder') },
     { value: 'general', label: t('contact.form.subjectOptions.general') },
@@ -91,59 +94,9 @@ function ContactosPage() {
 
               {/* Right Column - Contact Info Grid */}
               <div className="grid gap-8 sm:grid-cols-2">
-                {/* General Inquiries */}
-                <div>
-                  <p className="text-sm text-gray-500">{contactInfo.general.label}</p>
-                  <div className="mt-3 space-y-1">
-                    <a
-                      href={`mailto:${contactInfo.general.email}`}
-                      className="block text-base font-semibold text-gray-900 transition-colors hover:text-[#c07238]"
-                    >
-                      {contactInfo.general.email}
-                    </a>
-                    <a
-                      href={`tel:${contactInfo.general.phone.replace(/\s/g, '')}`}
-                      className="block text-base font-semibold text-gray-900 transition-colors hover:text-[#c07238]"
-                    >
-                      {contactInfo.general.phone}
-                    </a>
-                  </div>
-                </div>
-
-                {/* Editorial */}
-                <div>
-                  <p className="text-sm text-gray-500">{contactInfo.editorial.label}</p>
-                  <div className="mt-3 space-y-1">
-                    <a
-                      href={`mailto:${contactInfo.editorial.email}`}
-                      className="block text-base font-semibold text-gray-900 transition-colors hover:text-[#c07238]"
-                    >
-                      {contactInfo.editorial.email}
-                    </a>
-                    <a
-                      href={`tel:${contactInfo.editorial.phone.replace(/\s/g, '')}`}
-                      className="block text-base font-semibold text-gray-900 transition-colors hover:text-[#c07238]"
-                    >
-                      {contactInfo.editorial.phone}
-                    </a>
-                  </div>
-                </div>
-
-                {/* Address */}
-                <div className="sm:col-span-2">
-                  <p className="text-sm text-gray-500">{contactInfo.address.label}</p>
-                  <div className="mt-3">
-                    {contactInfo.address.lines.map((line) => (
-                      <p key={line} className="text-base font-semibold text-gray-900">
-                        {line}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Social Media */}
                 <div className="sm:col-span-2">
-                  <p className="text-xs uppercase tracking-[0.4em] text-gray-400">
+                  <p className="text-xs uppercase tracking-[0.4em] text-black font-bold">
                     {t('footer.columns.social')}
                   </p>
                   <div className="mt-4 flex flex-wrap gap-3">
@@ -189,10 +142,7 @@ function ContactosPage() {
                 </div>
               </a>
 
-              <a
-                href={`tel:${contactInfo.general.phone.replace(/\s/g, '')}`}
-                className="group flex items-start gap-4 border border-gray-200 bg-white p-6 transition-colors hover:border-[#c07238]"
-              >
+              <div className="group flex items-start gap-4 border border-gray-200 bg-white p-6 transition-colors hover:border-[#c07238]">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-[#f7f4ef] transition-colors group-hover:bg-[#c07238]/10">
                   <Phone className="h-5 w-5 text-[#c07238]" />
                 </div>
@@ -200,11 +150,19 @@ function ContactosPage() {
                   <h3 className="font-semibold text-gray-900">
                     {t('contact.quick.phone')}
                   </h3>
-                  <p className="mt-1 text-sm text-gray-600">
-                    {contactInfo.general.phone}
-                  </p>
+                  <div className="mt-1 space-y-1 text-sm text-gray-600">
+                    {phoneNumbers.map((phone) => (
+                      <a
+                        key={phone}
+                        href={`tel:${formatTel(phone)}`}
+                        className="block transition-colors hover:text-[#c07238]"
+                      >
+                        {phone}
+                      </a>
+                    ))}
+                  </div>
                 </div>
-              </a>
+              </div>
 
               <div className="group flex items-start gap-4 border border-gray-200 bg-white p-6">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-[#f7f4ef]">

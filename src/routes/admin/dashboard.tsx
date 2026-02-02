@@ -13,9 +13,11 @@ function AdminDashboardPage() {
   const { profile, session, signOut } = useAuth()
   const userName = profile?.name ?? session?.user.email ?? 'Admin'
   const userEmail = session?.user.email ?? ''
+  const authKey = session?.user.id ?? 'anon'
+  const canQuery = !!session?.access_token
 
   const metricsQuery = useQuery({
-    queryKey: ['admin', 'metrics'],
+    queryKey: ['admin', 'metrics', authKey],
     queryFn: async () => {
       const startOfDay = new Date()
       startOfDay.setHours(0, 0, 0, 0)
@@ -45,6 +47,7 @@ function AdminDashboardPage() {
       }
     },
     staleTime: 30_000,
+    enabled: canQuery,
   })
 
   return (

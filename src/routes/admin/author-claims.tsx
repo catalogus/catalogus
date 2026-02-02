@@ -36,9 +36,11 @@ function AdminAuthorClaimsPage() {
   const { session } = useAuth()
   const queryClient = useQueryClient()
   const [filter, setFilter] = useState<ClaimStatus | 'all'>('pending')
+  const authKey = session?.user.id ?? 'anon'
+  const canQuery = !!session?.access_token
 
   const claimsQuery = useQuery({
-    queryKey: ['admin', 'author-claims', filter],
+    queryKey: ['admin', 'author-claims', authKey, filter],
     queryFn: async () => {
       let query = supabase
         .from('authors')
@@ -80,6 +82,7 @@ function AdminAuthorClaimsPage() {
       return (claimsWithNotes as ClaimRow[]) ?? []
     },
     staleTime: 30_000,
+    enabled: canQuery,
   })
 
   const approveClaim = useMutation({

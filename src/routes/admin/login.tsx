@@ -1,13 +1,28 @@
 import { useState, useEffect } from 'react'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../../contexts/AuthProvider'
+import { ClientOnly } from '../../components/ClientOnly'
 
 export const Route = createFileRoute('/admin/login')({
   validateSearch: (search: Record<string, unknown>) => ({
     redirect: typeof search.redirect === 'string' ? search.redirect : null,
   }),
-  component: AdminLoginPage,
+  component: AdminLoginRoute,
 })
+
+function AdminLoginRoute() {
+  return (
+    <ClientOnly
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[var(--brand)] px-6">
+          <div className="text-sm text-gray-200">Loading...</div>
+        </div>
+      }
+    >
+      <AdminLoginPage />
+    </ClientOnly>
+  )
+}
 
 function AdminLoginPage() {
   const { signIn, signOut, profile, loading } = useAuth()

@@ -46,6 +46,8 @@ function AdminHeroSlidesPage() {
   const { profile, session, signOut } = useAuth()
   const userName = profile?.name ?? session?.user.email ?? 'Admin'
   const userEmail = session?.user.email ?? ''
+  const authKey = session?.user.id ?? 'anon'
+  const canQuery = !!session?.access_token
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
   const queryClient = useQueryClient()
@@ -70,7 +72,7 @@ function AdminHeroSlidesPage() {
   const [editingSlide, setEditingSlide] = useState<HeroSlide | null>(null)
 
   const slidesQuery = useQuery({
-    queryKey: ['admin', 'hero-slides'],
+    queryKey: ['admin', 'hero-slides', authKey],
     queryFn: async () => {
       const { data, error } = await withTimeout(
         supabase
@@ -84,10 +86,11 @@ function AdminHeroSlidesPage() {
       return data as HeroSlide[]
     },
     staleTime: 30_000,
+    enabled: canQuery,
   })
 
   const booksQuery = useQuery({
-    queryKey: ['admin', 'books-for-hero'],
+    queryKey: ['admin', 'books-for-hero', authKey],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('books')
@@ -97,10 +100,11 @@ function AdminHeroSlidesPage() {
       return data as { id: string; title: string; cover_url: string | null }[]
     },
     staleTime: 60_000,
+    enabled: canQuery,
   })
 
   const authorsQuery = useQuery({
-    queryKey: ['admin', 'authors-for-hero'],
+    queryKey: ['admin', 'authors-for-hero', authKey],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('authors')
@@ -111,10 +115,11 @@ function AdminHeroSlidesPage() {
       return data as { id: string; name: string; photo_url: string | null }[]
     },
     staleTime: 60_000,
+    enabled: canQuery,
   })
 
   const postsQuery = useQuery({
-    queryKey: ['admin', 'posts-for-hero'],
+    queryKey: ['admin', 'posts-for-hero', authKey],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('posts')
@@ -125,6 +130,7 @@ function AdminHeroSlidesPage() {
       return data as { id: string; title: string; featured_image_url: string | null }[]
     },
     staleTime: 60_000,
+    enabled: canQuery,
   })
 
   const uploadBackgroundImage = async (file: File, slideId: string) => {

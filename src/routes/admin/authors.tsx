@@ -43,6 +43,8 @@ function AdminAuthorsPage() {
   const userName = profile?.name ?? session?.user.email ?? 'Admin'
   const userEmail = session?.user.email ?? ''
   const queryClient = useQueryClient()
+  const authKey = session?.user.id ?? 'anon'
+  const canQuery = !!session?.access_token
 
   const [showForm, setShowForm] = useState(false)
   const [editingAuthor, setEditingAuthor] = useState<AuthorRow | null>(null)
@@ -52,7 +54,7 @@ function AdminAuthorsPage() {
   const [profileSearch, setProfileSearch] = useState('')
 
   const authorsQuery = useQuery({
-    queryKey: ['admin', 'authors'],
+    queryKey: ['admin', 'authors', authKey],
     queryFn: async () => {
       try {
         const { data, error } = await supabase
@@ -87,6 +89,7 @@ function AdminAuthorsPage() {
     },
     staleTime: 0,
     retry: 1,
+    enabled: canQuery,
   })
 
   const resizePhoto = async (file: File) => {
@@ -300,7 +303,7 @@ function AdminAuthorsPage() {
 
   // Profile search query for linking
   const profilesQuery = useQuery({
-    queryKey: ['admin', 'profiles-search', profileSearch],
+    queryKey: ['admin', 'profiles-search', authKey, profileSearch],
     queryFn: async () => {
       if (!profileSearch.trim()) return []
       const { data, error } = await supabase
@@ -313,7 +316,7 @@ function AdminAuthorsPage() {
       if (error) throw error
       return data
     },
-    enabled: !!linkingAuthor && profileSearch.length > 0,
+    enabled: canQuery && !!linkingAuthor && profileSearch.length > 0,
   })
 
   const linkProfile = useMutation({
