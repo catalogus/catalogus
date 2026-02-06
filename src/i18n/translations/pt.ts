@@ -334,6 +334,13 @@ const pt = {
       copyLink: 'Copiar link do livro',
       copySuccess: 'Link copiado',
       copyError: 'Nao foi possivel copiar o link',
+      freeDownload: 'Este livro esta disponivel para download gratuito.',
+    },
+    promo: {
+      labels: {
+        promocao: 'PROMOÇÃO',
+        preVenda: 'PRÉ-VENDA',
+      },
     },
     quantity: {
       decrease: 'Diminuir quantidade',
@@ -349,6 +356,12 @@ const pt = {
       },
       descriptionFallback: 'Descricao indisponivel.',
       addToCart: 'Adicionar ao carrinho',
+      download: 'Transferir',
+      digital: 'Digital',
+      newsletterTitle: 'Subscreva para transferir',
+      newsletterBody:
+        'Introduza o seu email para receber o link de confirmação e desbloquear o download digital.',
+      downloadError: 'Nao foi possivel gerar o link de download.',
       categoryLabel: 'Categoria:',
       languageLabel: 'Idioma:',
       isbnLabel: 'ISBN:',
@@ -432,6 +445,8 @@ const pt = {
     toasts: {
       cartEmpty: 'O carrinho esta vazio',
       loginRequired: 'Faça login para finalizar a compra',
+      paymentInitiated:
+        'Pedido de pagamento enviado. Confirme o pagamento no seu telefone usando o seu PIN M-Pesa.',
       paymentInitError:
         'Pedido criado mas falha ao iniciar pagamento. Visite a página do pedido para tentar novamente.',
       orderError: 'Falha ao criar o pedido. Tente novamente.',
@@ -459,9 +474,17 @@ const pt = {
       total: 'Total',
       paymentTitle: 'Pagamento M-Pesa',
       paymentFallback: 'As instrucoes de pagamento estarao disponiveis em breve.',
+      paymentPending:
+        'Enviamos um pedido de pagamento para o seu M-Pesa. Confirme no telefone com o seu PIN. Se ja confirmou, toque em “Atualizar estado”.',
+      paymentPaid: 'Pagamento confirmado. Obrigado pela sua compra.',
+      paymentFailed:
+        'O pagamento falhou ou foi cancelado. Tente novamente ou contacte o suporte.',
+      refreshStatus: 'Atualizar estado',
+      refreshingStatus: 'A verificar...',
       print: 'Imprimir pedido',
       backToShop: 'Voltar a loja',
       bookFallback: 'Livro',
+      download: 'Transferir',
     },
     history: {
       title: 'Meus pedidos',
@@ -472,6 +495,7 @@ const pt = {
       error: 'Falha ao carregar pedidos. Tente novamente.',
       empty: 'Nenhum pedido encontrado.',
       viewDetails: 'Ver detalhes',
+      downloads: 'Downloads',
     },
   },
   newsletter: {
@@ -485,6 +509,28 @@ const pt = {
       body:
         'Receba actualizações mensais sobre novos livros, eventos culturais, autores em destaque e muito mais.',
       close: 'Fechar',
+    },
+    form: {
+      label: 'Email',
+      placeholder: 'Digite o seu email',
+      cta: 'Subscrever',
+      submitting: 'A enviar...',
+      success: 'Verifique o seu email para confirmar a subscrição.',
+      error: 'Nao foi possivel subscrever. Tente novamente.',
+      invalidEmail: 'Email invalido.',
+      disclaimer: 'Enviaremos um link de confirmação. Pode cancelar quando quiser.',
+    },
+    verify: {
+      title: 'Confirmar subscrição',
+      helper: 'Vamos confirmar a sua subscrição.',
+      loading: 'A verificar o seu email...',
+      success: 'Subscricao confirmada. Pode continuar.',
+      error: 'Link invalido ou expirado.',
+      missingToken: 'Token de verificacao em falta.',
+      download: 'Transferir agora',
+      downloadError: 'Nao foi possivel gerar o download.',
+      downloadReady: 'O download esta pronto numa nova aba.',
+      backToShop: 'Voltar a loja',
     },
   },
   about: {

@@ -22,21 +22,28 @@ export const Route = createFileRoute('/loja/')({
     }
 
     const { data, error } = await publicSupabase
-      .from('books')
+      .from('books_shop')
       .select(
         `
             id,
             title,
             slug,
             price_mzn,
+            is_digital,
+            digital_access,
+            promo_type,
+            promo_price_mzn,
+            promo_start_date,
+            promo_end_date,
+            promo_is_active,
+            effective_price_mzn,
             stock,
             description,
             seo_description,
             cover_url,
             cover_path,
             category,
-            language,
-            authors:authors_books(author:authors(id, name, wp_slug))
+            language
           `,
       )
       .eq('is_active', true)
@@ -45,14 +52,7 @@ export const Route = createFileRoute('/loja/')({
 
     if (error) throw error
 
-    const books =
-      data?.map((entry: any) => ({
-        ...entry,
-        authors:
-          entry.authors?.map((a: any) => ({
-            author: a.author,
-          })) ?? [],
-      })) ?? []
+    const books = (data ?? []) as ProductCardBook[]
 
     return {
       metadata,
@@ -113,21 +113,28 @@ function ShopListingPage() {
     ],
     queryFn: async ({ pageParam = 1 }) => {
       let query = publicSupabase
-        .from('books')
+        .from('books_shop')
         .select(
           `
           id,
           title,
           slug,
           price_mzn,
+          is_digital,
+          digital_access,
+          promo_type,
+          promo_price_mzn,
+          promo_start_date,
+          promo_end_date,
+          promo_is_active,
+          effective_price_mzn,
           stock,
           description,
           seo_description,
           cover_url,
           cover_path,
           category,
-          language,
-          authors:authors_books(author:authors(id, name, wp_slug))
+          language
         `,
           { count: 'exact' },
         )
@@ -149,11 +156,11 @@ function ShopListingPage() {
       }
 
       if (selectedPrice.min > priceRange.min) {
-        query = query.gte('price_mzn', selectedPrice.min)
+        query = query.gte('effective_price_mzn', selectedPrice.min)
       }
 
       if (selectedPrice.max < priceRange.max) {
-        query = query.lte('price_mzn', selectedPrice.max)
+        query = query.lte('effective_price_mzn', selectedPrice.max)
       }
 
       switch (sortBy) {
@@ -164,10 +171,16 @@ function ShopListingPage() {
           query = query.order('created_at', { ascending: true })
           break
         case 'price-asc':
-          query = query.order('price_mzn', { ascending: true, nullsFirst: false })
+          query = query.order('effective_price_mzn', {
+            ascending: true,
+            nullsFirst: false,
+          })
           break
         case 'price-desc':
-          query = query.order('price_mzn', { ascending: false, nullsFirst: false })
+          query = query.order('effective_price_mzn', {
+            ascending: false,
+            nullsFirst: false,
+          })
           break
         case 'title':
           query = query.order('title', { ascending: true })
@@ -180,14 +193,7 @@ function ShopListingPage() {
 
       if (error) throw error
 
-      const books: ProductCardBook[] =
-        data?.map((entry: any) => ({
-          ...entry,
-          authors:
-            entry.authors?.map((a: any) => ({
-              author: a.author,
-            })) ?? [],
-        })) ?? []
+      const books: ProductCardBook[] = (data ?? []) as ProductCardBook[]
 
       const loaded = from + books.length
       const hasMore = count === null ? books.length === PAGE_SIZE : loaded < count

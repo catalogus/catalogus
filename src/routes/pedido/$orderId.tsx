@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
-import { initiateMpesaPayment } from '../../lib/mpesa'
 import { formatPrice, getOrderStatusColor } from '../../lib/shopHelpers'
 import { supabase } from '../../lib/supabaseClient'
+import { useAuth } from '../../contexts/AuthProvider'
+import { refreshMpesaStatus } from '../../server/mpesa'
+import { getPaidDigitalDownloadUrl } from '../../server/newsletter'
 
 type OrderItem = {
   id: number
@@ -15,6 +17,8 @@ type OrderItem = {
     title: string
     cover_url: string | null
     cover_path: string | null
+    is_digital?: boolean | null
+    digital_access?: 'paid' | 'free' | null
   } | null
 }
 
@@ -46,6 +50,7 @@ export const Route = createFileRoute('/pedido/$orderId')({
 function OrderConfirmationPage() {
   const { orderId } = Route.useParams()
   const { t, i18n } = useTranslation()
+  const { session } = useAuth()
   const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
 
   const orderQuery = useQuery({
@@ -67,7 +72,7 @@ function OrderConfirmationPage() {
             id,
             quantity,
             price,
-            book:books(id, title, cover_url, cover_path)
+            book:books(id, title, cover_url, cover_path, is_digital, digital_access)
           )
         `,
         )
@@ -78,6 +83,12 @@ function OrderConfirmationPage() {
       return (data as OrderDetail | null) ?? null
     },
     staleTime: 60_000,
+    refetchInterval: (query) => {
+      const status = (query.state.data as OrderDetail | null)?.status
+      if (!status) return false
+      if (['paid', 'failed', 'cancelled'].includes(status)) return false
+      return 10_000
+    },
   })
 
   const order = orderQuery.data
@@ -87,16 +98,46 @@ function OrderConfirmationPage() {
     : ''
   const statusColor = order ? getOrderStatusColor(order.status) : ''
 
-  const mpesaQuery = useQuery({
-    queryKey: ['mpesa', order?.order_number],
-    queryFn: async () => {
-      if (!order) return null
-      return initiateMpesaPayment({
-        order_number: order.order_number,
-        total: Number(order.total),
+  const paymentMessage = order
+    ? order.status === 'paid'
+      ? t('orders.detail.paymentPaid')
+      : order.status === 'failed'
+        ? t('orders.detail.paymentFailed')
+        : t('orders.detail.paymentPending')
+    : t('orders.detail.paymentFallback')
+
+  const refreshStatusMutation = useMutation({
+    mutationFn: async () => {
+      if (!session?.access_token || !order?.id) {
+        throw new Error('Missing access token')
+      }
+      return refreshMpesaStatus({
+        data: { orderId: order.id, accessToken: session.access_token },
       })
     },
-    enabled: !!order,
+    onSuccess: async () => {
+      await orderQuery.refetch()
+    },
+  })
+
+  const downloadMutation = useMutation({
+    mutationFn: async (bookId: string) => {
+      if (!session?.access_token) {
+        throw new Error('Missing access token')
+      }
+      return getPaidDigitalDownloadUrl({
+        data: {
+          orderId,
+          bookId,
+          accessToken: session.access_token,
+        },
+      })
+    },
+    onSuccess: (data) => {
+      if (data?.url) {
+        window.open(data.url, '_blank')
+      }
+    },
   })
 
   return (
@@ -161,7 +202,7 @@ function OrderConfirmationPage() {
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4">
+            <div id="downloads" className="border-t border-gray-200 pt-4">
               <h2 className="text-lg font-semibold text-gray-900">
                 {t('orders.detail.items')}
               </h2>
@@ -188,6 +229,18 @@ function OrderConfirmationPage() {
                       <p className="text-xs text-gray-600">
                         {item.quantity} x {formatPrice(item.price, locale)}
                       </p>
+                      {order.status === 'paid' &&
+                        item.book?.is_digital &&
+                        item.book.digital_access === 'paid' && (
+                          <button
+                            type="button"
+                            onClick={() => downloadMutation.mutate(item.book!.id)}
+                            className="mt-2 inline-flex items-center border border-gray-300 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400"
+                            disabled={downloadMutation.isPending}
+                          >
+                            {t('orders.detail.download')}
+                          </button>
+                        )}
                     </div>
                     <span className="text-sm font-semibold text-gray-900">
                       {formatPrice(item.price * item.quantity, locale)}
@@ -208,10 +261,20 @@ function OrderConfirmationPage() {
               <h3 className="text-xs uppercase tracking-wider text-gray-500">
                 {t('orders.detail.paymentTitle')}
               </h3>
-              <p className="mt-2">
-                {mpesaQuery.data?.instructions ??
-                  t('orders.detail.paymentFallback')}
-              </p>
+              <p className="mt-2">{paymentMessage}</p>
+              {order &&
+                !['paid', 'failed', 'cancelled'].includes(order.status) && (
+                  <button
+                    type="button"
+                    onClick={() => refreshStatusMutation.mutate()}
+                    disabled={refreshStatusMutation.isPending}
+                    className="mt-4 border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {refreshStatusMutation.isPending
+                      ? t('orders.detail.refreshingStatus')
+                      : t('orders.detail.refreshStatus')}
+                  </button>
+                )}
             </div>
 
             <div className="flex flex-wrap gap-3 border-t border-gray-200 pt-4">

@@ -2,7 +2,13 @@ import { Link2, ShoppingCart } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useCart } from '../../lib/useCart'
-import { isInStock, truncateText } from '../../lib/shopHelpers'
+import {
+  getDiscountPercent,
+  getEffectivePrice,
+  isInStock,
+  isPromoActive,
+  type PromoType,
+} from '../../lib/shopHelpers'
 import { publicSupabase } from '../../lib/supabasePublic'
 import { BookCover } from '../OptimizedImage'
 
@@ -11,6 +17,14 @@ export type ProductCardBook = {
   title: string
   slug: string | null
   price_mzn: number | null
+  is_digital?: boolean | null
+  digital_access?: 'paid' | 'free' | null
+  promo_type?: PromoType | null
+  promo_price_mzn?: number | null
+  promo_start_date?: string | null
+  promo_end_date?: string | null
+  promo_is_active?: boolean | null
+  effective_price_mzn?: number | null
   stock: number | null
   cover_url: string | null
   cover_path: string | null
@@ -29,9 +43,6 @@ type ProductCardProps = {
   book: ProductCardBook
   compact?: boolean
 }
-
-const MAX_DESCRIPTION_LENGTH = 350
-const MAX_DESCRIPTION_LENGTH_COMPACT = 160
 
 const formatPrice = (value: number | null | undefined, locale: string) => {
   if (value === null || value === undefined || Number.isNaN(value)) return ''
@@ -87,20 +98,34 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
   const { t, i18n } = useTranslation()
   const { addToCart } = useCart()
   const coverUrl = coverUrlFor(book)
+  const isDigital = !!book.is_digital
+  const canAddToCart = !isDigital || book.digital_access === 'paid'
+  const promoIsActive = isPromoActive(book)
+  const discountPercent = getDiscountPercent(book)
+  const effectivePrice = getEffectivePrice(book)
   const priceLabel = formatPrice(
-    book.price_mzn,
+    effectivePrice,
     i18n.language === 'en' ? 'en-US' : 'pt-MZ',
   )
-  const description = book.description || book.seo_description || ''
-  const summary = description
-    ? truncateText(
-        description,
-        compact ? MAX_DESCRIPTION_LENGTH_COMPACT : MAX_DESCRIPTION_LENGTH,
-      )
-    : t('shop.card.descriptionFallback')
-  const inStock = isInStock(book.stock ?? 0)
+  const originalPriceLabel =
+    promoIsActive && discountPercent !== null
+      ? formatPrice(book.price_mzn, i18n.language === 'en' ? 'en-US' : 'pt-MZ')
+      : ''
+  const promoLabel =
+    promoIsActive && book.promo_type
+      ? t(
+          `shop.promo.labels.${
+            book.promo_type === 'pre-venda' ? 'preVenda' : 'promocao'
+          }`,
+        )
+      : ''
+  const inStock = isInStock(book.stock ?? 0, isDigital)
 
   const handleAddToCart = () => {
+    if (isDigital && book.digital_access === 'free') {
+      toast.error(t('shop.card.freeDownload'))
+      return
+    }
     if (!inStock) {
       toast.error(t('shop.card.outOfStock'))
       return
@@ -110,9 +135,11 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
       id: book.id,
       title: book.title,
       slug: book.slug ?? book.id,
-      price_mzn: book.price_mzn ?? 0,
+      price_mzn: effectivePrice ?? book.price_mzn ?? 0,
       stock: book.stock ?? 0,
       cover_url: coverUrl,
+      is_digital: book.is_digital ?? false,
+      digital_access: book.digital_access ?? null,
     })
 
     toast.success(t('shop.card.addSuccess'))
@@ -150,15 +177,31 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
             </div>
           )}
         </div>
+        {promoIsActive && (promoLabel || discountPercent !== null) && (
+          <div className="absolute left-3 top-3 flex items-center gap-2">
+            {discountPercent !== null && (
+              <span className="bg-[#c7372f] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white">
+                -{discountPercent}%
+              </span>
+            )}
+            {promoLabel && (
+              <span className="bg-[#c7372f] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white">
+                {promoLabel}
+              </span>
+            )}
+          </div>
+        )}
         <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-white transition-transform hover:scale-105"
-            aria-label={t('shop.card.addToCart')}
-          >
-            <ShoppingCart className="h-5 w-5" />
-          </button>
+          {canAddToCart && (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-white transition-transform hover:scale-105"
+              aria-label={t('shop.card.addToCart')}
+            >
+              <ShoppingCart className="h-5 w-5" />
+            </button>
+          )}
           <button
             type="button"
             onClick={copyBookLink}
@@ -170,7 +213,7 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
         </div>
       </div>
 
-      <div className={compact ? 'space-y-2' : 'space-y-3'}>
+      <div className={compact ? 'space-y-1' : 'space-y-2'}>
         <a
           href={bookLinkFor(book)}
           className={`block font-semibold text-gray-900 transition-colors hover:text-gray-700 ${
@@ -179,16 +222,19 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
         >
           {book.title}
         </a>
-        {!compact && (
-          <p className="text-sm leading-relaxed text-gray-600">{summary}</p>
-        )}
-        {compact && summary && (
-          <p className="text-xs leading-relaxed text-gray-600">{summary}</p>
-        )}
         {priceLabel && (
-          <p className={`${compact ? 'text-base' : 'text-lg'} font-semibold text-[color:var(--brand)]`}>
-            {priceLabel}
-          </p>
+          <div className="flex flex-wrap items-baseline gap-2">
+            {originalPriceLabel && (
+              <span className="text-sm text-gray-400 line-through">
+                {originalPriceLabel}
+              </span>
+            )}
+            <span
+              className={`${compact ? 'text-base' : 'text-lg'} font-semibold text-[color:var(--brand)]`}
+            >
+              {priceLabel}
+            </span>
+          </div>
         )}
       </div>
     </div>

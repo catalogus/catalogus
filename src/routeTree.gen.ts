@@ -27,6 +27,7 @@ import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as PublicacoesSlugRouteImport } from './routes/publicacoes/$slug'
 import { Route as PedidoOrderIdRouteImport } from './routes/pedido/$orderId'
 import { Route as NoticiasSlugRouteImport } from './routes/noticias/$slug'
+import { Route as NewsletterVerifyRouteImport } from './routes/newsletter/verify'
 import { Route as LivroBookIdRouteImport } from './routes/livro/$bookId'
 import { Route as AutorAuthorIdRouteImport } from './routes/autor/$authorId'
 import { Route as AuthorSignUpRouteImport } from './routes/author/sign-up'
@@ -146,6 +147,11 @@ const PedidoOrderIdRoute = PedidoOrderIdRouteImport.update({
 const NoticiasSlugRoute = NoticiasSlugRouteImport.update({
   id: '/noticias/$slug',
   path: '/noticias/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsletterVerifyRoute = NewsletterVerifyRouteImport.update({
+  id: '/newsletter/verify',
+  path: '/newsletter/verify',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LivroBookIdRoute = LivroBookIdRouteImport.update({
@@ -321,6 +327,7 @@ export interface FileRoutesByFullPath {
   '/author/sign-up': typeof AuthorSignUpRoute
   '/autor/$authorId': typeof AutorAuthorIdRoute
   '/livro/$bookId': typeof LivroBookIdRoute
+  '/newsletter/verify': typeof NewsletterVerifyRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/publicacoes/$slug': typeof PublicacoesSlugRoute
@@ -371,6 +378,7 @@ export interface FileRoutesByTo {
   '/author/sign-up': typeof AuthorSignUpRoute
   '/autor/$authorId': typeof AutorAuthorIdRoute
   '/livro/$bookId': typeof LivroBookIdRoute
+  '/newsletter/verify': typeof NewsletterVerifyRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/publicacoes/$slug': typeof PublicacoesSlugRoute
@@ -422,6 +430,7 @@ export interface FileRoutesById {
   '/author/sign-up': typeof AuthorSignUpRoute
   '/autor/$authorId': typeof AutorAuthorIdRoute
   '/livro/$bookId': typeof LivroBookIdRoute
+  '/newsletter/verify': typeof NewsletterVerifyRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/publicacoes/$slug': typeof PublicacoesSlugRoute
@@ -474,6 +483,7 @@ export interface FileRouteTypes {
     | '/author/sign-up'
     | '/autor/$authorId'
     | '/livro/$bookId'
+    | '/newsletter/verify'
     | '/noticias/$slug'
     | '/pedido/$orderId'
     | '/publicacoes/$slug'
@@ -524,6 +534,7 @@ export interface FileRouteTypes {
     | '/author/sign-up'
     | '/autor/$authorId'
     | '/livro/$bookId'
+    | '/newsletter/verify'
     | '/noticias/$slug'
     | '/pedido/$orderId'
     | '/publicacoes/$slug'
@@ -574,6 +585,7 @@ export interface FileRouteTypes {
     | '/author/sign-up'
     | '/autor/$authorId'
     | '/livro/$bookId'
+    | '/newsletter/verify'
     | '/noticias/$slug'
     | '/pedido/$orderId'
     | '/publicacoes/$slug'
@@ -625,6 +637,7 @@ export interface RootRouteChildren {
   AuthorSignUpRoute: typeof AuthorSignUpRoute
   AutorAuthorIdRoute: typeof AutorAuthorIdRoute
   LivroBookIdRoute: typeof LivroBookIdRoute
+  NewsletterVerifyRoute: typeof NewsletterVerifyRoute
   NoticiasSlugRoute: typeof NoticiasSlugRoute
   PedidoOrderIdRoute: typeof PedidoOrderIdRoute
   PublicacoesSlugRoute: typeof PublicacoesSlugRoute
@@ -777,6 +790,13 @@ declare module '@tanstack/react-router' {
       path: '/noticias/$slug'
       fullPath: '/noticias/$slug'
       preLoaderRoute: typeof NoticiasSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/newsletter/verify': {
+      id: '/newsletter/verify'
+      path: '/newsletter/verify'
+      fullPath: '/newsletter/verify'
+      preLoaderRoute: typeof NewsletterVerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/livro/$bookId': {
@@ -1030,6 +1050,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthorSignUpRoute: AuthorSignUpRoute,
   AutorAuthorIdRoute: AutorAuthorIdRoute,
   LivroBookIdRoute: LivroBookIdRoute,
+  NewsletterVerifyRoute: NewsletterVerifyRoute,
   NoticiasSlugRoute: NoticiasSlugRoute,
   PedidoOrderIdRoute: PedidoOrderIdRoute,
   PublicacoesSlugRoute: PublicacoesSlugRoute,

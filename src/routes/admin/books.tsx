@@ -50,6 +50,14 @@ type BookRow = {
   title: string
   slug: string
   price_mzn: number
+  promo_type: 'promocao' | 'pre-venda' | null
+  promo_price_mzn: number | null
+  promo_start_date: string | null
+  promo_end_date: string | null
+  is_digital: boolean
+  digital_access: 'paid' | 'free' | null
+  digital_file_path: string | null
+  digital_file_url: string | null
   stock: number
   category: string | null
   language: string
@@ -99,7 +107,7 @@ function AdminBooksPage() {
       const { data, error } = await supabase
         .from('books')
         .select(
-          'id, title, slug, price_mzn, stock, category, language, is_active, featured, cover_url, cover_path, description, description_json, isbn, publisher, seo_title, seo_description, authors:authors_books(author_id, authors(id, name, photo_path))',
+          'id, title, slug, price_mzn, promo_type, promo_price_mzn, promo_start_date, promo_end_date, is_digital, digital_access, digital_file_path, digital_file_url, stock, category, language, is_active, featured, cover_url, cover_path, description, description_json, isbn, publisher, seo_title, seo_description, authors:authors_books(author_id, authors(id, name, photo_path))',
         )
         .order('created_at', { ascending: false })
       if (error) throw error
@@ -202,19 +210,40 @@ function AdminBooksPage() {
     return { path, publicUrl: data.publicUrl }
   }
 
+  const uploadDigitalFile = async (file: File, bookId: string) => {
+    const path = `digital/${bookId}/${Date.now()}-${file.name}`
+    const { error: uploadError } = await supabase.storage
+      .from('digital-books')
+      .upload(path, file, { upsert: true })
+    if (uploadError) throw uploadError
+    const { data } = supabase.storage.from('digital-books').getPublicUrl(path)
+    return { path, publicUrl: data.publicUrl }
+  }
+
   const upsertBook = useMutation({
     mutationFn: async (
-      payload: BookFormValues & { id?: string; file?: File | null },
+      payload: BookFormValues & {
+        id?: string
+        files?: { coverFile?: File | null; digitalFile?: File | null }
+      },
     ) => {
       const author_ids = payload.author_ids
       const bookId = payload.id ?? crypto.randomUUID?.() ?? Date.now().toString()
 
       let cover_url = payload.cover_url
       let cover_path = payload.cover_path
-      if (payload.file) {
-        const uploaded = await uploadCover(payload.file, bookId)
+      if (payload.files?.coverFile) {
+        const uploaded = await uploadCover(payload.files.coverFile, bookId)
         cover_url = uploaded.publicUrl
         cover_path = uploaded.path
+      }
+
+      let digital_file_url = payload.digital_file_url
+      let digital_file_path = payload.digital_file_path
+      if (payload.files?.digitalFile) {
+        const uploaded = await uploadDigitalFile(payload.files.digitalFile, bookId)
+        digital_file_url = uploaded.publicUrl
+        digital_file_path = uploaded.path
       }
 
       const description_json = payload.description
@@ -235,8 +264,18 @@ function AdminBooksPage() {
         cover_url,
         cover_path,
         description_json,
+        promo_type: payload.promo_type || null,
+        promo_price_mzn: payload.promo_price_mzn ?? null,
+        promo_start_date: payload.promo_start_date || null,
+        promo_end_date: payload.promo_end_date || null,
+        is_digital: payload.is_digital ?? false,
+        digital_access: payload.is_digital
+          ? payload.digital_access || null
+          : null,
+        digital_file_url: payload.is_digital ? digital_file_url ?? null : null,
+        digital_file_path: payload.is_digital ? digital_file_path ?? null : null,
       }
-      delete base.file
+      delete base.files
       delete base.author_ids
 
       if (payload.id) {
@@ -440,6 +479,14 @@ function AdminBooksPage() {
                           title: editingBook.title,
                           slug: editingBook.slug,
                           price_mzn: editingBook.price_mzn,
+                          promo_type: editingBook.promo_type ?? '',
+                          promo_price_mzn: editingBook.promo_price_mzn ?? null,
+                          promo_start_date: editingBook.promo_start_date ?? '',
+                          promo_end_date: editingBook.promo_end_date ?? '',
+                          is_digital: editingBook.is_digital ?? false,
+                          digital_access: editingBook.digital_access ?? '',
+                          digital_file_path: editingBook.digital_file_path ?? '',
+                          digital_file_url: editingBook.digital_file_url ?? '',
                           stock: editingBook.stock,
                           category: editingBook.category ?? '',
                           language: editingBook.language,
@@ -458,11 +505,11 @@ function AdminBooksPage() {
                       : undefined
                   }
                   submitting={upsertBook.isPending}
-                  onSubmit={async (vals, file) => {
+                  onSubmit={async (vals, files) => {
                     await upsertBook.mutateAsync({
                       ...vals,
                       id: editingBook?.id,
-                      file,
+                      files,
                     })
                   }}
                   authors={
@@ -540,6 +587,53 @@ function AdminBooksPage() {
                       <p className="text-gray-500">Featured</p>
                       <p className="font-semibold text-gray-900">
                         {detailBook.featured ? 'Yes' : 'No'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Promo type</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.promo_type ?? '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Promo price</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.promo_price_mzn !== null &&
+                        detailBook.promo_price_mzn !== undefined
+                          ? formatPrice(detailBook.promo_price_mzn)
+                          : '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Promo start</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.promo_start_date ?? '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Promo end</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.promo_end_date ?? '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Digital</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.is_digital ? 'Yes' : 'No'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Digital access</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.digital_access ?? '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Digital file</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.digital_file_path
+                          ? detailBook.digital_file_path.split('/').pop()
+                          : '—'}
                       </p>
                     </div>
                     <div>

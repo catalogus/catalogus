@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { NewsletterSignupForm } from './newsletter/NewsletterSignupForm'
 
 export function NewsletterSection() {
   const { t } = useTranslation()
@@ -17,11 +18,9 @@ export function NewsletterSection() {
           </div>
 
           <div className="w-full lg:w-auto">
-            <iframe
-              src="https://catalogusautores.substack.com/embed"
-              className="h-40 w-full border border-gray-200 bg-white lg:w-96"
-              title="Substack newsletter subscription"
-            />
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:w-96">
+              <NewsletterSignupForm />
+            </div>
           </div>
         </div>
       </div>

@@ -35,6 +35,73 @@ export const formatPriceCompact = (
   }).format(value)
 }
 
+export type PromoType = 'promocao' | 'pre-venda'
+
+export type PromoData = {
+  price_mzn?: number | string | null
+  promo_type?: PromoType | null
+  promo_price_mzn?: number | string | null
+  promo_start_date?: string | null
+  promo_end_date?: string | null
+  promo_is_active?: boolean | null
+  effective_price_mzn?: number | string | null
+}
+
+const getLocalDateString = () => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const normalizeDate = (value?: string | null) => {
+  if (!value) return null
+  return value.length >= 10 ? value.slice(0, 10) : value
+}
+
+const toNumber = (value: number | string | null | undefined) => {
+  if (value === null || value === undefined) return null
+  const num = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(num) ? num : null
+}
+
+export const isPromoActive = (data: PromoData): boolean => {
+  if (data.promo_is_active !== undefined && data.promo_is_active !== null) {
+    return data.promo_is_active
+  }
+  if (!data.promo_type) return false
+  const today = getLocalDateString()
+  const startDate = normalizeDate(data.promo_start_date)
+  const endDate = normalizeDate(data.promo_end_date)
+  if (data.promo_type === 'pre-venda') {
+    if (endDate && today > endDate) return false
+    return true
+  }
+  if (startDate && today < startDate) return false
+  if (endDate && today > endDate) return false
+  return true
+}
+
+export const getEffectivePrice = (data: PromoData): number | null => {
+  if (data.effective_price_mzn !== undefined && data.effective_price_mzn !== null) {
+    return toNumber(data.effective_price_mzn)
+  }
+  const price = toNumber(data.price_mzn)
+  if (!isPromoActive(data)) return price
+  const promoPrice = toNumber(data.promo_price_mzn)
+  if (price === null || promoPrice === null) return price
+  return promoPrice < price ? promoPrice : price
+}
+
+export const getDiscountPercent = (data: PromoData): number | null => {
+  if (!isPromoActive(data)) return null
+  const price = toNumber(data.price_mzn)
+  const promoPrice = toNumber(data.promo_price_mzn)
+  if (!price || promoPrice === null || promoPrice >= price) return null
+  return Math.round(((price - promoPrice) / price) * 100)
+}
+
 /**
  * Validate email address
  */
@@ -86,7 +153,11 @@ export const formatPhoneNumber = (phone: string): string => {
 /**
  * Check if book is in stock
  */
-export const isInStock = (stock: number | null | undefined): boolean => {
+export const isInStock = (
+  stock: number | null | undefined,
+  isDigital = false,
+): boolean => {
+  if (isDigital) return true
   return (stock ?? 0) > 0
 }
 
@@ -115,7 +186,12 @@ export const getStockStatusColor = (stock: number | null | undefined): string =>
 /**
  * Calculate max quantity allowed based on stock
  */
-export const getMaxQuantity = (stock: number | null | undefined, limit = 10): number => {
+export const getMaxQuantity = (
+  stock: number | null | undefined,
+  limit = 10,
+  isDigital = false,
+): number => {
+  if (isDigital) return 1
   const stockValue = stock ?? 0
   return Math.min(stockValue, limit)
 }

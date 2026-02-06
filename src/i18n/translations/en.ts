@@ -334,6 +334,13 @@ const en = {
       copyLink: 'Copy book link',
       copySuccess: 'Link copied',
       copyError: 'Could not copy link',
+      freeDownload: 'This book is available for free download.',
+    },
+    promo: {
+      labels: {
+        promocao: 'PROMOTION',
+        preVenda: 'PRE-SALE',
+      },
     },
     quantity: {
       decrease: 'Decrease quantity',
@@ -349,6 +356,12 @@ const en = {
       },
       descriptionFallback: 'Description unavailable.',
       addToCart: 'Add to cart',
+      download: 'Download',
+      digital: 'Digital',
+      newsletterTitle: 'Subscribe to download',
+      newsletterBody:
+        'Enter your email to receive the confirmation link and unlock the digital download.',
+      downloadError: 'Unable to generate the download link.',
       categoryLabel: 'Category:',
       languageLabel: 'Language:',
       isbnLabel: 'ISBN:',
@@ -432,6 +445,8 @@ const en = {
     toasts: {
       cartEmpty: 'The cart is empty',
       loginRequired: 'Sign in to complete your purchase',
+      paymentInitiated:
+        'Payment request sent. Confirm the payment on your phone using your M-Pesa PIN.',
       paymentInitError:
         'Order created but failed to start payment. Visit the order page to try again.',
       orderError: 'Failed to create the order. Please try again.',
@@ -459,9 +474,17 @@ const en = {
       total: 'Total',
       paymentTitle: 'M-Pesa payment',
       paymentFallback: 'Payment instructions will be available soon.',
+      paymentPending:
+        'We sent a payment request to your M-Pesa number. Confirm it on your phone using your PIN. If you already confirmed, tap “Check status”.',
+      paymentPaid: 'Payment confirmed. Thank you for your order.',
+      paymentFailed:
+        'Payment failed or was cancelled. Please try again or contact support.',
+      refreshStatus: 'Check status',
+      refreshingStatus: 'Checking...',
       print: 'Print order',
       backToShop: 'Back to shop',
       bookFallback: 'Book',
+      download: 'Download',
     },
     history: {
       title: 'My orders',
@@ -472,6 +495,7 @@ const en = {
       error: 'Failed to load orders. Please try again.',
       empty: 'No orders found.',
       viewDetails: 'View details',
+      downloads: 'Downloads',
     },
   },
   newsletter: {
@@ -485,6 +509,28 @@ const en = {
       body:
         'Get monthly updates about new books, cultural events, featured authors, and much more.',
       close: 'Close',
+    },
+    form: {
+      label: 'Email',
+      placeholder: 'Enter your email',
+      cta: 'Subscribe',
+      submitting: 'Sending...',
+      success: 'Check your email to confirm your subscription.',
+      error: 'Unable to subscribe. Please try again.',
+      invalidEmail: 'Invalid email.',
+      disclaimer: 'We will send a confirmation link. You can unsubscribe anytime.',
+    },
+    verify: {
+      title: 'Confirm subscription',
+      helper: 'We are confirming your subscription.',
+      loading: 'Verifying your email...',
+      success: 'Subscription confirmed. You can continue.',
+      error: 'Invalid or expired link.',
+      missingToken: 'Missing verification token.',
+      download: 'Download now',
+      downloadError: 'Unable to generate download.',
+      downloadReady: 'Your download is ready in a new tab.',
+      backToShop: 'Back to shop',
     },
   },
   about: {

@@ -44,6 +44,20 @@ exception
   when duplicate_object then null;
 end $$;
 
+do $$
+begin
+  create type public.digital_access as enum ('paid', 'free');
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create type public.newsletter_status as enum ('pending', 'verified');
+exception
+  when duplicate_object then null;
+end $$;
+
 -- Tables
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
@@ -79,6 +93,14 @@ create table if not exists public.books (
   cover_url text,
   cover_path text,
   featured boolean not null default false,
+  promo_type text,
+  promo_price_mzn numeric(12, 2),
+  promo_start_date date,
+  promo_end_date date,
+  is_digital boolean not null default false,
+  digital_access public.digital_access,
+  digital_file_path text,
+  digital_file_url text,
   isbn text,
   publisher text,
   seo_title text,
@@ -87,11 +109,32 @@ create table if not exists public.books (
   language language_code not null default 'pt',
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint books_promo_type_check check (promo_type is null or promo_type in ('promocao', 'pre-venda')),
+  constraint books_digital_access_check check (is_digital = false or digital_access is not null)
 );
 create index if not exists books_is_active_idx on public.books (is_active);
 create index if not exists books_category_idx on public.books (category);
 create index if not exists books_language_idx on public.books (language);
+
+create table if not exists public.newsletter_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  email text not null unique,
+  status public.newsletter_status not null default 'pending',
+  verification_token_hash text,
+  verification_expires_at timestamptz,
+  verified_at timestamptz,
+  download_token_hash text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists newsletter_subscriptions_status_idx
+  on public.newsletter_subscriptions (status);
+create index if not exists newsletter_subscriptions_verification_token_idx
+  on public.newsletter_subscriptions (verification_token_hash);
+create index if not exists newsletter_subscriptions_download_token_idx
+  on public.newsletter_subscriptions (download_token_hash);
 
 create table if not exists public.authors (
   id uuid primary key default gen_random_uuid(),
@@ -136,12 +179,18 @@ create table if not exists public.orders (
   customer_email text not null,
   total numeric(12, 2) not null,
   status order_status not null default 'pending',
+  payment_method text not null default 'mpesa',
   mpesa_transaction_id text,
+  mpesa_reference text,
+  mpesa_last_response jsonb,
+  paid_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 create index if not exists orders_customer_idx on public.orders (customer_id);
 create index if not exists orders_status_idx on public.orders (status);
+create index if not exists orders_mpesa_transaction_idx on public.orders (mpesa_transaction_id);
+create index if not exists orders_payment_method_idx on public.orders (payment_method);
 create index if not exists orders_created_idx on public.orders (created_at desc);
 
 create table if not exists public.order_items (
@@ -235,6 +284,97 @@ as $$
   select coalesce((auth.jwt() ->> 'role') = 'service_role', false);
 $$;
 
+create or replace function public.mark_order_paid(
+  p_order_id uuid,
+  p_transaction_id text,
+  p_reference text,
+  p_amount numeric,
+  p_response jsonb default null
+)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_order public.orders;
+begin
+  select * into v_order from public.orders where id = p_order_id for update;
+
+  if not found then
+    raise exception 'Order % not found', p_order_id;
+  end if;
+
+  if v_order.status = 'paid' then
+    return json_build_object(
+      'success', true,
+      'order_id', v_order.id,
+      'status', v_order.status
+    );
+  end if;
+
+  if p_amount is not null and v_order.total <> p_amount then
+    raise exception 'Amount mismatch. Expected %, got %', v_order.total, p_amount;
+  end if;
+
+  update public.orders
+  set
+    status = 'paid',
+    paid_at = now(),
+    mpesa_transaction_id = coalesce(p_transaction_id, mpesa_transaction_id),
+    mpesa_reference = coalesce(p_reference, mpesa_reference),
+    mpesa_last_response = coalesce(p_response, mpesa_last_response),
+    updated_at = now()
+  where id = v_order.id;
+
+  return json_build_object(
+    'success', true,
+    'order_id', v_order.id,
+    'status', 'paid'
+  );
+end;
+$$;
+
+create or replace function public.mark_order_failed(
+  p_order_id uuid,
+  p_transaction_id text,
+  p_reference text,
+  p_response jsonb default null
+)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_order public.orders;
+begin
+  select * into v_order from public.orders where id = p_order_id for update;
+
+  if not found then
+    raise exception 'Order % not found', p_order_id;
+  end if;
+
+  update public.orders
+  set
+    status = 'failed',
+    mpesa_transaction_id = coalesce(p_transaction_id, mpesa_transaction_id),
+    mpesa_reference = coalesce(p_reference, mpesa_reference),
+    mpesa_last_response = coalesce(p_response, mpesa_last_response),
+    updated_at = now()
+  where id = v_order.id;
+
+  return json_build_object(
+    'success', true,
+    'order_id', v_order.id,
+    'status', 'failed'
+  );
+end;
+$$;
+
+grant execute on function public.mark_order_paid(uuid, text, text, numeric, jsonb) to service_role;
+grant execute on function public.mark_order_failed(uuid, text, text, jsonb) to service_role;
+
 -- RLS
 alter table public.profiles enable row level security;
 alter table public.books enable row level security;
@@ -286,6 +426,13 @@ alter table public.authors
   add column if not exists author_gallery jsonb default '[]'::jsonb,
   add column if not exists featured_video text;
 
+alter table public.orders
+  add column if not exists payment_method text default 'mpesa',
+  add column if not exists mpesa_transaction_id text,
+  add column if not exists mpesa_reference text,
+  add column if not exists mpesa_last_response jsonb,
+  add column if not exists paid_at timestamptz;
+
 -- Profiles policies
 drop policy if exists "Profiles: user can view own profile" on public.profiles;
 create policy "Profiles: user can view own profile" on public.profiles
@@ -314,6 +461,13 @@ create policy "Books: public can read active" on public.books
 
 drop policy if exists "Books: admins full access" on public.books;
 create policy "Books: admins full access" on public.books
+  for all using (public.is_admin()) with check (public.is_admin());
+
+-- Newsletter subscriptions policies
+alter table public.newsletter_subscriptions enable row level security;
+
+drop policy if exists "Newsletter: admins full access" on public.newsletter_subscriptions;
+create policy "Newsletter: admins full access" on public.newsletter_subscriptions
   for all using (public.is_admin()) with check (public.is_admin());
 
 -- Authors policies
@@ -466,6 +620,23 @@ begin
 exception
   when insufficient_privilege then
     raise notice 'Skipping storage.objects policies (insufficient privileges).';
+end $$;
+
+-- Digital books storage bucket (private)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types) values
+  ('digital-books', 'digital-books', false, 52428800, array['application/pdf', 'application/epub+zip'])
+on conflict (id) do nothing;
+
+do $$
+begin
+  drop policy if exists "Storage: admin can manage digital books" on storage.objects;
+  create policy "Storage: admin can manage digital books"
+    on storage.objects for all
+    using (bucket_id = 'digital-books' and public.is_admin())
+    with check (bucket_id = 'digital-books' and public.is_admin());
+exception
+  when insufficient_privilege then
+    raise notice 'Skipping storage.objects policies for digital books (insufficient privileges).';
 end $$;
 
 -- Simple published/active defaults

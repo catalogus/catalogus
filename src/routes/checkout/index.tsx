@@ -10,7 +10,7 @@ import {
   isValidEmail,
   isValidMozambiquePhone,
 } from '../../lib/shopHelpers'
-import { supabase } from '../../lib/supabaseClient'
+import { createOrderAndInitiateMpesa } from '../../server/mpesa'
 
 export const Route = createFileRoute('/checkout/')({
   component: CheckoutPage,
@@ -57,6 +57,27 @@ function CheckoutPage() {
     [items],
   )
 
+  const testAmountRaw = Number(import.meta.env.VITE_MPESA_TEST_AMOUNT ?? '')
+  const testAmount =
+    Number.isFinite(testAmountRaw) && testAmountRaw > 0
+      ? testAmountRaw
+      : null
+  const priceRatio =
+    testAmount && total > 0 ? testAmount / total : 1
+  const checkoutTotal =
+    testAmount && total > 0 ? testAmount : total
+
+  const checkoutItems = useMemo(() => {
+    if (!testAmount || priceRatio === 1) {
+      return orderItems
+    }
+
+    return orderItems.map((item) => ({
+      ...item,
+      price: Number((item.price * priceRatio).toFixed(2)),
+    }))
+  }, [orderItems, priceRatio, testAmount])
+
   const validateForm = () => {
     const nextErrors: Record<string, string> = {}
     if (!formState.name.trim()) {
@@ -92,58 +113,33 @@ function CheckoutPage() {
     try {
       setIsSubmitting(true)
 
-      // Create order atomically (order + items + stock decrement in single transaction)
-      const { data: result, error: orderError } = await supabase.rpc(
-        'create_order_atomic',
-        {
-          p_customer_id: session?.user?.id ?? null,
-          p_customer_name: formState.name.trim(),
-          p_customer_email: formState.email.trim().toLowerCase(),
-          p_customer_phone: formState.phone.trim(),
-          p_total: total,
-          p_items: orderItems,
-        },
-      )
-
-      if (orderError) throw orderError
-
-      if (!result?.success) {
-        throw new Error(result?.error || 'Failed to create order')
+      if (!session?.access_token) {
+        throw new Error('Missing session access token')
       }
 
-      const orderId = result.order_id
-      const orderNumber = result.order_number
-
-      console.log('Order created atomically:', {
-        orderId,
-        orderNumber,
+      const paymentResult = await createOrderAndInitiateMpesa({
+        data: {
+          accessToken: session.access_token,
+          customer: {
+            name: formState.name.trim(),
+            email: formState.email.trim(),
+            phone: formState.phone.trim(),
+          },
+          items: checkoutItems,
+          total: checkoutTotal,
+        },
       })
 
-      // Initiate M-Pesa payment
-      try {
-        const { initiateMpesaPayment } = await import('../../lib/mpesa')
-
-        console.log('About to initiate payment with:', {
-          orderId,
-          orderIdType: typeof orderId,
-          customerPhone: formState.phone.trim(),
-        })
-
-        const paymentResult = await initiateMpesaPayment(
-          orderId,
-          formState.phone.trim()
-        )
-
+      if (paymentResult.orderId) {
         clearCart()
-        toast.success(paymentResult.message)
-        navigate({ to: `/pedido/${orderId}` })
-      } catch (paymentError) {
-        console.error('Payment initiation error:', paymentError)
-        // Order is created but payment failed to initiate
-        toast.error(
-          t('checkout.toasts.paymentInitError')
-        )
-        navigate({ to: `/pedido/${orderId}` })
+        if (paymentResult.success) {
+          toast.success(t('checkout.toasts.paymentInitiated'))
+        } else {
+          toast.error(paymentResult.message)
+        }
+        navigate({ to: `/pedido/${paymentResult.orderId}` })
+      } else {
+        throw new Error('Failed to create order')
       }
     } catch (error) {
       console.error('Checkout error:', error)
@@ -179,11 +175,18 @@ function CheckoutPage() {
                 {item.title}
               </p>
               <p className="text-xs text-gray-600">
-                {item.quantity} x {formatPrice(item.price, locale)}
+                {item.quantity} x{' '}
+                {formatPrice(
+                  Number((item.price * priceRatio).toFixed(2)),
+                  locale,
+                )}
               </p>
             </div>
             <span className="text-sm font-semibold text-gray-900">
-              {formatPrice(item.price * item.quantity, locale)}
+              {formatPrice(
+                Number((item.price * item.quantity * priceRatio).toFixed(2)),
+                locale,
+              )}
             </span>
           </div>
         ))}
@@ -193,7 +196,7 @@ function CheckoutPage() {
         <div className="flex items-center justify-between text-sm text-gray-600">
           <span>{t('checkout.summary.total')}</span>
           <span className="text-lg font-semibold text-gray-900">
-            {formatPrice(total, locale)}
+            {formatPrice(checkoutTotal, locale)}
           </span>
         </div>
       </div>

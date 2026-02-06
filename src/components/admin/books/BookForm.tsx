@@ -3,6 +3,7 @@ import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
 import { Button } from '../../ui/button'
 import { validateAndOptimizeImage } from '../../../lib/imageOptimization'
+import type { PromoType } from '../../../lib/shopHelpers'
 
 type AuthorOption = { id: string; name: string }
 
@@ -10,6 +11,14 @@ export type BookFormValues = {
   title: string
   slug: string
   price_mzn: number
+  promo_type: PromoType | ''
+  promo_price_mzn: number | null
+  promo_start_date: string
+  promo_end_date: string
+  is_digital: boolean
+  digital_access: 'paid' | 'free' | ''
+  digital_file_path: string
+  digital_file_url: string
   stock: number
   category: string
   language: string
@@ -27,7 +36,10 @@ export type BookFormValues = {
 
 type BookFormProps = {
   initial?: Partial<BookFormValues>
-  onSubmit: (values: BookFormValues, file?: File | null) => Promise<void> | void
+  onSubmit: (
+    values: BookFormValues,
+    files?: { coverFile?: File | null; digitalFile?: File | null },
+  ) => Promise<void> | void
   onCancel: () => void
   submitting?: boolean
   authors: AuthorOption[]
@@ -38,6 +50,14 @@ const defaultValues: BookFormValues = {
   title: '',
   slug: '',
   price_mzn: 0,
+  promo_type: '',
+  promo_price_mzn: null,
+  promo_start_date: '',
+  promo_end_date: '',
+  is_digital: false,
+  digital_access: '',
+  digital_file_path: '',
+  digital_file_url: '',
   stock: 0,
   category: '',
   language: 'pt',
@@ -70,6 +90,7 @@ export function BookForm({
     initial?.cover_url ?? null,
   )
   const [file, setFile] = useState<File | null>(null)
+  const [digitalFile, setDigitalFile] = useState<File | null>(null)
   const [localAuthors, setLocalAuthors] = useState<AuthorOption[]>(authors)
   const [newAuthorName, setNewAuthorName] = useState('')
   const [addingAuthor, setAddingAuthor] = useState(false)
@@ -87,7 +108,7 @@ export function BookForm({
 
   const handleChange = (
     key: keyof BookFormValues,
-    value: string | number | boolean,
+    value: string | number | boolean | null,
   ) => {
     setValues((prev) => ({
       ...prev,
@@ -104,7 +125,7 @@ export function BookForm({
         .trim()
         .replace(/[^\w\s-]/g, '')
         .replace(/\s+/g, '-')
-    onSubmit({ ...values, slug }, file)
+    onSubmit({ ...values, slug }, { coverFile: file, digitalFile })
   }
 
   const toggleAuthor = (authorId: string) => {
@@ -355,6 +376,109 @@ export function BookForm({
             onChange={(e) => handleChange('stock', Number(e.target.value))}
           />
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="promo_type">Promo type</Label>
+          <select
+            id="promo_type"
+            value={values.promo_type}
+            onChange={(e) => handleChange('promo_type', e.target.value)}
+            className="w-full rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
+          >
+            <option value="">No promo</option>
+            <option value="promocao">Promocao</option>
+            <option value="pre-venda">Pre-venda</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="promo_price">Promo price (MZN)</Label>
+          <Input
+            id="promo_price"
+            type="number"
+            min={0}
+            value={values.promo_price_mzn ?? ''}
+            onChange={(e) =>
+              handleChange(
+                'promo_price_mzn',
+                e.target.value === '' ? null : Number(e.target.value),
+              )
+            }
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="promo_start_date">Promo start date</Label>
+          <Input
+            id="promo_start_date"
+            type="date"
+            value={values.promo_start_date}
+            onChange={(e) => handleChange('promo_start_date', e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="promo_end_date">Promo end date</Label>
+          <Input
+            id="promo_end_date"
+            type="date"
+            value={values.promo_end_date}
+            onChange={(e) => handleChange('promo_end_date', e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={values.is_digital}
+            onChange={(e) => handleChange('is_digital', e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          <span className="text-gray-900">Digital book</span>
+        </label>
+        {values.is_digital && (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="digital_access">Digital access</Label>
+              <select
+                id="digital_access"
+                value={values.digital_access}
+                onChange={(e) => handleChange('digital_access', e.target.value)}
+                required={values.is_digital}
+                className="w-full rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
+              >
+                <option value="">Select access</option>
+                <option value="paid">Paid</option>
+                <option value="free">Free</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="digital_file">Digital file</Label>
+              <input
+                id="digital_file"
+                type="file"
+                accept=".pdf,.epub"
+                onChange={(e) => {
+                  const selected = e.target.files?.[0] ?? null
+                  setDigitalFile(selected)
+                }}
+                className="w-full rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700"
+              />
+              {values.digital_file_path && !digitalFile && (
+                <p className="text-xs text-gray-500">
+                  Current file: {values.digital_file_path.split('/').pop()}
+                </p>
+              )}
+              {digitalFile && (
+                <p className="text-xs text-gray-500">Selected: {digitalFile.name}</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">

@@ -17,6 +17,7 @@ export type CartItem = {
   cover_url: string | null
   stock: number // cached to validate availability
   slug: string // for linking to book detail page
+  is_digital?: boolean | null
 }
 
 type CartContextValue = {
@@ -37,6 +38,8 @@ type BookData = {
   price_mzn: number
   stock: number
   cover_url: string | null
+  is_digital?: boolean | null
+  digital_access?: 'paid' | 'free' | null
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined)
@@ -54,8 +57,10 @@ async function hydrateCart(
   const bookIds = storedItems.map((item) => item.id)
 
   const { data, error } = await publicSupabase
-    .from('books')
-    .select('id, title, slug, price_mzn, stock, cover_url, cover_path')
+    .from('books_shop')
+    .select(
+      'id, title, slug, price_mzn, effective_price_mzn, stock, cover_url, cover_path, is_digital, digital_access',
+    )
     .in('id', bookIds)
     .eq('is_active', true)
 
@@ -74,13 +79,17 @@ async function hydrateCart(
       coverUrl = urlData.publicUrl
     }
 
+    const resolvedStock = book.is_digital ? 1 : book.stock ?? 0
+
     return {
       id: book.id,
       title: book.title,
       slug: book.slug,
-      price: book.price_mzn ?? 0,
-      stock: book.stock ?? 0,
+      price: book.effective_price_mzn ?? book.price_mzn ?? 0,
+      stock: resolvedStock,
       cover_url: coverUrl,
+      is_digital: book.is_digital ?? false,
+      digital_access: book.digital_access ?? null,
     }
   })
 
@@ -89,6 +98,9 @@ async function hydrateCart(
   for (const stored of storedItems) {
     const book = books?.find((b) => b.id === stored.id)
     if (book) {
+      if (book.is_digital && book.digital_access === 'free') {
+        continue
+      }
       // Ensure quantity doesn't exceed current stock
       const quantity = Math.min(stored.quantity, book.stock)
       if (quantity > 0) {
@@ -99,6 +111,7 @@ async function hydrateCart(
           price: book.price,
           stock: book.stock,
           cover_url: book.cover_url,
+          is_digital: book.is_digital ?? false,
           quantity,
         })
       }
@@ -142,18 +155,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = useCallback((book: BookData, quantity = 1) => {
     setItems((prev) => {
+      if (book.is_digital && book.digital_access === 'free') {
+        return prev
+      }
       const existing = prev.find((item) => item.id === book.id)
+      const stockValue = book.is_digital ? 1 : book.stock
 
       if (existing) {
         // Update quantity, but don't exceed stock
-        const newQuantity = Math.min(existing.quantity + quantity, book.stock)
+        const newQuantity = Math.min(existing.quantity + quantity, stockValue)
         return prev.map((item) =>
           item.id === book.id ? { ...item, quantity: newQuantity } : item,
         )
       }
 
       // Add new item
-      const validQuantity = Math.min(quantity, book.stock)
+      const validQuantity = Math.min(quantity, stockValue)
       if (validQuantity <= 0) return prev
 
       return [
@@ -163,9 +180,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
           title: book.title,
           slug: book.slug,
           price: book.price_mzn ?? 0,
-          stock: book.stock,
+          stock: stockValue,
           cover_url: book.cover_url,
           quantity: validQuantity,
+          is_digital: book.is_digital ?? false,
         },
       ]
     })
