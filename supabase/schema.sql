@@ -136,12 +136,18 @@ create table if not exists public.orders (
   customer_email text not null,
   total numeric(12, 2) not null,
   status order_status not null default 'pending',
+  payment_method text not null default 'mpesa',
   mpesa_transaction_id text,
+  mpesa_reference text,
+  mpesa_last_response jsonb,
+  paid_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 create index if not exists orders_customer_idx on public.orders (customer_id);
 create index if not exists orders_status_idx on public.orders (status);
+create index if not exists orders_mpesa_transaction_idx on public.orders (mpesa_transaction_id);
+create index if not exists orders_payment_method_idx on public.orders (payment_method);
 create index if not exists orders_created_idx on public.orders (created_at desc);
 
 create table if not exists public.order_items (
@@ -235,6 +241,97 @@ as $$
   select coalesce((auth.jwt() ->> 'role') = 'service_role', false);
 $$;
 
+create or replace function public.mark_order_paid(
+  p_order_id uuid,
+  p_transaction_id text,
+  p_reference text,
+  p_amount numeric,
+  p_response jsonb default null
+)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_order public.orders;
+begin
+  select * into v_order from public.orders where id = p_order_id for update;
+
+  if not found then
+    raise exception 'Order % not found', p_order_id;
+  end if;
+
+  if v_order.status = 'paid' then
+    return json_build_object(
+      'success', true,
+      'order_id', v_order.id,
+      'status', v_order.status
+    );
+  end if;
+
+  if p_amount is not null and v_order.total <> p_amount then
+    raise exception 'Amount mismatch. Expected %, got %', v_order.total, p_amount;
+  end if;
+
+  update public.orders
+  set
+    status = 'paid',
+    paid_at = now(),
+    mpesa_transaction_id = coalesce(p_transaction_id, mpesa_transaction_id),
+    mpesa_reference = coalesce(p_reference, mpesa_reference),
+    mpesa_last_response = coalesce(p_response, mpesa_last_response),
+    updated_at = now()
+  where id = v_order.id;
+
+  return json_build_object(
+    'success', true,
+    'order_id', v_order.id,
+    'status', 'paid'
+  );
+end;
+$$;
+
+create or replace function public.mark_order_failed(
+  p_order_id uuid,
+  p_transaction_id text,
+  p_reference text,
+  p_response jsonb default null
+)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_order public.orders;
+begin
+  select * into v_order from public.orders where id = p_order_id for update;
+
+  if not found then
+    raise exception 'Order % not found', p_order_id;
+  end if;
+
+  update public.orders
+  set
+    status = 'failed',
+    mpesa_transaction_id = coalesce(p_transaction_id, mpesa_transaction_id),
+    mpesa_reference = coalesce(p_reference, mpesa_reference),
+    mpesa_last_response = coalesce(p_response, mpesa_last_response),
+    updated_at = now()
+  where id = v_order.id;
+
+  return json_build_object(
+    'success', true,
+    'order_id', v_order.id,
+    'status', 'failed'
+  );
+end;
+$$;
+
+grant execute on function public.mark_order_paid(uuid, text, text, numeric, jsonb) to service_role;
+grant execute on function public.mark_order_failed(uuid, text, text, jsonb) to service_role;
+
 -- RLS
 alter table public.profiles enable row level security;
 alter table public.books enable row level security;
@@ -285,6 +382,13 @@ alter table public.authors
   add column if not exists published_works jsonb default '[]'::jsonb,
   add column if not exists author_gallery jsonb default '[]'::jsonb,
   add column if not exists featured_video text;
+
+alter table public.orders
+  add column if not exists payment_method text default 'mpesa',
+  add column if not exists mpesa_transaction_id text,
+  add column if not exists mpesa_reference text,
+  add column if not exists mpesa_last_response jsonb,
+  add column if not exists paid_at timestamptz;
 
 -- Profiles policies
 drop policy if exists "Profiles: user can view own profile" on public.profiles;

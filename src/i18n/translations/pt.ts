@@ -432,6 +432,8 @@ const pt = {
     toasts: {
       cartEmpty: 'O carrinho esta vazio',
       loginRequired: 'Faça login para finalizar a compra',
+      paymentInitiated:
+        'Pedido de pagamento enviado. Confirme o pagamento no seu telefone usando o seu PIN M-Pesa.',
       paymentInitError:
         'Pedido criado mas falha ao iniciar pagamento. Visite a página do pedido para tentar novamente.',
       orderError: 'Falha ao criar o pedido. Tente novamente.',
@@ -459,6 +461,13 @@ const pt = {
       total: 'Total',
       paymentTitle: 'Pagamento M-Pesa',
       paymentFallback: 'As instrucoes de pagamento estarao disponiveis em breve.',
+      paymentPending:
+        'Enviamos um pedido de pagamento para o seu M-Pesa. Confirme no telefone com o seu PIN. Se ja confirmou, toque em “Atualizar estado”.',
+      paymentPaid: 'Pagamento confirmado. Obrigado pela sua compra.',
+      paymentFailed:
+        'O pagamento falhou ou foi cancelado. Tente novamente ou contacte o suporte.',
+      refreshStatus: 'Atualizar estado',
+      refreshingStatus: 'A verificar...',
       print: 'Imprimir pedido',
       backToShop: 'Voltar a loja',
       bookFallback: 'Livro',

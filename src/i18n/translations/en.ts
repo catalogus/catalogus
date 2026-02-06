@@ -432,6 +432,8 @@ const en = {
     toasts: {
       cartEmpty: 'The cart is empty',
       loginRequired: 'Sign in to complete your purchase',
+      paymentInitiated:
+        'Payment request sent. Confirm the payment on your phone using your M-Pesa PIN.',
       paymentInitError:
         'Order created but failed to start payment. Visit the order page to try again.',
       orderError: 'Failed to create the order. Please try again.',
@@ -459,6 +461,13 @@ const en = {
       total: 'Total',
       paymentTitle: 'M-Pesa payment',
       paymentFallback: 'Payment instructions will be available soon.',
+      paymentPending:
+        'We sent a payment request to your M-Pesa number. Confirm it on your phone using your PIN. If you already confirmed, tap “Check status”.',
+      paymentPaid: 'Payment confirmed. Thank you for your order.',
+      paymentFailed:
+        'Payment failed or was cancelled. Please try again or contact support.',
+      refreshStatus: 'Check status',
+      refreshingStatus: 'Checking...',
       print: 'Print order',
       backToShop: 'Back to shop',
       bookFallback: 'Book',
