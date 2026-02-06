@@ -90,6 +90,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const showDevtools = import.meta.env.DEV
 
   return (
     <html lang="pt">
@@ -104,17 +105,19 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <CartProvider>
                   {children}
                   <Toaster position="top-right" richColors />
-                  <TanStackDevtools
-                    config={{
-                      position: 'bottom-left',
-                    }}
-                    plugins={[
-                      {
-                        name: 'Tanstack Router',
-                        render: <TanStackRouterDevtoolsPanel />,
-                      },
-                    ]}
-                  />
+                  {showDevtools && (
+                    <TanStackDevtools
+                      config={{
+                        position: 'bottom-left',
+                      }}
+                      plugins={[
+                        {
+                          name: 'Tanstack Router',
+                          render: <TanStackRouterDevtoolsPanel />,
+                        },
+                      ]}
+                    />
+                  )}
                 </CartProvider>
               </AuthProvider>
             </QueryClientProvider>

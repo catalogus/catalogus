@@ -43,6 +43,16 @@ const navItems: NavItem[] = [
   { labelKey: 'header.nav.contacts', href: '/contactos' },
 ]
 
+const isExternalHref = (href: string) =>
+  href.startsWith('http://') ||
+  href.startsWith('https://') ||
+  href.startsWith('mailto:') ||
+  href.startsWith('tel:')
+
+const isHashLink = (href: string) => href.includes('#')
+
+const shouldUseRouterLink = (href: string) => !isExternalHref(href) && !isHashLink(href)
+
 export default function Header() {
   const { t } = useTranslation()
   const { session, profile, signOut } = useAuth()
@@ -133,23 +143,35 @@ export default function Header() {
             if (item.children && item.children.length > 0) {
               return (
                 <div key={item.labelKey} className="relative group">
-                  <a
-                    href={item.href}
-                    className={className}
-                    aria-haspopup="true"
-                  >
-                    {t(item.labelKey)}
-                  </a>
+                  {shouldUseRouterLink(item.href) ? (
+                    <Link to={item.href} className={className} aria-haspopup="true">
+                      {t(item.labelKey)}
+                    </Link>
+                  ) : (
+                    <a href={item.href} className={className} aria-haspopup="true">
+                      {t(item.labelKey)}
+                    </a>
+                  )}
                   <div className="pointer-events-none absolute left-0 top-full pt-3 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
                     <div className="min-w-[280px] border border-gray-200 bg-white py-3 shadow-lg">
                       {item.children.map((child) => (
-                        <a
-                          key={child.href}
-                          href={child.href}
-                          className="block px-5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-[#f4efe9] hover:text-[color:var(--header-accent)]"
-                        >
-                          {t(child.labelKey)}
-                        </a>
+                        shouldUseRouterLink(child.href) ? (
+                          <Link
+                            key={child.href}
+                            to={child.href}
+                            className="block px-5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-[#f4efe9] hover:text-[color:var(--header-accent)]"
+                          >
+                            {t(child.labelKey)}
+                          </Link>
+                        ) : (
+                          <a
+                            key={child.href}
+                            href={child.href}
+                            className="block px-5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-[#f4efe9] hover:text-[color:var(--header-accent)]"
+                          >
+                            {t(child.labelKey)}
+                          </a>
+                        )
                       ))}
                     </div>
                   </div>
@@ -164,7 +186,11 @@ export default function Header() {
                 </Link>
               )
             }
-            return (
+            return shouldUseRouterLink(item.href) ? (
+              <Link key={item.labelKey} to={item.href} className={className}>
+                {t(item.labelKey)}
+              </Link>
+            ) : (
               <a key={item.labelKey} href={item.href} className={className}>
                 {t(item.labelKey)}
               </a>
@@ -330,15 +356,27 @@ export default function Header() {
               )
             }
             return (
-              <a
-                key={item.labelKey}
-                href={item.href}
-                className={baseClass}
-                style={style}
-                onClick={() => setMenuOpen(false)}
-              >
-                {t(item.labelKey)}
-              </a>
+              shouldUseRouterLink(item.href) ? (
+                <Link
+                  key={item.labelKey}
+                  to={item.href}
+                  className={baseClass}
+                  style={style}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t(item.labelKey)}
+                </Link>
+              ) : (
+                <a
+                  key={item.labelKey}
+                  href={item.href}
+                  className={baseClass}
+                  style={style}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t(item.labelKey)}
+                </a>
+              )
             )
           })}
         </div>

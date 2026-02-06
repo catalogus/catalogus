@@ -110,6 +110,9 @@ export function Hero({ slides }: HeroProps) {
                       src={slide.background_image_url}
                       alt={slide.title}
                       className="h-full w-full object-cover"
+                      loading={isActive ? 'eager' : 'lazy'}
+                      decoding={isActive ? 'sync' : 'async'}
+                      fetchPriority={isActive ? 'high' : 'auto'}
                     />
                   )}
                   <div className="absolute inset-0 bg-black/60" />
@@ -177,7 +180,9 @@ export function Hero({ slides }: HeroProps) {
                               src={visualImageUrl}
                               alt={visualName}
                               className="h-full w-full object-cover"
-                              loading="lazy"
+                              loading={isActive ? 'eager' : 'lazy'}
+                              decoding={isActive ? 'sync' : 'async'}
+                              fetchPriority={isActive ? 'high' : 'auto'}
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-5xl font-semibold text-white/70">

@@ -14,6 +14,16 @@ type FooterColumn = {
   links: FooterLink[]
 }
 
+const isExternalHref = (href: string) =>
+  href.startsWith('http://') ||
+  href.startsWith('https://') ||
+  href.startsWith('mailto:') ||
+  href.startsWith('tel:')
+
+const isHashLink = (href: string) => href.includes('#')
+
+const shouldUseRouterLink = (href: string) => !isExternalHref(href) && !isHashLink(href)
+
 const footerColumns: FooterColumn[] = [
   {
     titleKey: 'footer.columns.projects',
@@ -94,6 +104,13 @@ export default function Footer() {
                         {t(link.labelKey)}
                         <ExternalLink className="h-3 w-3" />
                       </a>
+                    ) : shouldUseRouterLink(link.href) ? (
+                      <Link
+                        to={link.href}
+                        className="text-sm text-gray-600 transition-colors hover:text-gray-900"
+                      >
+                        {t(link.labelKey)}
+                      </Link>
                     ) : (
                       <a
                         href={link.href}
@@ -118,13 +135,23 @@ export default function Footer() {
           </p>
           <nav className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
             {legalLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-sm text-gray-600 transition-colors hover:text-gray-900"
-              >
-                {t(link.labelKey)}
-              </a>
+              shouldUseRouterLink(link.href) ? (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className="text-sm text-gray-600 transition-colors hover:text-gray-900"
+                >
+                  {t(link.labelKey)}
+                </Link>
+              ) : (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-gray-600 transition-colors hover:text-gray-900"
+                >
+                  {t(link.labelKey)}
+                </a>
+              )
             ))}
           </nav>
         </div>

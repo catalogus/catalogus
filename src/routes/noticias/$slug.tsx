@@ -627,6 +627,9 @@ function NewsPostDetailPage() {
                 src={featuredImage}
                 alt={post.title}
                 className="absolute inset-0 h-full w-full object-cover"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-[#3d2f23] to-[#0f0c0a]" />
