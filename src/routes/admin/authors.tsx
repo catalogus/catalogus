@@ -33,6 +33,7 @@ import { AuthorForm } from '../../components/admin/authors/AuthorForm'
 import { AuthorDetail } from '../../components/admin/authors/AuthorDetail'
 import { toast } from 'sonner'
 import type { AuthorRow, AuthorFormValues } from '../../types/author'
+import { KpiTile } from '../../components/admin/ui/KpiTile'
 
 export const Route = createFileRoute('/admin/authors')({
   component: withAdminGuard(AdminAuthorsPage),
@@ -89,6 +90,41 @@ function AdminAuthorsPage() {
     },
     staleTime: 0,
     retry: 1,
+    enabled: canQuery,
+  })
+
+  const authorsKpiQuery = useQuery({
+    queryKey: ['admin', 'authors-kpis', authKey],
+    queryFn: async () => {
+      const [total, featured, linked, pending] = await Promise.all([
+        supabase.from('authors').select('id', { count: 'exact', head: true }),
+        supabase
+          .from('authors')
+          .select('id', { count: 'exact', head: true })
+          .eq('featured', true),
+        supabase
+          .from('authors')
+          .select('id', { count: 'exact', head: true })
+          .not('profile_id', 'is', null),
+        supabase
+          .from('authors')
+          .select('id', { count: 'exact', head: true })
+          .eq('claim_status', 'pending'),
+      ])
+
+      if (total.error) throw total.error
+      if (featured.error) throw featured.error
+      if (linked.error) throw linked.error
+      if (pending.error) throw pending.error
+
+      return {
+        total: total.count ?? 0,
+        featured: featured.count ?? 0,
+        linked: linked.count ?? 0,
+        pending: pending.count ?? 0,
+      }
+    },
+    staleTime: 30_000,
     enabled: canQuery,
   })
 
@@ -192,6 +228,7 @@ function AdminAuthorsPage() {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'authors'] })
       console.log('Refetching authors...')
       await queryClient.refetchQueries({ queryKey: ['admin', 'authors'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'authors-kpis'] })
       console.log('Queries refreshed, closing form')
       setShowForm(false)
       toast.success('Author created successfully')
@@ -245,6 +282,7 @@ function AdminAuthorsPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'authors'] })
       await queryClient.refetchQueries({ queryKey: ['admin', 'authors'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'authors-kpis'] })
       setShowForm(false)
       setEditingAuthor(null)
       toast.success('Author updated successfully')
@@ -276,6 +314,7 @@ function AdminAuthorsPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'authors'] })
       await queryClient.refetchQueries({ queryKey: ['admin', 'authors'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'authors-kpis'] })
       setDeleteConfirm(null)
       toast.success('Author deleted successfully')
     },
@@ -295,6 +334,7 @@ function AdminAuthorsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'authors'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'authors-kpis'] })
       toast.success('Featured status updated')
     },
     onError: (err: any) =>
@@ -345,6 +385,7 @@ function AdminAuthorsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'authors'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'authors-kpis'] })
       setLinkingAuthor(null)
       setProfileSearch('')
       toast.success('Profile linked successfully')
@@ -370,6 +411,7 @@ function AdminAuthorsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'authors'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'authors-kpis'] })
       toast.success('Profile unlinked')
     },
     onError: (err: any) => {
@@ -392,6 +434,11 @@ function AdminAuthorsPage() {
 
   const handleDelete = (id: string) => {
     setDeleteConfirm(id)
+  }
+
+  const formatNumber = (value?: number | null) => {
+    if (value === null || value === undefined) return '—'
+    return new Intl.NumberFormat('en-US').format(value)
   }
 
   return (
@@ -418,6 +465,52 @@ function AdminAuthorsPage() {
               Add author
             </Button>
           </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <KpiTile
+              label="Total authors"
+              value={
+                authorsKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(authorsKpiQuery.data?.total)
+              }
+              helper="All time"
+            />
+            <KpiTile
+              label="Featured"
+              value={
+                authorsKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(authorsKpiQuery.data?.featured)
+              }
+              helper="Featured profiles"
+            />
+            <KpiTile
+              label="Linked profiles"
+              value={
+                authorsKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(authorsKpiQuery.data?.linked)
+              }
+              helper="Connected to users"
+            />
+            <KpiTile
+              label="Pending claims"
+              value={
+                authorsKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(authorsKpiQuery.data?.pending)
+              }
+              helper="Awaiting review"
+              tone="warning"
+            />
+          </div>
+
+          {authorsKpiQuery.isError && (
+            <p className="text-sm text-rose-600">
+              Failed to load KPI summary. Check connection or permissions.
+            </p>
+          )}
           <div className="rounded-2xl border border-gray-200 p-4 bg-white">
             {authorsQuery.isLoading ? (
               <p className="text-sm text-gray-500">Loading authors…</p>

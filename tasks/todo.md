@@ -184,6 +184,25 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 ### Test Notes
 - `pnpm test` failed: `listen EPERM: operation not permitted ::1` and Nitro dev worker init error.
 
+# Admin Sections: Basic KPIs
+
+## Spec (Draft)
+- Add lightweight KPI tiles at the top of admin sections: Users, Authors, Orders, Books, Publications.
+- KPIs should be fast (count-based), use existing data, and be robust to filters.
+- Default to all-time counts unless a section already defines a time range.
+
+## Plan
+- [x] Define KPI sets per section (users, authors, orders, books, publications).
+- [x] Add shared KPI tile component for consistent layout.
+- [x] Implement section KPIs using efficient count queries or existing list data.
+- [x] Add loading/empty states where applicable.
+- [ ] Verify each section renders correct counts and no regressions.
+
+## Review
+- [ ] Each section shows 3–5 relevant KPI tiles.
+- [ ] KPIs update after mutations (create/update/delete).
+- [ ] Performance remains acceptable (no large data fetches for KPIs).
+
 # KPI Dashboard Revamp
 
 ## Spec (Draft)
