@@ -299,3 +299,19 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 
 ### Verification Notes
 - `pnpm test` (Vitest): no test files found (exit code 1).
+
+# Security: RLS + Security Headers
+
+## Spec
+- Enable RLS and core policies for orders, order_items, profiles, books, authors, authors_books, partners, services, projects.
+- Add `is_admin()` / `is_service_role()` helper functions if missing.
+- Add baseline security headers in `vercel.json`.
+
+## Plan
+- [x] Add migration with RLS enables + policies + helper functions.
+- [x] Add security headers in Vercel config.
+- [x] Verify no breaking changes in public reads (books/authors) and customer order access.
+
+## Review
+- [x] RLS enabled for core tables with policies aligned to current app behavior.
+- [x] Security headers active in `vercel.json`.
