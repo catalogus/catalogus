@@ -200,8 +200,26 @@ function AdminBooksPage() {
     onError: (err) => toast.error(err.message ?? 'Failed to add author'),
   })
 
+  const sanitizeFileName = (name: string) => {
+    const normalized = name
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '-')
+    const parts = normalized.split('.')
+    const ext = parts.length > 1 ? parts.pop() : ''
+    const base = parts.join('.')
+    const safeBase =
+      base
+        .replace(/[^a-zA-Z0-9_-]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .toLowerCase() || 'file'
+    const safeExt = ext ? ext.replace(/[^a-zA-Z0-9]+/g, '').toLowerCase() : ''
+    return safeExt ? `${safeBase}.${safeExt}` : safeBase
+  }
+
   const uploadCover = async (file: File, bookId: string) => {
-    const path = `covers/${bookId}/${Date.now()}-${file.name}`
+    const safeName = sanitizeFileName(file.name)
+    const path = `covers/${bookId}/${Date.now()}-${safeName}`
     const { error: uploadError } = await supabase.storage
       .from('covers')
       .upload(path, file, { upsert: true })
@@ -211,7 +229,8 @@ function AdminBooksPage() {
   }
 
   const uploadDigitalFile = async (file: File, bookId: string) => {
-    const path = `digital/${bookId}/${Date.now()}-${file.name}`
+    const safeName = sanitizeFileName(file.name)
+    const path = `digital/${bookId}/${Date.now()}-${safeName}`
     const { error: uploadError } = await supabase.storage
       .from('digital-books')
       .upload(path, file, { upsert: true })
