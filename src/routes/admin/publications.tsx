@@ -27,6 +27,21 @@ import {
   type PublicationFormValues,
 } from '../../components/admin/publications/PublicationForm'
 import { toast } from 'sonner'
+
+const buildSeoTitle = (value?: string | null) => {
+  const title = value?.trim()
+  return title ? title : null
+}
+
+const buildSeoDescription = (value?: string | null) => {
+  const cleaned = value
+    ? value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+    : ''
+  if (!cleaned) return null
+  const maxLength = 160
+  if (cleaned.length <= maxLength) return cleaned
+  return `${cleaned.slice(0, maxLength).trim()}...`
+}
 import {
   Dialog,
   DialogContent,
@@ -126,6 +141,8 @@ function AdminPublicationsPage() {
     ) => {
       const publicationId =
         payload.id ?? crypto.randomUUID?.() ?? Date.now().toString()
+      const seo_title = buildSeoTitle(payload.title)
+      const seo_description = buildSeoDescription(payload.description)
 
       let pdf_path = ''
       let pdf_url = ''
@@ -181,8 +198,8 @@ function AdminPublicationsPage() {
               is_active: payload.is_active,
               is_featured: payload.is_featured,
               publish_date: payload.publish_date || null,
-              seo_title: payload.seo_title || null,
-              seo_description: payload.seo_description || null,
+              seo_title,
+              seo_description,
               created_by: session?.user.id,
               updated_at: new Date().toISOString(),
             })
@@ -300,8 +317,8 @@ function AdminPublicationsPage() {
           is_active: payload.is_active,
           is_featured: payload.is_featured,
           publish_date: payload.publish_date || null,
-          seo_title: payload.seo_title || null,
-          seo_description: payload.seo_description || null,
+          seo_title,
+          seo_description,
           updated_at: new Date().toISOString(),
         }
 
@@ -323,8 +340,8 @@ function AdminPublicationsPage() {
           is_active: payload.is_active,
           is_featured: payload.is_featured,
           publish_date: payload.publish_date || null,
-          seo_title: payload.seo_title || null,
-          seo_description: payload.seo_description || null,
+          seo_title,
+          seo_description,
           updated_at: new Date().toISOString(),
         }
 

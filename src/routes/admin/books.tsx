@@ -217,6 +217,21 @@ function AdminBooksPage() {
     return safeExt ? `${safeBase}.${safeExt}` : safeBase
   }
 
+  const buildSeoTitle = (value?: string | null) => {
+    const title = value?.trim()
+    return title ? title : null
+  }
+
+  const buildSeoDescription = (value?: string | null) => {
+    const cleaned = value
+      ? value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+      : ''
+    if (!cleaned) return null
+    const maxLength = 160
+    if (cleaned.length <= maxLength) return cleaned
+    return `${cleaned.slice(0, maxLength).trim()}...`
+  }
+
   const uploadCover = async (file: File, bookId: string) => {
     const safeName = sanitizeFileName(file.name)
     const path = `covers/${bookId}/${Date.now()}-${safeName}`
@@ -276,6 +291,8 @@ function AdminBooksPage() {
             ],
           }
         : null
+      const seo_title = buildSeoTitle(payload.title)
+      const seo_description = buildSeoDescription(payload.description)
 
       const base: any = {
         ...payload,
@@ -283,6 +300,8 @@ function AdminBooksPage() {
         cover_url,
         cover_path,
         description_json,
+        seo_title,
+        seo_description,
         promo_type: payload.promo_type || null,
         promo_price_mzn: payload.promo_price_mzn ?? null,
         promo_start_date: payload.promo_start_date || null,
