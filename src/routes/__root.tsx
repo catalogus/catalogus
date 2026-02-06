@@ -26,7 +26,9 @@ interface RouterContext {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   head: ({ location }) => {
-    const noindex = shouldNoIndex(location.pathname, location.search)
+    const pathname = location?.pathname ?? '/'
+    const search = location?.search ?? ''
+    const noindex = shouldNoIndex(pathname, search)
     const seo = buildSeo({
       title: SEO_DEFAULTS.title,
       description: SEO_DEFAULTS.description,
