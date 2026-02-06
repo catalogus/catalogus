@@ -9,6 +9,7 @@ import {
   getCategoryBadgeClass,
   buildExcerpt,
 } from '../../lib/newsHelpers'
+import { buildSeo } from '../../lib/seo'
 
 export const Route = createFileRoute('/noticias/')({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -107,6 +108,19 @@ export const Route = createFileRoute('/noticias/')({
       hasMore: posts.length === 6,
       language,
     }
+  },
+  head: ({ location }) => {
+    const params = new URLSearchParams(
+      location.search.startsWith('?') ? location.search.slice(1) : location.search,
+    )
+    const hasFilters = !!(params.get('q') || params.get('categoria') || params.get('tag'))
+    return buildSeo({
+      title: 'Noticias',
+      description: 'Acompanhe as ultimas noticias e eventos literarios.',
+      path: '/noticias',
+      type: 'website',
+      noindex: hasFilters,
+    })
   },
   component: NewsListingPage,
 })

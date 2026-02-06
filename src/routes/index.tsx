@@ -10,6 +10,7 @@ import FeaturedAuthorsSection from '../components/home/FeaturedAuthorsSection'
 import NewsSection from '../components/home/NewsSection'
 import PartnersSection from '../components/home/PartnersSection'
 import { publicSupabase } from '../lib/supabasePublic'
+import { SEO_DEFAULTS, buildSeo } from '../lib/seo'
 import type { HeroSlide, HeroSlideWithContent } from '../types/hero'
 
 type FeaturedBook = {
@@ -248,6 +249,14 @@ export const Route = createFileRoute('/')({
     ])
     return { heroSlides, featuredBooks, featuredAuthors, newsPosts, newsLanguage: language }
   },
+  head: () =>
+    buildSeo({
+      title: SEO_DEFAULTS.title,
+      description: SEO_DEFAULTS.description,
+      image: SEO_DEFAULTS.image,
+      path: '/',
+      type: 'website',
+    }),
   component: Home,
 })
 

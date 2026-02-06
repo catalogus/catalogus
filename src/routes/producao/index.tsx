@@ -4,8 +4,16 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
+import { buildSeo } from '../../lib/seo'
 
 export const Route = createFileRoute('/producao/')({
+  head: () =>
+    buildSeo({
+      title: 'Producao',
+      description: 'Galeria de producoes e momentos do trabalho da Catalogus.',
+      path: '/producao',
+      type: 'website',
+    }),
   component: ProducaoPage,
 })
 

@@ -2,8 +2,16 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
+import { buildSeo } from '../../lib/seo'
 
 export const Route = createFileRoute('/sobre/')({
+  head: () =>
+    buildSeo({
+      title: 'Sobre',
+      description: 'Saiba mais sobre a Catalogus e o nosso trabalho cultural.',
+      path: '/sobre',
+      type: 'website',
+    }),
   component: AboutPage,
 })
 

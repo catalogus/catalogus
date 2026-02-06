@@ -6,8 +6,16 @@ import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { cn } from '@/lib/utils'
 import { CATALOGUS_SOCIAL_LINKS } from '../../lib/socialLinks.tsx'
+import { buildSeo } from '../../lib/seo'
 
 export const Route = createFileRoute('/contactos/')({
+  head: () =>
+    buildSeo({
+      title: 'Contactos',
+      description: 'Entre em contacto com a equipa Catalogus.',
+      path: '/contactos',
+      type: 'website',
+    }),
   component: ContactosPage,
 })
 

@@ -4,6 +4,13 @@ import { type ReactNode, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { publicSupabase } from '../../lib/supabasePublic'
+import {
+  SEO_DEFAULTS,
+  buildArticleJsonLd,
+  buildBreadcrumbJsonLd,
+  buildSeo,
+  toAbsoluteUrl,
+} from '../../lib/seo'
 import type { PostRow } from '../../types/post'
 
 export const Route = createFileRoute('/noticias/$slug')({
@@ -24,6 +31,7 @@ export const Route = createFileRoute('/noticias/$slug')({
           featured_image_url,
           published_at,
           created_at,
+          updated_at,
           author_id,
           view_count,
           translation_group_id,
@@ -179,6 +187,49 @@ export const Route = createFileRoute('/noticias/$slug')({
     }
 
     return { post, tags: tagsList, recentPosts, relatedPosts, language }
+  },
+  head: ({ loaderData, params }) => {
+    const post = loaderData?.post ?? null
+    const path = `/noticias/${params.slug}`
+
+    if (!post) {
+      return buildSeo({
+        title: 'Noticia nao encontrada',
+        description: SEO_DEFAULTS.description,
+        path,
+        noindex: true,
+      })
+    }
+
+    const description = post.excerpt || post.body || SEO_DEFAULTS.description
+    const image = post.featured_image_url || null
+    const canonical = toAbsoluteUrl(path)
+
+    return buildSeo({
+      title: post.title,
+      description,
+      image,
+      path,
+      type: 'article',
+      publishedTime: post.published_at ?? post.created_at,
+      modifiedTime: post.updated_at ?? post.published_at ?? post.created_at,
+      jsonLd: [
+        buildBreadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Noticias', path: '/noticias' },
+          { name: post.title, path },
+        ]),
+        buildArticleJsonLd({
+          title: post.title,
+          description,
+          image,
+          url: canonical,
+          publishedAt: post.published_at ?? post.created_at,
+          modifiedAt: post.updated_at ?? post.published_at ?? post.created_at,
+          authorName: post.author?.name ?? null,
+        }),
+      ],
+    })
   },
   component: NewsPostDetailPage,
 })

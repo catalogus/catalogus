@@ -1,3 +1,15 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /account
+Disallow: /auth
+Disallow: /author
+Disallow: /checkout
+Disallow: /carrinho
+Disallow: /pedido
+Disallow: /meus-pedidos
+Disallow: /newsletter
+Disallow: /demo
+Disallow: /pesquisa
+
+Sitemap: https://catalogus.co.mz/sitemap.xml

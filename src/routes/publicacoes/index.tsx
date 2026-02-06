@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { publicSupabase } from '../../lib/supabasePublic'
+import { buildSeo } from '../../lib/seo'
 import type { Publication } from '../../types/publication'
 
 export const Route = createFileRoute('/publicacoes/')({
@@ -22,6 +23,13 @@ export const Route = createFileRoute('/publicacoes/')({
       return { publications: [] as Publication[], hasError: true }
     }
   },
+  head: () =>
+    buildSeo({
+      title: 'Publicacoes',
+      description: 'Explore as publicacoes digitais da Catalogus.',
+      path: '/publicacoes',
+      type: 'website',
+    }),
   component: PublicationsListingPage,
 })
 
