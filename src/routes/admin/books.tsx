@@ -40,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu'
 import { MoreHorizontal } from 'lucide-react'
+import { KpiTile } from '../../components/admin/ui/KpiTile'
 
 export const Route = createFileRoute('/admin/books')({
   component: withAdminGuard(AdminBooksPage),
@@ -117,6 +118,48 @@ function AdminBooksPage() {
     enabled: canQuery,
   })
 
+  const booksKpiQuery = useQuery({
+    queryKey: ['admin', 'books-kpis', authKey],
+    queryFn: async () => {
+      const [total, active, featured, digital, lowStock] = await Promise.all([
+        supabase.from('books').select('id', { count: 'exact', head: true }),
+        supabase
+          .from('books')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_active', true),
+        supabase
+          .from('books')
+          .select('id', { count: 'exact', head: true })
+          .eq('featured', true),
+        supabase
+          .from('books')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_digital', true),
+        supabase
+          .from('books')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_digital', false)
+          .lte('stock', 5),
+      ])
+
+      if (total.error) throw total.error
+      if (active.error) throw active.error
+      if (featured.error) throw featured.error
+      if (digital.error) throw digital.error
+      if (lowStock.error) throw lowStock.error
+
+      return {
+        total: total.count ?? 0,
+        active: active.count ?? 0,
+        featured: featured.count ?? 0,
+        digital: digital.count ?? 0,
+        lowStock: lowStock.count ?? 0,
+      }
+    },
+    staleTime: 30_000,
+    enabled: canQuery,
+  })
+
   const toggleActive = useMutation({
     mutationFn: async (payload: { id: string; is_active: boolean }) => {
       const { error } = await supabase
@@ -127,6 +170,7 @@ function AdminBooksPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'books'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'books-kpis'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'featured-books'] })
       toast.success('Status updated')
     },
@@ -148,6 +192,7 @@ function AdminBooksPage() {
           : current,
       )
       queryClient.invalidateQueries({ queryKey: ['admin', 'books'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'books-kpis'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'featured-books'] })
       toast.success('Featured updated')
     },
@@ -164,6 +209,7 @@ function AdminBooksPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'books'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'books-kpis'] })
     },
   })
 
@@ -173,6 +219,11 @@ function AdminBooksPage() {
       currency: 'MZN',
       maximumFractionDigits: 0,
     }).format(value)
+
+  const formatNumber = (value?: number | null) => {
+    if (value === null || value === undefined) return '—'
+    return new Intl.NumberFormat('en-US').format(value)
+  }
 
   const coverUrlFor = (book: BookRow) => {
     if (book.cover_url) return book.cover_url
@@ -337,6 +388,7 @@ function AdminBooksPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'books'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'books-kpis'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'featured-books'] })
       setShowForm(false)
       setEditingBook(null)
@@ -352,6 +404,7 @@ function AdminBooksPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'books'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'books-kpis'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'featured-books'] })
       toast.success('Book deleted')
     },
@@ -380,6 +433,61 @@ function AdminBooksPage() {
               Add book
             </Button>
           </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <KpiTile
+              label="Total books"
+              value={
+                booksKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(booksKpiQuery.data?.total)
+              }
+              helper="All time"
+            />
+            <KpiTile
+              label="Active"
+              value={
+                booksKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(booksKpiQuery.data?.active)
+              }
+              helper="Available in shop"
+            />
+            <KpiTile
+              label="Featured"
+              value={
+                booksKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(booksKpiQuery.data?.featured)
+              }
+              helper="Homepage highlights"
+            />
+            <KpiTile
+              label="Digital"
+              value={
+                booksKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(booksKpiQuery.data?.digital)
+              }
+              helper="Digital catalog"
+            />
+            <KpiTile
+              label="Low stock"
+              value={
+                booksKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(booksKpiQuery.data?.lowStock)
+              }
+              helper="Physical <= 5"
+              tone="warning"
+            />
+          </div>
+
+          {booksKpiQuery.isError && (
+            <p className="text-sm text-rose-600">
+              Failed to load KPI summary. Check connection or permissions.
+            </p>
+          )}
           <div className="rounded-2xl border border-gray-200 p-4 bg-white">
             {booksQuery.isLoading ? (
               <p className="text-sm text-gray-500">Loading books…</p>

@@ -64,6 +64,7 @@ import {
   dataUrlToBlob,
   extractPdfOutline,
 } from '../../lib/pdfHelpers'
+import { KpiTile } from '../../components/admin/ui/KpiTile'
 
 export const Route = createFileRoute('/admin/publications')({
   component: withAdminGuard(AdminPublicationsPage),
@@ -98,6 +99,43 @@ function AdminPublicationsPage() {
     enabled: canQuery,
   })
 
+  const publicationsKpiQuery = useQuery({
+    queryKey: ['admin', 'publications-kpis', authKey],
+    queryFn: async () => {
+      const [total, active, featured, processed] = await Promise.all([
+        supabase
+          .from('publications')
+          .select('id', { count: 'exact', head: true }),
+        supabase
+          .from('publications')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_active', true),
+        supabase
+          .from('publications')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_featured', true),
+        supabase
+          .from('publications')
+          .select('id', { count: 'exact', head: true })
+          .gt('page_count', 0),
+      ])
+
+      if (total.error) throw total.error
+      if (active.error) throw active.error
+      if (featured.error) throw featured.error
+      if (processed.error) throw processed.error
+
+      return {
+        total: total.count ?? 0,
+        active: active.count ?? 0,
+        featured: featured.count ?? 0,
+        processed: processed.count ?? 0,
+      }
+    },
+    staleTime: 30_000,
+    enabled: canQuery,
+  })
+
   const toggleActive = useMutation({
     mutationFn: async (payload: { id: string; is_active: boolean }) => {
       const { error } = await supabase
@@ -108,6 +146,7 @@ function AdminPublicationsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'publications'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'publications-kpis'] })
       queryClient.invalidateQueries({ queryKey: ['publications'] })
       toast.success('Status actualizado')
     },
@@ -129,6 +168,7 @@ function AdminPublicationsPage() {
           : current
       )
       queryClient.invalidateQueries({ queryKey: ['admin', 'publications'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'publications-kpis'] })
       queryClient.invalidateQueries({ queryKey: ['publications'] })
       toast.success('Destaque actualizado')
     },
@@ -357,6 +397,7 @@ function AdminPublicationsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'publications'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'publications-kpis'] })
       queryClient.invalidateQueries({ queryKey: ['publications'] })
       setShowForm(false)
       setEditingPublication(null)
@@ -409,6 +450,7 @@ function AdminPublicationsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'publications'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'publications-kpis'] })
       queryClient.invalidateQueries({ queryKey: ['publications'] })
       toast.success('Publicação eliminada')
     },
@@ -424,6 +466,11 @@ function AdminPublicationsPage() {
       month: 'short',
       year: 'numeric',
     })
+  }
+
+  const formatNumber = (value?: number | null) => {
+    if (value === null || value === undefined) return '—'
+    return new Intl.NumberFormat('en-US').format(value)
   }
 
   return (
@@ -448,6 +495,51 @@ function AdminPublicationsPage() {
               Adicionar publicação
             </Button>
           </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <KpiTile
+              label="Total"
+              value={
+                publicationsKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(publicationsKpiQuery.data?.total)
+              }
+              helper="All time"
+            />
+            <KpiTile
+              label="Active"
+              value={
+                publicationsKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(publicationsKpiQuery.data?.active)
+              }
+              helper="Visible to readers"
+            />
+            <KpiTile
+              label="Featured"
+              value={
+                publicationsKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(publicationsKpiQuery.data?.featured)
+              }
+              helper="Highlighted"
+            />
+            <KpiTile
+              label="Processed"
+              value={
+                publicationsKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(publicationsKpiQuery.data?.processed)
+              }
+              helper="Page count > 0"
+            />
+          </div>
+
+          {publicationsKpiQuery.isError && (
+            <p className="text-sm text-rose-600">
+              Falha ao carregar KPI. Verifique a conexão ou permissões.
+            </p>
+          )}
 
           <div className="rounded-2xl border border-gray-200 p-4 bg-white">
             {publicationsQuery.isLoading ? (

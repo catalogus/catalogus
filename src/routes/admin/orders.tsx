@@ -1,11 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useMutation, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { DashboardLayout } from '../../components/admin/layout'
 import { withAdminGuard } from '../../components/admin/withAdminGuard'
 import { StatusBadge } from '../../components/admin/ui/StatusBadge'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthProvider'
+import { KpiTile } from '../../components/admin/ui/KpiTile'
 
 export const Route = createFileRoute('/admin/orders')({
   component: withAdminGuard(AdminOrdersPage),
@@ -30,6 +31,41 @@ function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const authKey = session?.user.id ?? 'anon'
   const canQuery = !!session?.access_token
+
+  const ordersKpiQuery = useQuery({
+    queryKey: ['admin', 'orders-kpis', authKey],
+    queryFn: async () => {
+      const [total, paid, pendingProcessing, failedCancelled] = await Promise.all([
+        supabase.from('orders').select('id', { count: 'exact', head: true }),
+        supabase
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'paid'),
+        supabase
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .in('status', ['pending', 'processing']),
+        supabase
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .in('status', ['failed', 'cancelled']),
+      ])
+
+      if (total.error) throw total.error
+      if (paid.error) throw paid.error
+      if (pendingProcessing.error) throw pendingProcessing.error
+      if (failedCancelled.error) throw failedCancelled.error
+
+      return {
+        total: total.count ?? 0,
+        paid: paid.count ?? 0,
+        pendingProcessing: pendingProcessing.count ?? 0,
+        failedCancelled: failedCancelled.count ?? 0,
+      }
+    },
+    staleTime: 30_000,
+    enabled: canQuery,
+  })
 
   const ordersQuery = useInfiniteQuery({
     queryKey: ['admin', 'orders', authKey, { search, status: statusFilter }],
@@ -82,6 +118,7 @@ function AdminOrdersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders-kpis'] })
     },
   })
 
@@ -106,6 +143,11 @@ function AdminOrdersPage() {
     }
   }
 
+  const formatNumber = (value?: number | null) => {
+    if (value === null || value === undefined) return '—'
+    return new Intl.NumberFormat('en-US').format(value)
+  }
+
   return (
     <DashboardLayout
       userRole={profile?.role ?? 'admin'}
@@ -124,6 +166,54 @@ function AdminOrdersPage() {
               M-Pesa status feed will surface here.
             </div>
           </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <KpiTile
+              label="Total orders"
+              value={
+                ordersKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(ordersKpiQuery.data?.total)
+              }
+              helper="All time"
+            />
+            <KpiTile
+              label="Paid orders"
+              value={
+                ordersKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(ordersKpiQuery.data?.paid)
+              }
+              helper="Completed payments"
+              tone="success"
+            />
+            <KpiTile
+              label="Pending/Processing"
+              value={
+                ordersKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(ordersKpiQuery.data?.pendingProcessing)
+              }
+              helper="In progress"
+              tone="warning"
+            />
+            <KpiTile
+              label="Failed/Cancelled"
+              value={
+                ordersKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(ordersKpiQuery.data?.failedCancelled)
+              }
+              helper="Needs attention"
+              tone="danger"
+            />
+          </div>
+
+          {ordersKpiQuery.isError && (
+            <p className="text-sm text-rose-600">
+              Failed to load KPI summary. Check connection or permissions.
+            </p>
+          )}
 
           {/* Filters */}
           <div className="flex gap-3">

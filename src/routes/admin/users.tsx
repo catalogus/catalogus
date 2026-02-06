@@ -39,6 +39,7 @@ import { toast } from 'sonner'
 import { MoreHorizontal, Search } from 'lucide-react'
 import type { UserRole } from '../../types/admin'
 import { StatusBadge } from '../../components/admin/ui/StatusBadge'
+import { KpiTile } from '../../components/admin/ui/KpiTile'
 
 export const Route = createFileRoute('/admin/users')({
   component: withAdminGuard(AdminUsersPage),
@@ -133,6 +134,42 @@ function AdminUsersPage() {
 
   const adminCount = adminCountQuery.data ?? 0
 
+  const usersKpiQuery = useQuery({
+    queryKey: ['admin', 'users-kpis', authKey],
+    queryFn: async () => {
+      const [total, admins, authors, pendingAuthors] = await Promise.all([
+        supabase.from('profiles').select('id', { count: 'exact', head: true }),
+        supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('role', 'admin'),
+        supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('role', 'author'),
+        supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('role', 'author')
+          .eq('status', 'pending'),
+      ])
+
+      if (total.error) throw total.error
+      if (admins.error) throw admins.error
+      if (authors.error) throw authors.error
+      if (pendingAuthors.error) throw pendingAuthors.error
+
+      return {
+        total: total.count ?? 0,
+        admins: admins.count ?? 0,
+        authors: authors.count ?? 0,
+        pending: pendingAuthors.count ?? 0,
+      }
+    },
+    staleTime: 30_000,
+    enabled: canQuery,
+  })
+
   const createUser = useMutation({
     mutationFn: async (values: UserFormValues) => {
       const email = values.email.toLowerCase().trim()
@@ -191,6 +228,7 @@ function AdminUsersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'users', 'admin-count'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users-kpis'] })
       setShowForm(false)
       setFormValues(emptyUserValues)
       toast.success('User created')
@@ -256,6 +294,7 @@ function AdminUsersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'users', 'admin-count'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users-kpis'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'authors'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'authors', 'list'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'authors-for-hero'] })
@@ -294,6 +333,11 @@ function AdminUsersPage() {
     })
   }
 
+  const formatNumber = (value?: number | null) => {
+    if (value === null || value === undefined) return '—'
+    return new Intl.NumberFormat('en-US').format(value)
+  }
+
   return (
     <DashboardLayout
       userRole={profile?.role ?? 'admin'}
@@ -316,6 +360,52 @@ function AdminUsersPage() {
               Add user
             </Button>
           </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <KpiTile
+              label="Total users"
+              value={
+                usersKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(usersKpiQuery.data?.total)
+              }
+              helper="All time"
+            />
+            <KpiTile
+              label="Admins"
+              value={
+                usersKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(usersKpiQuery.data?.admins)
+              }
+              helper="Active admins"
+            />
+            <KpiTile
+              label="Authors"
+              value={
+                usersKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(usersKpiQuery.data?.authors)
+              }
+              helper="Profiles with author role"
+            />
+            <KpiTile
+              label="Pending approvals"
+              value={
+                usersKpiQuery.isLoading
+                  ? '…'
+                  : formatNumber(usersKpiQuery.data?.pending)
+              }
+              helper="Author status pending"
+              tone="warning"
+            />
+          </div>
+
+          {usersKpiQuery.isError && (
+            <p className="text-sm text-rose-600">
+              Failed to load KPI summary. Check connection or permissions.
+            </p>
+          )}
 
           <div className="rounded-2xl border border-gray-200 p-4 bg-white">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
