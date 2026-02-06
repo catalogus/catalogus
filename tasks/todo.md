@@ -183,3 +183,59 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 
 ### Test Notes
 - `pnpm test` failed: `listen EPERM: operation not permitted ::1` and Nitro dev worker init error.
+
+# KPI Dashboard Revamp
+
+## Spec (Draft)
+- Goal: Turn the admin dashboard into a true KPI cockpit for sales, operations, and catalog health.
+- Default time range: last 7 days, with quick picks (Today, 7d, 30d, 90d, YTD) and custom range.
+- Timezone: Africa/Maputo for server-side aggregation; allow client override if needed.
+- Show data freshness: "Last updated" timestamp and manual refresh.
+- Section-by-section improvements:
+  - Overview header: add date range selector, compare-to-previous-period toggle, and last updated.
+  - KPI summary cards: expand from 3 to a focused 6-8 KPIs with deltas and small trends.
+    - Candidate KPIs (based on existing data): revenue, paid orders, total orders, avg order value, paid rate, new customers, active books, low stock, newsletter signups.
+  - Revenue and orders trend: line chart with revenue + orders over time and comparison to previous period.
+  - Order status breakdown: stacked bar or donut (paid, pending, processing, failed, cancelled).
+  - Top books: table with units sold, revenue, stock, promo flag (based on order_items + books).
+  - Inventory health: low stock / out of stock list and digital vs physical split.
+  - Engagement: newsletter signups and new customers (from first order).
+  - Recent activity: latest orders list for quick access.
+- Known data limits:
+  - No pageview or cart events in schema, so conversion rate is not possible without new tracking.
+- KPI formula definitions (draft):
+  - Revenue: `sum(orders.total)` where `status = 'paid'` and `created_at` in range.
+  - Paid orders: `count(*)` where `status = 'paid'` and `created_at` in range.
+  - Total orders: `count(*)` where `created_at` in range (option: exclude `failed` + `cancelled` if desired).
+  - Avg order value: `revenue / nullif(paid_orders, 0)`.
+  - Paid rate: `paid_orders / nullif(total_orders, 0)`.
+  - New customers: count of first-time buyers in range (by `customer_id`, fallback to `customer_email` when `customer_id` is null).
+  - Newsletter signups: count `newsletter_subscriptions` where `created_at` in range; optionally split by `status = 'verified'`.
+  - Active books: count `books` where `is_active = true`.
+  - Low stock: count/list `books` where `is_active = true`, `is_digital = false`, and `stock <= low_stock_threshold` (default 5).
+  - Out of stock: `stock = 0` (physical only).
+  - Top books: aggregate `order_items` joined to `orders` (paid only) by `book_id`, sum `quantity`, revenue = `sum(quantity * price)`.
+  - Orders trend: daily buckets of paid orders + revenue; generate full date series to fill zero days.
+  - Order status breakdown: count by `status` in range.
+  - Recent activity: latest N orders (created_at desc), show `order_number`, `customer_name`, `status`, `total`.
+- Confirmed decisions:
+  - Timezone: Africa/Maputo.
+  - Total orders includes all statuses.
+  - Low stock threshold: 5.
+
+## Plan
+- [x] Confirm KPI priorities, time ranges, and "must-have" sections with product owner.
+- [x] Finalize metric formulas and confirm edge-case rules (paid vs total, customer identity, timezone).
+- [x] Design data layer (single RPC returning JSON) for efficient, consistent metrics.
+- [x] Update dashboard UI: layout, KPI cards, charts/tables, and section hierarchy.
+- [x] Add empty/loading/error states for each section and data freshness indicator.
+- [ ] Verify with real data and document results; note any missing instrumentation needs.
+
+## Review
+- [ ] KPI list and formulas are agreed and documented.
+- [ ] Dashboard sections render with correct data for the selected time range.
+- [ ] Performance is acceptable (no excessive client-side joins or N+1 queries).
+- [ ] Visual hierarchy makes the most important KPIs obvious at a glance.
+
+### Test Notes
+- `pnpm test` failed: `listen EPERM: operation not permitted ::1` and Nitro dev worker init error.

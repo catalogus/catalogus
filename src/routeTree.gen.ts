@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SobreIndexRouteImport } from './routes/sobre/index'
 import { Route as PublicacoesIndexRouteImport } from './routes/publicacoes/index'
@@ -24,7 +25,6 @@ import { Route as CarrinhoIndexRouteImport } from './routes/carrinho/index'
 import { Route as AutoresIndexRouteImport } from './routes/autores/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
-import { Route as SitemapXmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PublicacoesSlugRouteImport } from './routes/publicacoes/$slug'
 import { Route as PedidoOrderIdRouteImport } from './routes/pedido/$orderId'
 import { Route as NoticiasSlugRouteImport } from './routes/noticias/$slug'
@@ -60,6 +60,11 @@ import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -133,11 +138,6 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AccountIndexRoute = AccountIndexRouteImport.update({
   id: '/account/',
   path: '/account/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapXmlRoute = SitemapXmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PublicacoesSlugRoute = PublicacoesSlugRouteImport.update({
@@ -313,6 +313,7 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account/profile': typeof AccountProfileRoute
   '/admin/author-claims': typeof AdminAuthorClaimsRoute
   '/admin/authors': typeof AdminAuthorsRoute
@@ -337,7 +338,6 @@ export interface FileRoutesByFullPath {
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/publicacoes/$slug': typeof PublicacoesSlugRoute
-  '/sitemap.xml': typeof SitemapXmlRoute
   '/account': typeof AccountIndexRoute
   '/admin': typeof AdminIndexRoute
   '/autores': typeof AutoresIndexRoute
@@ -365,6 +365,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account/profile': typeof AccountProfileRoute
   '/admin/author-claims': typeof AdminAuthorClaimsRoute
   '/admin/authors': typeof AdminAuthorsRoute
@@ -389,7 +390,6 @@ export interface FileRoutesByTo {
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/publicacoes/$slug': typeof PublicacoesSlugRoute
-  '/sitemap.xml': typeof SitemapXmlRoute
   '/account': typeof AccountIndexRoute
   '/admin': typeof AdminIndexRoute
   '/autores': typeof AutoresIndexRoute
@@ -418,6 +418,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account/profile': typeof AccountProfileRoute
   '/admin/author-claims': typeof AdminAuthorClaimsRoute
   '/admin/authors': typeof AdminAuthorsRoute
@@ -442,7 +443,6 @@ export interface FileRoutesById {
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/publicacoes/$slug': typeof PublicacoesSlugRoute
-  '/sitemap.xml': typeof SitemapXmlRoute
   '/account/': typeof AccountIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/autores/': typeof AutoresIndexRoute
@@ -472,6 +472,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/sitemap.xml'
     | '/account/profile'
     | '/admin/author-claims'
     | '/admin/authors'
@@ -496,7 +497,6 @@ export interface FileRouteTypes {
     | '/noticias/$slug'
     | '/pedido/$orderId'
     | '/publicacoes/$slug'
-    | '/sitemap.xml'
     | '/account'
     | '/admin'
     | '/autores'
@@ -524,6 +524,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/sitemap.xml'
     | '/account/profile'
     | '/admin/author-claims'
     | '/admin/authors'
@@ -548,7 +549,6 @@ export interface FileRouteTypes {
     | '/noticias/$slug'
     | '/pedido/$orderId'
     | '/publicacoes/$slug'
-    | '/sitemap.xml'
     | '/account'
     | '/admin'
     | '/autores'
@@ -576,6 +576,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/sitemap.xml'
     | '/account/profile'
     | '/admin/author-claims'
     | '/admin/authors'
@@ -600,7 +601,6 @@ export interface FileRouteTypes {
     | '/noticias/$slug'
     | '/pedido/$orderId'
     | '/publicacoes/$slug'
-    | '/sitemap.xml'
     | '/account/'
     | '/admin/'
     | '/autores/'
@@ -629,6 +629,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AccountProfileRoute: typeof AccountProfileRoute
   AdminAuthorClaimsRoute: typeof AdminAuthorClaimsRoute
   AdminAuthorsRoute: typeof AdminAuthorsRoute
@@ -653,7 +654,6 @@ export interface RootRouteChildren {
   NoticiasSlugRoute: typeof NoticiasSlugRoute
   PedidoOrderIdRoute: typeof PedidoOrderIdRoute
   PublicacoesSlugRoute: typeof PublicacoesSlugRoute
-  SitemapXmlRoute: typeof SitemapXmlRoute
   AccountIndexRoute: typeof AccountIndexRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AutoresIndexRoute: typeof AutoresIndexRoute
@@ -679,6 +679,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -782,13 +789,6 @@ declare module '@tanstack/react-router' {
       path: '/account'
       fullPath: '/account'
       preLoaderRoute: typeof AccountIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapXmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/publicacoes/$slug': {
@@ -1050,6 +1050,7 @@ const AdminContentRouteWithChildren = AdminContentRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   AccountProfileRoute: AccountProfileRoute,
   AdminAuthorClaimsRoute: AdminAuthorClaimsRoute,
   AdminAuthorsRoute: AdminAuthorsRoute,
@@ -1074,7 +1075,6 @@ const rootRouteChildren: RootRouteChildren = {
   NoticiasSlugRoute: NoticiasSlugRoute,
   PedidoOrderIdRoute: PedidoOrderIdRoute,
   PublicacoesSlugRoute: PublicacoesSlugRoute,
-  SitemapXmlRoute: SitemapXmlRoute,
   AccountIndexRoute: AccountIndexRoute,
   AdminIndexRoute: AdminIndexRoute,
   AutoresIndexRoute: AutoresIndexRoute,
