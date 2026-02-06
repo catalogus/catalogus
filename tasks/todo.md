@@ -116,6 +116,21 @@
 
 Notes: Likely idle expiry of Supabase access token without a proactive refresh; added scheduled refresh in AuthProvider.
 
+# Bug: books_shop.is_digital Missing
+
+## Spec (Draft)
+- UI error shows: `column books_shop.is_digital does not exist`.
+- Likely cause: production schema missing `books.is_digital` (digital books migration not applied) or stale `books_shop` view.
+
+## Plan
+- [x] Confirm schema expectations: `books.is_digital` + `digital_access` exist; `books_shop` view should include `b.*`.
+- [x] Add migration to ensure digital book columns/type exist (idempotent) and recreate `books_shop` view.
+- [ ] Verify local schema/migration ordering and ensure view includes `is_digital`.
+- [ ] Document that migration must be applied in production to resolve the error.
+
+## Review
+- [ ] `books_shop` includes `is_digital` and query no longer fails.
+
 # SEO: Full Implementation
 
 ## Spec (Draft)
