@@ -108,6 +108,17 @@ export default function Header() {
     }
   }, [menuOpen])
 
+  useEffect(() => {
+    if (!menuOpen) return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [menuOpen])
+
   // Close user menu on scroll
   useEffect(() => {
     if (!userMenuOpen) return
@@ -310,6 +321,9 @@ export default function Header() {
         }`}
         style={{ background: 'var(--header-panel)' }}
         aria-hidden={!menuOpen}
+        aria-modal={menuOpen ? 'true' : undefined}
+        aria-label={t('header.menu.open')}
+        role="dialog"
       >
         <div className="flex items-center justify-between">
           <Link

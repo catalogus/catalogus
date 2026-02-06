@@ -4,6 +4,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools'
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
 import { Toaster } from 'sonner'
+import { useEffect, useState } from 'react'
 
 import { AuthProvider } from '../contexts/AuthProvider'
 import { ErrorBoundary } from '../components/ErrorBoundary'
@@ -91,38 +92,57 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const showDevtools = import.meta.env.DEV
+  const [lang, setLang] = useState(i18n.language || 'pt')
+
+  useEffect(() => {
+    const handler = (nextLang: string) => {
+      setLang(nextLang)
+    }
+    i18n.on('languageChanged', handler)
+    return () => {
+      i18n.off('languageChanged', handler)
+    }
+  }, [])
 
   return (
-    <html lang="pt">
+    <html lang={lang === 'en' ? 'en' : 'pt'}>
       <head>
         <HeadContent />
       </head>
       <body>
-        <ErrorBoundary>
-          <I18nextProvider i18n={i18n}>
-            <QueryClientProvider client={queryClient}>
-              <AuthProvider>
-                <CartProvider>
-                  {children}
-                  <Toaster position="top-right" richColors />
-                  {showDevtools && (
-                    <TanStackDevtools
-                      config={{
-                        position: 'bottom-left',
-                      }}
-                      plugins={[
-                        {
-                          name: 'Tanstack Router',
-                          render: <TanStackRouterDevtoolsPanel />,
-                        },
-                      ]}
-                    />
-                  )}
-                </CartProvider>
-              </AuthProvider>
-            </QueryClientProvider>
-          </I18nextProvider>
-        </ErrorBoundary>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-gray-900 focus:shadow focus:outline-none"
+        >
+          Skip to content
+        </a>
+        <div id="main-content" tabIndex={-1}>
+          <ErrorBoundary>
+            <I18nextProvider i18n={i18n}>
+              <QueryClientProvider client={queryClient}>
+                <AuthProvider>
+                  <CartProvider>
+                    {children}
+                    <Toaster position="top-right" richColors />
+                    {showDevtools && (
+                      <TanStackDevtools
+                        config={{
+                          position: 'bottom-left',
+                        }}
+                        plugins={[
+                          {
+                            name: 'Tanstack Router',
+                            render: <TanStackRouterDevtoolsPanel />,
+                          },
+                        ]}
+                      />
+                    )}
+                  </CartProvider>
+                </AuthProvider>
+              </QueryClientProvider>
+            </I18nextProvider>
+          </ErrorBoundary>
+        </div>
         <Scripts />
       </body>
     </html>

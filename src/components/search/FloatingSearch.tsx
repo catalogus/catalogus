@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { normalizeSearchTerm } from '../../lib/searchHelpers'
+import { Dialog, DialogContent, DialogTitle } from '../ui/dialog'
 
 export function FloatingSearch() {
   const { t, i18n } = useTranslation()
@@ -10,17 +11,12 @@ export function FloatingSearch() {
   const [value, setValue] = useState('')
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
-  const previousOverflow = useRef('')
 
   useEffect(() => {
     if (!open) return
-
-    previousOverflow.current = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
     const id = requestAnimationFrame(() => inputRef.current?.focus())
     return () => {
       cancelAnimationFrame(id)
-      document.body.style.overflow = previousOverflow.current
     }
   }, [open])
 
@@ -99,32 +95,29 @@ export function FloatingSearch() {
         </button>
       </div>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4"
-          onClick={() => setOpen(false)}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent
+          className="w-full max-w-2xl p-0 border-0 bg-transparent shadow-none"
+          overlayClassName="bg-black/50"
+          showCloseButton={false}
         >
-          <div
-            className="w-full max-w-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <form onSubmit={handleSubmit}>
-              <label className="relative block">
-                <span className="sr-only">{t('search.label')}</span>
-                <Search className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                <input
-                  ref={inputRef}
-                  type="search"
-                  value={value}
-                  onChange={(event) => setValue(event.target.value)}
-                  placeholder={t('search.placeholder')}
-                  className="h-14 w-full border border-gray-200 bg-white px-14 text-sm text-gray-900 shadow-lg outline-none transition focus:border-[color:var(--brand)]"
-                />
-              </label>
-            </form>
-          </div>
-        </div>
-      )}
+          <DialogTitle className="sr-only">{t('search.label')}</DialogTitle>
+          <form onSubmit={handleSubmit}>
+            <label className="relative block">
+              <span className="sr-only">{t('search.label')}</span>
+              <Search className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <input
+                ref={inputRef}
+                type="search"
+                value={value}
+                onChange={(event) => setValue(event.target.value)}
+                placeholder={t('search.placeholder')}
+                className="h-14 w-full border border-gray-200 bg-white px-14 text-sm text-gray-900 shadow-lg outline-none transition focus:border-[color:var(--brand)]"
+              />
+            </label>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

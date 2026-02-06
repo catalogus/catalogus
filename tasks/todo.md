@@ -287,12 +287,12 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 
 ## Plan
 - [x] Phase 0 (Security): pricing validation in RPC, sanitize rich HTML, throttle newsletter, noopener.
-- [ ] Phase 1 (Performance/UX): gate devtools, bundle PDF worker, reduce CLS/LCP risk, internal Link navigation.
-- [ ] Phase 2 (A11y/SEO): accessible dialogs, skip link, dynamic html lang, keyboard close.
+- [x] Phase 1 (Performance/UX): gate devtools, bundle PDF worker, reduce CLS/LCP risk, internal Link navigation.
+- [x] Phase 2 (A11y/SEO): accessible dialogs, skip link, dynamic html lang, keyboard close.
 - [ ] Run targeted checks (lint/tests if possible) and document outcomes.
 
 ## Review
-- [ ] Phase 0 committed with conventional message.
-- [ ] Phase 1 committed with conventional message.
-- [ ] Phase 2 committed with conventional message.
+- [x] Phase 0 committed with conventional message.
+- [x] Phase 1 committed with conventional message.
+- [x] Phase 2 committed with conventional message.
 - [ ] Verification notes recorded.
