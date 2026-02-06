@@ -97,3 +97,21 @@
 
 ## Review
 - [ ] Listing/featured/search cards no longer show description text.
+
+# Bug: Dashboard Idle -> Failed to Fetch
+
+## Spec (Draft)
+- When user stays idle on dashboard for ~5+ minutes, navigating to another section triggers `Failed to fetch` and forces a full page refresh.
+- Expected: navigation should work without full refresh; requests should succeed after idle.
+
+## Plan
+- [x] Trace the request path for dashboard section navigation and identify which fetch fails after idle.
+- [x] Review auth/session handling (Supabase/SDK) and any request wrappers for idle/refresh behavior.
+- [x] Implement a resilient fix (session refresh, retry, or token rehydration) with minimal impact.
+- [ ] Verify by idling 5+ minutes, then navigating to another section without refresh; document results.
+
+## Review
+- [x] Root cause identified and documented.
+- [ ] Navigation works after idle without manual refresh.
+
+Notes: Likely idle expiry of Supabase access token without a proactive refresh; added scheduled refresh in AuthProvider.

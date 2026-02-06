@@ -155,6 +155,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queryClient])
 
+  useEffect(() => {
+    const refreshToken = sessionQuery.data?.refresh_token
+    const expiresAt = sessionQuery.data?.expires_at
+    if (!refreshToken || !expiresAt) return
+
+    const REFRESH_MARGIN_MS = 60_000
+    const MIN_REFRESH_DELAY_MS = 5_000
+    let timeoutId: number | null = null
+
+    const scheduleRefresh = () => {
+      const now = Date.now()
+      const refreshInMs = Math.max(
+        expiresAt * 1000 - now - REFRESH_MARGIN_MS,
+        MIN_REFRESH_DELAY_MS,
+      )
+
+      timeoutId = window.setTimeout(async () => {
+        const { data, error } = await supabase.auth.refreshSession()
+        if (error) {
+          console.warn('Session refresh error:', error)
+          timeoutId = window.setTimeout(scheduleRefresh, 30_000)
+          return
+        }
+        if (data.session) {
+          queryClient.setQueryData(['auth', 'session'], data.session)
+        }
+      }, refreshInMs)
+    }
+
+    scheduleRefresh()
+
+    return () => {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId)
+      }
+    }
+  }, [sessionQuery.data?.refresh_token, sessionQuery.data?.expires_at, queryClient])
+
   const signIn = useCallback(async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
