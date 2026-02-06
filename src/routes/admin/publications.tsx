@@ -643,9 +643,14 @@ function AdminPublicationsPage() {
                               <DropdownMenuLabel>Acções</DropdownMenuLabel>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
-                                onClick={() =>
-                                  window.open(`/publicacoes/${pub.slug}`, '_blank')
-                                }
+                                onClick={() => {
+                                  const popup = window.open(
+                                    `/publicacoes/${pub.slug}`,
+                                    '_blank',
+                                    'noopener',
+                                  )
+                                  if (popup) popup.opener = null
+                                }}
                               >
                                 Ver publicação
                               </DropdownMenuItem>

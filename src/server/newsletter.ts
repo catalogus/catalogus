@@ -5,6 +5,7 @@ import { isValidEmail } from '../lib/shopHelpers'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Catalogus <no-reply@catalogus.co.mz>'
+const NEWSLETTER_THROTTLE_MS = 2 * 60 * 1000
 
 const getSiteUrl = () => {
   const raw =
@@ -94,9 +95,16 @@ export const requestNewsletterSubscription = createServerFn({ method: 'POST' })
 
     const { data: existing } = await serverSupabase
       .from('newsletter_subscriptions')
-      .select('id, status')
+      .select('id, status, updated_at')
       .eq('email', email)
       .maybeSingle()
+
+    if (existing?.updated_at) {
+      const lastUpdated = new Date(existing.updated_at).getTime()
+      if (!Number.isNaN(lastUpdated) && Date.now() - lastUpdated < NEWSLETTER_THROTTLE_MS) {
+        throw new Error('Please wait before requesting another verification email.')
+      }
+    }
 
     const status = existing?.status === 'verified' ? 'verified' : 'pending'
 

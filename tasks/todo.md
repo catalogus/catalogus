@@ -258,3 +258,41 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 
 ### Test Notes
 - `pnpm test` failed: `listen EPERM: operation not permitted ::1` and Nitro dev worker init error.
+
+# Platform Audit: Security, Performance, UX, SEO, Accessibility
+
+## Spec
+- Audit current codebase and platform behavior for the five areas.
+- Provide a prioritized, concrete improvement plan (no code changes yet).
+- Call out quick wins vs. larger initiatives, with file references where applicable.
+
+## Plan
+- [x] Scan routes, shared components, server functions, and Supabase migrations for baseline architecture.
+- [ ] Identify issues/opportunities by category with concrete evidence (file refs).
+- [ ] Prioritize improvements into quick wins vs. strategic workstreams.
+- [ ] Align on scope/timeline before implementation.
+- [ ] Define verification approach (Lighthouse, a11y checks, security validation).
+
+## Review
+- [ ] Findings documented by category with severity/impact.
+- [ ] Prioritized roadmap agreed with the user.
+- [ ] Verification strategy defined (metrics + tools).
+
+# Platform Improvements: Phase Execution
+
+## Spec
+- Implement prioritized fixes across security, performance/UX, and accessibility/SEO.
+- Use conventional commits per phase.
+- Verify core flows and document results.
+
+## Plan
+- [x] Phase 0 (Security): pricing validation in RPC, sanitize rich HTML, throttle newsletter, noopener.
+- [ ] Phase 1 (Performance/UX): gate devtools, bundle PDF worker, reduce CLS/LCP risk, internal Link navigation.
+- [ ] Phase 2 (A11y/SEO): accessible dialogs, skip link, dynamic html lang, keyboard close.
+- [ ] Run targeted checks (lint/tests if possible) and document outcomes.
+
+## Review
+- [ ] Phase 0 committed with conventional message.
+- [ ] Phase 1 committed with conventional message.
+- [ ] Phase 2 committed with conventional message.
+- [ ] Verification notes recorded.

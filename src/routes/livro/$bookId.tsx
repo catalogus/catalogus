@@ -293,7 +293,8 @@ function BookDetailPage() {
       const result = await getFreeDigitalDownloadUrl({
         data: { bookId: book.id, downloadToken: token },
       })
-      window.open(result.url, '_blank')
+      const popup = window.open(result.url, '_blank', 'noopener')
+      if (popup) popup.opener = null
     } catch (error) {
       console.error('Free download error', error)
       setDownloadError(t('shop.detail.downloadError'))

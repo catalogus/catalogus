@@ -11,6 +11,7 @@ import {
   buildSeo,
   toAbsoluteUrl,
 } from '../../lib/seo'
+import { sanitizeRichText } from '../../lib/sanitizeHtml'
 import type { PostRow } from '../../types/post'
 
 export const Route = createFileRoute('/noticias/$slug')({
@@ -566,6 +567,7 @@ function NewsPostDetailPage() {
   const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
   const dateLabel = formatPostDate(post?.published_at ?? post?.created_at ?? null, locale)
   const excerpt = post?.excerpt?.trim() || buildExcerpt(post?.body)
+  const safeBody = post?.body ? sanitizeRichText(post.body) : ''
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -667,10 +669,10 @@ function NewsPostDetailPage() {
                     </p>
                   )}
                   
-                  {post.body ? (
+                  {safeBody ? (
                     <div
                       className="post-content text-gray-700"
-                      dangerouslySetInnerHTML={{ __html: post.body }}
+                      dangerouslySetInnerHTML={{ __html: safeBody }}
                     />
                   ) : (
                     <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">
