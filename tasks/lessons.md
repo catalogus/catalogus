@@ -6,3 +6,4 @@
 - When a view selects `b.*`, avoid `CREATE OR REPLACE VIEW` if underlying columns might have changed. Use `DROP VIEW` + `CREATE VIEW` or an explicit column list to prevent column rename errors.
 - When using TanStack Router `head`, guard `location` since it can be undefined during hydration; default to `'/'` and `''` to avoid crashes.
 - Sanitize uploaded file names for Supabase Storage keys (remove spaces/diacritics/special chars) to avoid `InvalidKey` errors.
+- When a user requests SEO to be automatic, remove manual admin inputs and compute SEO fields from title/description during save.

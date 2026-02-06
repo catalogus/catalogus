@@ -131,6 +131,22 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 ## Review
 - [ ] `books_shop` includes `is_digital` and query no longer fails.
 
+# UI: Remove Admin SEO Fields
+
+## Spec (Draft)
+- Remove SEO title/description inputs from admin forms for Books and Publications (Mapas Literarios).
+- SEO should be automatic (derived from title/description), not manual input.
+- Avoid wiping existing SEO fields unintentionally on edit.
+
+## Plan
+- [x] Remove SEO section from `BookForm`.
+- [x] Remove SEO section from `PublicationForm`.
+- [x] Auto-derive `seo_title`/`seo_description` in admin save logic.
+- [ ] Verify forms submit without manual SEO and without unexpected clearing.
+
+## Review
+- [ ] SEO inputs no longer appear on add/edit for Books and Publications.
+
 # SEO: Full Implementation
 
 ## Spec (Draft)

@@ -62,8 +62,6 @@ export function PublicationForm({
       ? new Date(initial.publish_date).toISOString().split('T')[0]
       : new Date().toISOString().split('T')[0]
   )
-  const [seoTitle, setSeoTitle] = useState(initial?.seo_title ?? '')
-  const [seoDescription, setSeoDescription] = useState(initial?.seo_description ?? '')
   const [tableOfContents, setTableOfContents] = useState<TableOfContentsItem[]>(
     initial?.table_of_contents ?? []
   )
@@ -114,8 +112,8 @@ export function PublicationForm({
         is_active: isActive,
         is_featured: isFeatured,
         publish_date: publishDate,
-        seo_title: seoTitle,
-        seo_description: seoDescription,
+        seo_title: title.trim(),
+        seo_description: description.trim(),
         table_of_contents: tableOfContents,
       },
       pdfFile
@@ -407,30 +405,6 @@ export function PublicationForm({
             ))}
           </div>
         )}
-      </div>
-
-      {/* SEO */}
-      <div className="space-y-4 border-t pt-4">
-        <p className="text-sm font-medium text-gray-500">SEO</p>
-        <div className="space-y-2">
-          <Label htmlFor="seoTitle">Título SEO</Label>
-          <Input
-            id="seoTitle"
-            value={seoTitle}
-            onChange={e => setSeoTitle(e.target.value)}
-            placeholder={title || 'Título para motores de busca'}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="seoDescription">Descrição SEO</Label>
-          <Textarea
-            id="seoDescription"
-            value={seoDescription}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSeoDescription(e.target.value)}
-            placeholder={description || 'Descrição para motores de busca'}
-            rows={2}
-          />
-        </div>
       </div>
 
       {/* Actions */}

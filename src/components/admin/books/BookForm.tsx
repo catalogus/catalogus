@@ -523,25 +523,6 @@ export function BookForm({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="seo_title">SEO title</Label>
-        <Input
-          id="seo_title"
-          value={values.seo_title}
-          onChange={(e) => handleChange('seo_title', e.target.value)}
-        />
-        <Label htmlFor="seo_description" className="pt-1">
-          SEO description
-        </Label>
-        <textarea
-          id="seo_description"
-          value={values.seo_description}
-          onChange={(e) => handleChange('seo_description', e.target.value)}
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          rows={2}
-        />
-      </div>
-
       <div className="flex flex-wrap gap-4">
         <label className="inline-flex items-center gap-2 text-sm">
           <input
