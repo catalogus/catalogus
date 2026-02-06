@@ -44,6 +44,20 @@ exception
   when duplicate_object then null;
 end $$;
 
+do $$
+begin
+  create type public.digital_access as enum ('paid', 'free');
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create type public.newsletter_status as enum ('pending', 'verified');
+exception
+  when duplicate_object then null;
+end $$;
+
 -- Tables
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
@@ -83,6 +97,10 @@ create table if not exists public.books (
   promo_price_mzn numeric(12, 2),
   promo_start_date date,
   promo_end_date date,
+  is_digital boolean not null default false,
+  digital_access public.digital_access,
+  digital_file_path text,
+  digital_file_url text,
   isbn text,
   publisher text,
   seo_title text,
@@ -92,11 +110,31 @@ create table if not exists public.books (
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint books_promo_type_check check (promo_type is null or promo_type in ('promocao', 'pre-venda'))
+  constraint books_promo_type_check check (promo_type is null or promo_type in ('promocao', 'pre-venda')),
+  constraint books_digital_access_check check (is_digital = false or digital_access is not null)
 );
 create index if not exists books_is_active_idx on public.books (is_active);
 create index if not exists books_category_idx on public.books (category);
 create index if not exists books_language_idx on public.books (language);
+
+create table if not exists public.newsletter_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  email text not null unique,
+  status public.newsletter_status not null default 'pending',
+  verification_token_hash text,
+  verification_expires_at timestamptz,
+  verified_at timestamptz,
+  download_token_hash text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists newsletter_subscriptions_status_idx
+  on public.newsletter_subscriptions (status);
+create index if not exists newsletter_subscriptions_verification_token_idx
+  on public.newsletter_subscriptions (verification_token_hash);
+create index if not exists newsletter_subscriptions_download_token_idx
+  on public.newsletter_subscriptions (download_token_hash);
 
 create table if not exists public.authors (
   id uuid primary key default gen_random_uuid(),
@@ -425,6 +463,13 @@ drop policy if exists "Books: admins full access" on public.books;
 create policy "Books: admins full access" on public.books
   for all using (public.is_admin()) with check (public.is_admin());
 
+-- Newsletter subscriptions policies
+alter table public.newsletter_subscriptions enable row level security;
+
+drop policy if exists "Newsletter: admins full access" on public.newsletter_subscriptions;
+create policy "Newsletter: admins full access" on public.newsletter_subscriptions
+  for all using (public.is_admin()) with check (public.is_admin());
+
 -- Authors policies
 drop policy if exists "Authors: public can read" on public.authors;
 create policy "Authors: public can read" on public.authors
@@ -575,6 +620,23 @@ begin
 exception
   when insufficient_privilege then
     raise notice 'Skipping storage.objects policies (insufficient privileges).';
+end $$;
+
+-- Digital books storage bucket (private)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types) values
+  ('digital-books', 'digital-books', false, 52428800, array['application/pdf', 'application/epub+zip'])
+on conflict (id) do nothing;
+
+do $$
+begin
+  drop policy if exists "Storage: admin can manage digital books" on storage.objects;
+  create policy "Storage: admin can manage digital books"
+    on storage.objects for all
+    using (bucket_id = 'digital-books' and public.is_admin())
+    with check (bucket_id = 'digital-books' and public.is_admin());
+exception
+  when insufficient_privilege then
+    raise notice 'Skipping storage.objects policies for digital books (insufficient privileges).';
 end $$;
 
 -- Simple published/active defaults

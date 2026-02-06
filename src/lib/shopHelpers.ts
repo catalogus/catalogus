@@ -74,6 +74,10 @@ export const isPromoActive = (data: PromoData): boolean => {
   const today = getLocalDateString()
   const startDate = normalizeDate(data.promo_start_date)
   const endDate = normalizeDate(data.promo_end_date)
+  if (data.promo_type === 'pre-venda') {
+    if (endDate && today > endDate) return false
+    return true
+  }
   if (startDate && today < startDate) return false
   if (endDate && today > endDate) return false
   return true
@@ -149,7 +153,11 @@ export const formatPhoneNumber = (phone: string): string => {
 /**
  * Check if book is in stock
  */
-export const isInStock = (stock: number | null | undefined): boolean => {
+export const isInStock = (
+  stock: number | null | undefined,
+  isDigital = false,
+): boolean => {
+  if (isDigital) return true
   return (stock ?? 0) > 0
 }
 
@@ -178,7 +186,12 @@ export const getStockStatusColor = (stock: number | null | undefined): string =>
 /**
  * Calculate max quantity allowed based on stock
  */
-export const getMaxQuantity = (stock: number | null | undefined, limit = 10): number => {
+export const getMaxQuantity = (
+  stock: number | null | undefined,
+  limit = 10,
+  isDigital = false,
+): number => {
+  if (isDigital) return 1
   const stockValue = stock ?? 0
   return Math.min(stockValue, limit)
 }

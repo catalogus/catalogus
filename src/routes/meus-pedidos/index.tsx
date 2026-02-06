@@ -19,6 +19,8 @@ type OrderItem = {
     title: string | null
     cover_url: string | null
     cover_path: string | null
+    is_digital?: boolean | null
+    digital_access?: 'paid' | 'free' | null
   } | null
 }
 
@@ -56,7 +58,7 @@ function OrdersHistoryPage() {
             id,
             quantity,
             price,
-            book:books(title, cover_url, cover_path)
+            book:books(title, cover_url, cover_path, is_digital, digital_access)
           )
         `,
         )
@@ -158,6 +160,10 @@ function OrdersHistoryPage() {
                       month: 'short',
                       year: 'numeric',
                     })
+                    const hasDigitalPaid = (order.items ?? []).some(
+                      (item) =>
+                        item.book?.is_digital && item.book.digital_access === 'paid',
+                    )
                     return (
                       <div
                         key={order.id}
@@ -181,12 +187,22 @@ function OrdersHistoryPage() {
                             {formatPrice(order.total, locale)}
                           </p>
                         </div>
-                        <Link
-                          to={`/pedido/${order.id}`}
-                          className="inline-flex items-center justify-center border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400"
-                        >
-                          {t('orders.history.viewDetails')}
-                        </Link>
+                        <div className="flex flex-wrap gap-2">
+                          {order.status === 'paid' && hasDigitalPaid && (
+                            <Link
+                              to={`/pedido/${order.id}#downloads`}
+                              className="inline-flex items-center justify-center border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400"
+                            >
+                              {t('orders.history.downloads')}
+                            </Link>
+                          )}
+                          <Link
+                            to={`/pedido/${order.id}`}
+                            className="inline-flex items-center justify-center border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400"
+                          >
+                            {t('orders.history.viewDetails')}
+                          </Link>
+                        </div>
                       </div>
                     )
                   })}

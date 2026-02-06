@@ -334,6 +334,7 @@ const en = {
       copyLink: 'Copy book link',
       copySuccess: 'Link copied',
       copyError: 'Could not copy link',
+      freeDownload: 'This book is available for free download.',
     },
     promo: {
       labels: {
@@ -355,6 +356,12 @@ const en = {
       },
       descriptionFallback: 'Description unavailable.',
       addToCart: 'Add to cart',
+      download: 'Download',
+      digital: 'Digital',
+      newsletterTitle: 'Subscribe to download',
+      newsletterBody:
+        'Enter your email to receive the confirmation link and unlock the digital download.',
+      downloadError: 'Unable to generate the download link.',
       categoryLabel: 'Category:',
       languageLabel: 'Language:',
       isbnLabel: 'ISBN:',
@@ -477,6 +484,7 @@ const en = {
       print: 'Print order',
       backToShop: 'Back to shop',
       bookFallback: 'Book',
+      download: 'Download',
     },
     history: {
       title: 'My orders',
@@ -487,6 +495,7 @@ const en = {
       error: 'Failed to load orders. Please try again.',
       empty: 'No orders found.',
       viewDetails: 'View details',
+      downloads: 'Downloads',
     },
   },
   newsletter: {
@@ -500,6 +509,28 @@ const en = {
       body:
         'Get monthly updates about new books, cultural events, featured authors, and much more.',
       close: 'Close',
+    },
+    form: {
+      label: 'Email',
+      placeholder: 'Enter your email',
+      cta: 'Subscribe',
+      submitting: 'Sending...',
+      success: 'Check your email to confirm your subscription.',
+      error: 'Unable to subscribe. Please try again.',
+      invalidEmail: 'Invalid email.',
+      disclaimer: 'We will send a confirmation link. You can unsubscribe anytime.',
+    },
+    verify: {
+      title: 'Confirm subscription',
+      helper: 'We are confirming your subscription.',
+      loading: 'Verifying your email...',
+      success: 'Subscription confirmed. You can continue.',
+      error: 'Invalid or expired link.',
+      missingToken: 'Missing verification token.',
+      download: 'Download now',
+      downloadError: 'Unable to generate download.',
+      downloadReady: 'Your download is ready in a new tab.',
+      backToShop: 'Back to shop',
     },
   },
   about: {

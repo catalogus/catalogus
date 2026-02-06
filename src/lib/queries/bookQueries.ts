@@ -18,6 +18,8 @@ export type BookDetail = {
   title: string
   slug: string | null
   price_mzn: number | null
+  is_digital?: boolean | null
+  digital_access?: 'paid' | 'free' | null
   promo_type?: 'promocao' | 'pre-venda' | null
   promo_price_mzn?: number | null
   promo_start_date?: string | null
@@ -48,7 +50,7 @@ export const useBook = (bookId: string, initialData?: BookDetail | null) => {
     queryKey: bookKeys.detail(bookId),
     queryFn: async () => {
       const selectFields =
-        'id, title, slug, price_mzn, promo_type, promo_price_mzn, promo_start_date, promo_end_date, promo_is_active, effective_price_mzn, stock, description, seo_description, cover_url, cover_path, isbn, publisher, category, language, authors:authors_books(author:authors(id, name, wp_slug))'
+        'id, title, slug, price_mzn, is_digital, digital_access, promo_type, promo_price_mzn, promo_start_date, promo_end_date, promo_is_active, effective_price_mzn, stock, description, seo_description, cover_url, cover_path, isbn, publisher, category, language, authors:authors_books(author:authors(id, name, wp_slug))'
 
       const { data: bySlug, error: slugError } = await publicSupabase
         .from('books_shop')
@@ -94,6 +96,8 @@ export const useRelatedBooks = (
           title,
           slug,
           price_mzn,
+          is_digital,
+          digital_access,
           promo_type,
           promo_price_mzn,
           promo_start_date,

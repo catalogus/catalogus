@@ -17,6 +17,8 @@ type FeaturedBook = {
   title: string
   slug: string | null
   price_mzn: number | null
+  is_digital?: boolean | null
+  digital_access?: 'paid' | 'free' | null
   promo_type?: 'promocao' | 'pre-venda' | null
   promo_price_mzn?: number | null
   promo_start_date?: string | null
@@ -173,7 +175,7 @@ const fetchFeaturedBooks = async () => {
   const { data, error } = await publicSupabase
     .from('books_shop')
     .select(
-      'id, title, slug, price_mzn, promo_type, promo_price_mzn, promo_start_date, promo_end_date, promo_is_active, effective_price_mzn, description, seo_description, cover_url, cover_path, featured, is_active',
+      'id, title, slug, price_mzn, is_digital, digital_access, promo_type, promo_price_mzn, promo_start_date, promo_end_date, promo_is_active, effective_price_mzn, description, seo_description, cover_url, cover_path, featured, is_active',
     )
     .eq('featured', true)
     .eq('is_active', true)

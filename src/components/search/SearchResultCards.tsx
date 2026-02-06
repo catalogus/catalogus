@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { buildExcerpt, formatPostDate } from '../../lib/newsHelpers'
-import { formatPrice, truncateText } from '../../lib/shopHelpers'
+import { formatPrice } from '../../lib/shopHelpers'
 import { publicSupabase } from '../../lib/supabasePublic'
 import { AuthorCard, type AuthorCardData } from '../author/AuthorCard'
 
@@ -51,10 +51,6 @@ export function BookResultCard({ book }: { book: SearchBook }) {
     book.price_mzn === null || book.price_mzn === undefined
       ? ''
       : formatPrice(book.price_mzn, i18n.language === 'en' ? 'en-US' : 'pt-PT')
-  const description = truncateText(
-    book.description || book.seo_description || '',
-    140,
-  )
   const authors = (book.authors ?? [])
     .map((item) => item.author?.name)
     .filter(Boolean)
@@ -92,7 +88,6 @@ export function BookResultCard({ book }: { book: SearchBook }) {
         </div>
         <h3 className="text-lg font-semibold text-gray-900">{book.title}</h3>
         {authors && <p className="text-sm text-gray-500">{authors}</p>}
-        {description && <p className="text-sm text-gray-600">{description}</p>}
       </div>
     </a>
   )

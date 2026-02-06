@@ -6,6 +6,7 @@ import { formatPrice, getOrderStatusColor } from '../../lib/shopHelpers'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthProvider'
 import { refreshMpesaStatus } from '../../server/mpesa'
+import { getPaidDigitalDownloadUrl } from '../../server/newsletter'
 
 type OrderItem = {
   id: number
@@ -16,6 +17,8 @@ type OrderItem = {
     title: string
     cover_url: string | null
     cover_path: string | null
+    is_digital?: boolean | null
+    digital_access?: 'paid' | 'free' | null
   } | null
 }
 
@@ -69,7 +72,7 @@ function OrderConfirmationPage() {
             id,
             quantity,
             price,
-            book:books(id, title, cover_url, cover_path)
+            book:books(id, title, cover_url, cover_path, is_digital, digital_access)
           )
         `,
         )
@@ -114,6 +117,26 @@ function OrderConfirmationPage() {
     },
     onSuccess: async () => {
       await orderQuery.refetch()
+    },
+  })
+
+  const downloadMutation = useMutation({
+    mutationFn: async (bookId: string) => {
+      if (!session?.access_token) {
+        throw new Error('Missing access token')
+      }
+      return getPaidDigitalDownloadUrl({
+        data: {
+          orderId,
+          bookId,
+          accessToken: session.access_token,
+        },
+      })
+    },
+    onSuccess: (data) => {
+      if (data?.url) {
+        window.open(data.url, '_blank')
+      }
     },
   })
 
@@ -179,7 +202,7 @@ function OrderConfirmationPage() {
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4">
+            <div id="downloads" className="border-t border-gray-200 pt-4">
               <h2 className="text-lg font-semibold text-gray-900">
                 {t('orders.detail.items')}
               </h2>
@@ -206,6 +229,18 @@ function OrderConfirmationPage() {
                       <p className="text-xs text-gray-600">
                         {item.quantity} x {formatPrice(item.price, locale)}
                       </p>
+                      {order.status === 'paid' &&
+                        item.book?.is_digital &&
+                        item.book.digital_access === 'paid' && (
+                          <button
+                            type="button"
+                            onClick={() => downloadMutation.mutate(item.book!.id)}
+                            className="mt-2 inline-flex items-center border border-gray-300 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400"
+                            disabled={downloadMutation.isPending}
+                          >
+                            {t('orders.detail.download')}
+                          </button>
+                        )}
                     </div>
                     <span className="text-sm font-semibold text-gray-900">
                       {formatPrice(item.price * item.quantity, locale)}

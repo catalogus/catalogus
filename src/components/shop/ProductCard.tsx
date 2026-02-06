@@ -7,7 +7,6 @@ import {
   getEffectivePrice,
   isInStock,
   isPromoActive,
-  truncateText,
   type PromoType,
 } from '../../lib/shopHelpers'
 import { publicSupabase } from '../../lib/supabasePublic'
@@ -18,6 +17,8 @@ export type ProductCardBook = {
   title: string
   slug: string | null
   price_mzn: number | null
+  is_digital?: boolean | null
+  digital_access?: 'paid' | 'free' | null
   promo_type?: PromoType | null
   promo_price_mzn?: number | null
   promo_start_date?: string | null
@@ -42,9 +43,6 @@ type ProductCardProps = {
   book: ProductCardBook
   compact?: boolean
 }
-
-const MAX_DESCRIPTION_LENGTH = 350
-const MAX_DESCRIPTION_LENGTH_COMPACT = 160
 
 const formatPrice = (value: number | null | undefined, locale: string) => {
   if (value === null || value === undefined || Number.isNaN(value)) return ''
@@ -100,6 +98,8 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
   const { t, i18n } = useTranslation()
   const { addToCart } = useCart()
   const coverUrl = coverUrlFor(book)
+  const isDigital = !!book.is_digital
+  const canAddToCart = !isDigital || book.digital_access === 'paid'
   const promoIsActive = isPromoActive(book)
   const discountPercent = getDiscountPercent(book)
   const effectivePrice = getEffectivePrice(book)
@@ -119,16 +119,13 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
           }`,
         )
       : ''
-  const description = book.description || book.seo_description || ''
-  const summary = description
-    ? truncateText(
-        description,
-        compact ? MAX_DESCRIPTION_LENGTH_COMPACT : MAX_DESCRIPTION_LENGTH,
-      )
-    : t('shop.card.descriptionFallback')
-  const inStock = isInStock(book.stock ?? 0)
+  const inStock = isInStock(book.stock ?? 0, isDigital)
 
   const handleAddToCart = () => {
+    if (isDigital && book.digital_access === 'free') {
+      toast.error(t('shop.card.freeDownload'))
+      return
+    }
     if (!inStock) {
       toast.error(t('shop.card.outOfStock'))
       return
@@ -141,6 +138,8 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
       price_mzn: effectivePrice ?? book.price_mzn ?? 0,
       stock: book.stock ?? 0,
       cover_url: coverUrl,
+      is_digital: book.is_digital ?? false,
+      digital_access: book.digital_access ?? null,
     })
 
     toast.success(t('shop.card.addSuccess'))
@@ -193,14 +192,16 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
           </div>
         )}
         <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-white transition-transform hover:scale-105"
-            aria-label={t('shop.card.addToCart')}
-          >
-            <ShoppingCart className="h-5 w-5" />
-          </button>
+          {canAddToCart && (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-white transition-transform hover:scale-105"
+              aria-label={t('shop.card.addToCart')}
+            >
+              <ShoppingCart className="h-5 w-5" />
+            </button>
+          )}
           <button
             type="button"
             onClick={copyBookLink}

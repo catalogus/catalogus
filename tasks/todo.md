@@ -43,8 +43,57 @@
 ## Plan
 - [x] Normalize promo date/price handling (string vs number, date-only parsing).
 - [x] Use `books_shop` view for book detail + related queries to rely on computed promo flags.
+- [x] Adjust pre-venda active logic to show until end date (ignore start date for pre-venda).
 - [ ] Verify promo badges/prices render with active pre-venda and promo price.
 
 ## Review
 - [ ] Pre-venda badge shows when active.
 - [ ] Promo price replaces base price when active.
+
+# Digital Books: Sell or Free Download
+
+## Spec (Draft)
+- Add support for digital books with either paid purchase or free download.
+- Proposed model (draft):
+  - Same `books` record with digital fields.
+  - `is_digital` boolean.
+  - `digital_file_path` (storage path) + `digital_file_url` optional.
+  - `digital_access` enum: `paid` | `free`.
+- Behavior (draft):
+  - Paid digital: purchased via checkout, download link available after successful payment.
+  - Paid digital uses existing `price_mzn` (no separate digital price).
+  - Free digital: download available after newsletter subscription (hard gate).
+  - Stock for digital items optional / ignored.
+  - Show "Download" CTA for free digital; "Buy Digital" or normal add-to-cart for paid.
+- Surfaces:
+  - Admin books form (upload + set digital access).
+  - Book detail page (download button).
+  - Orders/history (link to downloads).
+- Open questions:
+  - Newsletter verification email provider: Resend.
+  - Token expiry window: 24h.
+  - Download signed URL TTL: 3h.
+
+## Plan
+- [x] Confirm remaining spec decisions (email provider, token expiry, download URL TTL).
+- [x] Update DB schema + storage buckets/policies for digital files.
+- [x] Update admin book form to upload and configure digital access.
+- [x] Implement frontend UX: badges, pricing, and download CTA.
+- [x] Implement backend download access (paid gating / free access).
+- [ ] Verify flow: free download, paid purchase -> download availability.
+
+## Review
+- [ ] Admin can upload digital file and set free/paid access.
+- [ ] Free digital downloads work immediately.
+- [ ] Paid digital download unlocks after successful payment.
+- [ ] UI clearly distinguishes physical vs digital where applicable.
+
+# UI: Remove Book Card Descriptions
+
+## Plan
+- [x] Remove description/excerpt from shop listing cards, related cards, and featured grid.
+- [x] Remove description excerpt from search result book cards.
+- [ ] Verify card layouts still align and pricing is visible.
+
+## Review
+- [ ] Listing/featured/search cards no longer show description text.

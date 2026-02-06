@@ -6,6 +6,14 @@ import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { ProductCard, type ProductCardBook } from '../../components/shop/ProductCard'
 import { QuantitySelector } from '../../components/shop/QuantitySelector'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/ui/dialog'
+import { NewsletterSignupForm } from '../../components/newsletter/NewsletterSignupForm'
 import { useCart } from '../../lib/useCart'
 import { BookCover } from '../../components/OptimizedImage'
 import {
@@ -20,12 +28,13 @@ import {
 } from '../../lib/shopHelpers'
 import { publicSupabase } from '../../lib/supabasePublic'
 import { useBook, useRelatedBooks, type BookDetail } from '../../lib/queries/bookQueries'
+import { getFreeDigitalDownloadUrl } from '../../server/newsletter'
 
 export const Route = createFileRoute('/livro/$bookId')({
   loader: async ({ params }) => {
     const { bookId } = params
     const selectFields =
-      'id, title, slug, price_mzn, promo_type, promo_price_mzn, promo_start_date, promo_end_date, promo_is_active, effective_price_mzn, stock, description, seo_description, cover_url, cover_path, isbn, publisher, category, language, authors:authors_books(author:authors(id, name, wp_slug))'
+      'id, title, slug, price_mzn, is_digital, digital_access, promo_type, promo_price_mzn, promo_start_date, promo_end_date, promo_is_active, effective_price_mzn, stock, description, seo_description, cover_url, cover_path, isbn, publisher, category, language, authors:authors_books(author:authors(id, name, wp_slug))'
 
     const { data: bySlug, error: slugError } = await publicSupabase
       .from('books_shop')
@@ -56,6 +65,8 @@ export const Route = createFileRoute('/livro/$bookId')({
           title,
           slug,
           price_mzn,
+          is_digital,
+          digital_access,
           promo_type,
           promo_price_mzn,
           promo_start_date,
@@ -110,6 +121,9 @@ function BookDetailPage() {
   const { addToCart } = useCart()
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description')
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false)
+  const [downloadError, setDownloadError] = useState<string | null>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
 
   // Use query factory hooks
   const bookQuery = useBook(bookId, loaderData.book)
@@ -122,9 +136,10 @@ function BookDetailPage() {
 
   const coverUrl = resolveCoverUrl(book)
   const stock = book?.stock ?? 0
-  const maxQuantity = getMaxQuantity(stock)
-  const inStock = isInStock(stock)
-  const stockColor = getStockStatusColor(stock)
+  const isDigital = !!book?.is_digital
+  const maxQuantity = getMaxQuantity(stock, 10, isDigital)
+  const inStock = isInStock(stock, isDigital)
+  const stockColor = isDigital ? 'text-blue-600' : getStockStatusColor(stock)
   const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
   const promoIsActive = book ? isPromoActive(book) : false
   const discountPercent = book ? getDiscountPercent(book) : null
@@ -137,11 +152,13 @@ function BookDetailPage() {
           }`,
         )
       : ''
-  const stockLabel = inStock
-    ? stock <= 5
-      ? t('shop.detail.stock.low', { count: stock })
-      : t('shop.detail.stock.inStock')
-    : t('shop.detail.stock.outOfStock')
+  const stockLabel = isDigital
+    ? t('shop.detail.digital')
+    : inStock
+      ? stock <= 5
+        ? t('shop.detail.stock.low', { count: stock })
+        : t('shop.detail.stock.inStock')
+      : t('shop.detail.stock.outOfStock')
 
   useEffect(() => {
     if (!book) return
@@ -167,6 +184,10 @@ function BookDetailPage() {
 
   const handleAddToCart = () => {
     if (!book) return
+    if (book.is_digital && book.digital_access === 'free') {
+      setDownloadModalOpen(true)
+      return
+    }
     if (!inStock) {
       toast.error(t('shop.detail.toasts.outOfStock'))
       return
@@ -180,6 +201,8 @@ function BookDetailPage() {
         price_mzn: effectivePrice ?? book.price_mzn ?? 0,
         stock: stock,
         cover_url: coverUrl,
+        is_digital: book.is_digital ?? false,
+        digital_access: book.digital_access ?? null,
       },
       quantity,
     )
@@ -189,6 +212,32 @@ function BookDetailPage() {
         title: truncateText(book.title, 40),
       }),
     )
+  }
+
+  const handleFreeDownload = async () => {
+    if (!book) return
+    setDownloadError(null)
+    setIsDownloading(true)
+    try {
+      const token =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('catalogus_newsletter_download_token')
+          : null
+      if (!token) {
+        setDownloadModalOpen(true)
+        return
+      }
+      const result = await getFreeDigitalDownloadUrl({
+        data: { bookId: book.id, downloadToken: token },
+      })
+      window.open(result.url, '_blank')
+    } catch (error) {
+      console.error('Free download error', error)
+      setDownloadError(t('shop.detail.downloadError'))
+      setDownloadModalOpen(true)
+    } finally {
+      setIsDownloading(false)
+    }
   }
 
   return (
@@ -255,7 +304,7 @@ function BookDetailPage() {
 
           <main className="container mx-auto px-4 py-16 lg:px-15">
             <div className="grid gap-10 lg:grid-cols-[minmax(0,420px)_1fr]">
-              <div className="bg-[#f2eee9] p-10 shadow-sm">
+              <div className="shadow-sm">
                 <div className="relative aspect-[3/4] w-full overflow-hidden bg-white">
                   {book.cover_path || coverUrl ? (
                     <BookCover
@@ -328,24 +377,37 @@ function BookDetailPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">
-                  <QuantitySelector
-                    value={quantity}
-                    onChange={setQuantity}
-                    min={1}
-                    max={maxQuantity || 1}
-                    disabled={!inStock}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddToCart}
-                    disabled={!inStock}
-                    className="flex items-center gap-2 bg-[color:var(--brand)] px-6 py-3 text-sm font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#a25a2c] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
-                  >
-                    <ShoppingCart className="h-4 w-4" />
-                    {inStock
-                      ? t('shop.detail.addToCart')
-                      : t('shop.detail.stock.outOfStock')}
-                  </button>
+                  {!(book.is_digital && book.digital_access === 'free') && (
+                    <QuantitySelector
+                      value={quantity}
+                      onChange={setQuantity}
+                      min={1}
+                      max={maxQuantity || 1}
+                      disabled={!inStock}
+                    />
+                  )}
+                  {book.is_digital && book.digital_access === 'free' ? (
+                    <button
+                      type="button"
+                      onClick={handleFreeDownload}
+                      className="flex items-center gap-2 bg-[color:var(--brand)] px-6 py-3 text-sm font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#a25a2c] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
+                      disabled={isDownloading}
+                    >
+                      {t('shop.detail.download')}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleAddToCart}
+                      disabled={!inStock}
+                      className="flex items-center gap-2 bg-[color:var(--brand)] px-6 py-3 text-sm font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#a25a2c] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                      {inStock
+                        ? t('shop.detail.addToCart')
+                        : t('shop.detail.stock.outOfStock')}
+                    </button>
+                  )}
                 </div>
 
                 <div className="space-y-2 text-xs uppercase tracking-wider text-gray-500">
@@ -458,6 +520,21 @@ function BookDetailPage() {
         </main>
         </>
       )}
+
+      <Dialog open={downloadModalOpen} onOpenChange={setDownloadModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t('shop.detail.newsletterTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('shop.detail.newsletterBody')}
+            </DialogDescription>
+          </DialogHeader>
+          {downloadError && (
+            <p className="text-sm text-rose-600">{downloadError}</p>
+          )}
+          <NewsletterSignupForm bookId={book?.id} />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

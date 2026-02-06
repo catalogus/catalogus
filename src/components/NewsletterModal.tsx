@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { NewsletterSignupForm } from './newsletter/NewsletterSignupForm'
 
 const STORAGE_KEY = 'catalogus_newsletter_dismissed'
 const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
@@ -92,11 +93,7 @@ export function NewsletterModal() {
           </p>
 
           <div className="mt-6">
-            <iframe
-              src="https://catalogusautores.substack.com/embed"
-              className="h-40 w-full border border-gray-200 bg-white"
-              title="Substack newsletter subscription"
-            />
+            <NewsletterSignupForm compact onSubmitted={handleClose} />
           </div>
         </div>
       </div>

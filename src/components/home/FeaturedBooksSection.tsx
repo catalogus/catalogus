@@ -13,6 +13,8 @@ type FeaturedBook = {
   title: string
   slug: string | null
   price_mzn: number | null
+  is_digital?: boolean | null
+  digital_access?: 'paid' | 'free' | null
   promo_type?: PromoType | null
   promo_price_mzn?: number | null
   promo_start_date?: string | null
@@ -25,8 +27,6 @@ type FeaturedBook = {
   cover_path: string | null
 }
 
-const MAX_DESCRIPTION_LENGTH = 350
-
 const formatPrice = (value: number | null, locale: string) => {
   if (value === null || Number.isNaN(value)) return ''
   return new Intl.NumberFormat(locale, {
@@ -34,11 +34,6 @@ const formatPrice = (value: number | null, locale: string) => {
     currency: 'MZN',
     maximumFractionDigits: 0,
   }).format(value)
-}
-
-const truncateText = (value: string, maxLength: number) => {
-  if (value.length <= maxLength) return value
-  return `${value.slice(0, maxLength).trimEnd()}...`
 }
 
 const bookLinkFor = (book: FeaturedBook) => `/livro/${book.id}`
@@ -109,13 +104,11 @@ export default function FeaturedBooksSection({
           {!hasError &&
             books.map((book) => {
               const coverUrl = book.cover_url
-              const description = book.description || book.seo_description || ''
-              const summary = description
-                ? truncateText(description, MAX_DESCRIPTION_LENGTH)
-                : t('home.featuredBooks.descriptionFallback')
               const promoIsActive = isPromoActive(book)
               const discountPercent = getDiscountPercent(book)
               const effectivePrice = getEffectivePrice(book)
+              const isDigital = !!book.is_digital
+              const canAddToCart = !isDigital || book.digital_access === 'paid'
               const priceLabel = formatPrice(
                 effectivePrice,
                 i18n.language === 'en' ? 'en-US' : 'pt-MZ',
@@ -137,6 +130,10 @@ export default function FeaturedBooksSection({
                   : ''
               const handleAddToCart = () => {
                 if (typeof window === 'undefined') return
+                if (isDigital && book.digital_access === 'free') {
+                  toast.error(t('shop.card.freeDownload'))
+                  return
+                }
                 try {
                   const key = 'catalogus-cart'
                   const raw = window.localStorage.getItem(key)
@@ -201,14 +198,16 @@ export default function FeaturedBooksSection({
                       </div>
                     )}
                     <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
-                      <button
-                        type="button"
-                        onClick={handleAddToCart}
-                        className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-white transition-transform hover:scale-105"
-                        aria-label={t('home.featuredBooks.addToCart')}
-                      >
-                        <ShoppingCart className="h-5 w-5" />
-                      </button>
+                      {canAddToCart && (
+                        <button
+                          type="button"
+                          onClick={handleAddToCart}
+                          className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand)] text-white transition-transform hover:scale-105"
+                          aria-label={t('home.featuredBooks.addToCart')}
+                        >
+                          <ShoppingCart className="h-5 w-5" />
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={handleCopyBookLink}
@@ -227,9 +226,6 @@ export default function FeaturedBooksSection({
                     >
                       {book.title}
                     </a>
-                    <p className="text-sm leading-relaxed text-gray-600">
-                      {summary}
-                    </p>
                     {priceLabel && (
                       <div className="flex flex-wrap items-baseline gap-2">
                         {originalPriceLabel && (
