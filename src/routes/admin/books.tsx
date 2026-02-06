@@ -50,6 +50,10 @@ type BookRow = {
   title: string
   slug: string
   price_mzn: number
+  promo_type: 'promocao' | 'pre-venda' | null
+  promo_price_mzn: number | null
+  promo_start_date: string | null
+  promo_end_date: string | null
   stock: number
   category: string | null
   language: string
@@ -99,7 +103,7 @@ function AdminBooksPage() {
       const { data, error } = await supabase
         .from('books')
         .select(
-          'id, title, slug, price_mzn, stock, category, language, is_active, featured, cover_url, cover_path, description, description_json, isbn, publisher, seo_title, seo_description, authors:authors_books(author_id, authors(id, name, photo_path))',
+          'id, title, slug, price_mzn, promo_type, promo_price_mzn, promo_start_date, promo_end_date, stock, category, language, is_active, featured, cover_url, cover_path, description, description_json, isbn, publisher, seo_title, seo_description, authors:authors_books(author_id, authors(id, name, photo_path))',
         )
         .order('created_at', { ascending: false })
       if (error) throw error
@@ -235,6 +239,10 @@ function AdminBooksPage() {
         cover_url,
         cover_path,
         description_json,
+        promo_type: payload.promo_type || null,
+        promo_price_mzn: payload.promo_price_mzn ?? null,
+        promo_start_date: payload.promo_start_date || null,
+        promo_end_date: payload.promo_end_date || null,
       }
       delete base.file
       delete base.author_ids
@@ -440,6 +448,10 @@ function AdminBooksPage() {
                           title: editingBook.title,
                           slug: editingBook.slug,
                           price_mzn: editingBook.price_mzn,
+                          promo_type: editingBook.promo_type ?? '',
+                          promo_price_mzn: editingBook.promo_price_mzn ?? null,
+                          promo_start_date: editingBook.promo_start_date ?? '',
+                          promo_end_date: editingBook.promo_end_date ?? '',
                           stock: editingBook.stock,
                           category: editingBook.category ?? '',
                           language: editingBook.language,
@@ -540,6 +552,33 @@ function AdminBooksPage() {
                       <p className="text-gray-500">Featured</p>
                       <p className="font-semibold text-gray-900">
                         {detailBook.featured ? 'Yes' : 'No'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Promo type</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.promo_type ?? '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Promo price</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.promo_price_mzn !== null &&
+                        detailBook.promo_price_mzn !== undefined
+                          ? formatPrice(detailBook.promo_price_mzn)
+                          : '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Promo start</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.promo_start_date ?? '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Promo end</p>
+                      <p className="font-semibold text-gray-900">
+                        {detailBook.promo_end_date ?? '—'}
                       </p>
                     </div>
                     <div>

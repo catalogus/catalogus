@@ -12,7 +12,10 @@ import {
   formatPrice,
   getMaxQuantity,
   getStockStatusColor,
+  getDiscountPercent,
+  getEffectivePrice,
   isInStock,
+  isPromoActive,
   truncateText,
 } from '../../lib/shopHelpers'
 import { publicSupabase } from '../../lib/supabasePublic'
@@ -22,10 +25,10 @@ export const Route = createFileRoute('/livro/$bookId')({
   loader: async ({ params }) => {
     const { bookId } = params
     const selectFields =
-      'id, title, slug, price_mzn, stock, description, seo_description, cover_url, cover_path, isbn, publisher, category, language, authors:authors_books(author:authors(id, name, wp_slug))'
+      'id, title, slug, price_mzn, promo_type, promo_price_mzn, promo_start_date, promo_end_date, promo_is_active, effective_price_mzn, stock, description, seo_description, cover_url, cover_path, isbn, publisher, category, language, authors:authors_books(author:authors(id, name, wp_slug))'
 
     const { data: bySlug, error: slugError } = await publicSupabase
-      .from('books')
+      .from('books_shop')
       .select(selectFields)
       .eq('slug', bookId)
       .eq('is_active', true)
@@ -36,8 +39,8 @@ export const Route = createFileRoute('/livro/$bookId')({
 
     const resolvedBook = book
       ? book
-      : ((await publicSupabase
-          .from('books')
+        : ((await publicSupabase
+          .from('books_shop')
           .select(selectFields)
           .eq('id', bookId)
           .eq('is_active', true)
@@ -46,13 +49,19 @@ export const Route = createFileRoute('/livro/$bookId')({
     let relatedBooks = [] as ProductCardBook[]
     if (resolvedBook?.category) {
       const { data, error } = await publicSupabase
-        .from('books')
+        .from('books_shop')
         .select(
           `
           id,
           title,
           slug,
           price_mzn,
+          promo_type,
+          promo_price_mzn,
+          promo_start_date,
+          promo_end_date,
+          promo_is_active,
+          effective_price_mzn,
           stock,
           description,
           seo_description,
@@ -117,6 +126,17 @@ function BookDetailPage() {
   const inStock = isInStock(stock)
   const stockColor = getStockStatusColor(stock)
   const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
+  const promoIsActive = book ? isPromoActive(book) : false
+  const discountPercent = book ? getDiscountPercent(book) : null
+  const effectivePrice = book ? getEffectivePrice(book) : null
+  const promoLabel =
+    promoIsActive && book?.promo_type
+      ? t(
+          `shop.promo.labels.${
+            book.promo_type === 'pre-venda' ? 'preVenda' : 'promocao'
+          }`,
+        )
+      : ''
   const stockLabel = inStock
     ? stock <= 5
       ? t('shop.detail.stock.low', { count: stock })
@@ -157,7 +177,7 @@ function BookDetailPage() {
         id: book.id,
         title: book.title,
         slug: book.slug ?? book.id,
-        price_mzn: book.price_mzn ?? 0,
+        price_mzn: effectivePrice ?? book.price_mzn ?? 0,
         stock: stock,
         cover_url: coverUrl,
       },
@@ -236,7 +256,7 @@ function BookDetailPage() {
           <main className="container mx-auto px-4 py-16 lg:px-15">
             <div className="grid gap-10 lg:grid-cols-[minmax(0,420px)_1fr]">
               <div className="bg-[#f2eee9] p-10 shadow-sm">
-                <div className="aspect-[3/4] w-full overflow-hidden bg-white">
+                <div className="relative aspect-[3/4] w-full overflow-hidden bg-white">
                   {book.cover_path || coverUrl ? (
                     <BookCover
                       src={book.cover_path || coverUrl}
@@ -247,6 +267,20 @@ function BookDetailPage() {
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-4xl font-semibold text-gray-300">
                       {book.title.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  {promoIsActive && (promoLabel || discountPercent !== null) && (
+                    <div className="absolute left-4 top-4 flex items-center gap-2">
+                      {discountPercent !== null && (
+                        <span className="bg-[#c7372f] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white">
+                          -{discountPercent}%
+                        </span>
+                      )}
+                      {promoLabel && (
+                        <span className="bg-[#c7372f] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white">
+                          {promoLabel}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -272,9 +306,16 @@ function BookDetailPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-2xl font-bold text-[color:var(--brand)]">
-                    {formatPrice(book.price_mzn ?? 0, locale)}
-                  </p>
+                  <div className="flex flex-wrap items-baseline gap-3">
+                    {promoIsActive && discountPercent !== null && (
+                      <span className="text-sm text-gray-400 line-through">
+                        {formatPrice(book.price_mzn ?? 0, locale)}
+                      </span>
+                    )}
+                    <span className="text-2xl font-bold text-[color:var(--brand)]">
+                      {formatPrice(effectivePrice ?? book.price_mzn ?? 0, locale)}
+                    </span>
+                  </div>
                   <p className={`text-sm font-medium ${stockColor}`}>{stockLabel}</p>
                 </div>
 

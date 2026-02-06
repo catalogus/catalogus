@@ -3,6 +3,7 @@ import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
 import { Button } from '../../ui/button'
 import { validateAndOptimizeImage } from '../../../lib/imageOptimization'
+import type { PromoType } from '../../../lib/shopHelpers'
 
 type AuthorOption = { id: string; name: string }
 
@@ -10,6 +11,10 @@ export type BookFormValues = {
   title: string
   slug: string
   price_mzn: number
+  promo_type: PromoType | ''
+  promo_price_mzn: number | null
+  promo_start_date: string
+  promo_end_date: string
   stock: number
   category: string
   language: string
@@ -38,6 +43,10 @@ const defaultValues: BookFormValues = {
   title: '',
   slug: '',
   price_mzn: 0,
+  promo_type: '',
+  promo_price_mzn: null,
+  promo_start_date: '',
+  promo_end_date: '',
   stock: 0,
   category: '',
   language: 'pt',
@@ -87,7 +96,7 @@ export function BookForm({
 
   const handleChange = (
     key: keyof BookFormValues,
-    value: string | number | boolean,
+    value: string | number | boolean | null,
   ) => {
     setValues((prev) => ({
       ...prev,
@@ -353,6 +362,58 @@ export function BookForm({
             min={0}
             value={values.stock}
             onChange={(e) => handleChange('stock', Number(e.target.value))}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="promo_type">Promo type</Label>
+          <select
+            id="promo_type"
+            value={values.promo_type}
+            onChange={(e) => handleChange('promo_type', e.target.value)}
+            className="w-full rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
+          >
+            <option value="">No promo</option>
+            <option value="promocao">Promocao</option>
+            <option value="pre-venda">Pre-venda</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="promo_price">Promo price (MZN)</Label>
+          <Input
+            id="promo_price"
+            type="number"
+            min={0}
+            value={values.promo_price_mzn ?? ''}
+            onChange={(e) =>
+              handleChange(
+                'promo_price_mzn',
+                e.target.value === '' ? null : Number(e.target.value),
+              )
+            }
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="promo_start_date">Promo start date</Label>
+          <Input
+            id="promo_start_date"
+            type="date"
+            value={values.promo_start_date}
+            onChange={(e) => handleChange('promo_start_date', e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="promo_end_date">Promo end date</Label>
+          <Input
+            id="promo_end_date"
+            type="date"
+            value={values.promo_end_date}
+            onChange={(e) => handleChange('promo_end_date', e.target.value)}
           />
         </div>
       </div>

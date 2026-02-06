@@ -335,6 +335,12 @@ const en = {
       copySuccess: 'Link copied',
       copyError: 'Could not copy link',
     },
+    promo: {
+      labels: {
+        promocao: 'PROMOTION',
+        preVenda: 'PRE-SALE',
+      },
+    },
     quantity: {
       decrease: 'Decrease quantity',
       increase: 'Increase quantity',

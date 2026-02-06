@@ -54,8 +54,10 @@ async function hydrateCart(
   const bookIds = storedItems.map((item) => item.id)
 
   const { data, error } = await publicSupabase
-    .from('books')
-    .select('id, title, slug, price_mzn, stock, cover_url, cover_path')
+    .from('books_shop')
+    .select(
+      'id, title, slug, price_mzn, effective_price_mzn, stock, cover_url, cover_path',
+    )
     .in('id', bookIds)
     .eq('is_active', true)
 
@@ -78,7 +80,7 @@ async function hydrateCart(
       id: book.id,
       title: book.title,
       slug: book.slug,
-      price: book.price_mzn ?? 0,
+      price: book.effective_price_mzn ?? book.price_mzn ?? 0,
       stock: book.stock ?? 0,
       cover_url: coverUrl,
     }

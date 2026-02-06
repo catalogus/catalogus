@@ -335,6 +335,12 @@ const pt = {
       copySuccess: 'Link copiado',
       copyError: 'Nao foi possivel copiar o link',
     },
+    promo: {
+      labels: {
+        promocao: 'PROMOÇÃO',
+        preVenda: 'PRÉ-VENDA',
+      },
+    },
     quantity: {
       decrease: 'Diminuir quantidade',
       increase: 'Aumentar quantidade',

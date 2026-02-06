@@ -1,12 +1,24 @@
 import { Link2, ShoppingCart } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import {
+  getDiscountPercent,
+  getEffectivePrice,
+  isPromoActive,
+  type PromoType,
+} from '../../lib/shopHelpers'
 
 type FeaturedBook = {
   id: string
   title: string
   slug: string | null
   price_mzn: number | null
+  promo_type?: PromoType | null
+  promo_price_mzn?: number | null
+  promo_start_date?: string | null
+  promo_end_date?: string | null
+  promo_is_active?: boolean | null
+  effective_price_mzn?: number | null
   description: string | null
   seo_description: string | null
   cover_url: string | null
@@ -101,10 +113,28 @@ export default function FeaturedBooksSection({
               const summary = description
                 ? truncateText(description, MAX_DESCRIPTION_LENGTH)
                 : t('home.featuredBooks.descriptionFallback')
+              const promoIsActive = isPromoActive(book)
+              const discountPercent = getDiscountPercent(book)
+              const effectivePrice = getEffectivePrice(book)
               const priceLabel = formatPrice(
-                book.price_mzn,
+                effectivePrice,
                 i18n.language === 'en' ? 'en-US' : 'pt-MZ',
               )
+              const originalPriceLabel =
+                promoIsActive && discountPercent !== null
+                  ? formatPrice(
+                      book.price_mzn,
+                      i18n.language === 'en' ? 'en-US' : 'pt-MZ',
+                    )
+                  : ''
+              const promoLabel =
+                promoIsActive && book.promo_type
+                  ? t(
+                      `shop.promo.labels.${
+                        book.promo_type === 'pre-venda' ? 'preVenda' : 'promocao'
+                      }`,
+                    )
+                  : ''
               const handleAddToCart = () => {
                 if (typeof window === 'undefined') return
                 try {
@@ -156,6 +186,20 @@ export default function FeaturedBooksSection({
                         </div>
                       )}
                     </div>
+                    {promoIsActive && (promoLabel || discountPercent !== null) && (
+                      <div className="absolute left-3 top-3 flex items-center gap-2">
+                        {discountPercent !== null && (
+                          <span className="bg-[#c7372f] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white">
+                            -{discountPercent}%
+                          </span>
+                        )}
+                        {promoLabel && (
+                          <span className="bg-[#c7372f] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white">
+                            {promoLabel}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
                       <button
                         type="button"
@@ -187,9 +231,16 @@ export default function FeaturedBooksSection({
                       {summary}
                     </p>
                     {priceLabel && (
-                      <p className="text-lg font-semibold text-[color:var(--brand)]">
-                        {priceLabel}
-                      </p>
+                      <div className="flex flex-wrap items-baseline gap-2">
+                        {originalPriceLabel && (
+                          <span className="text-sm text-gray-400 line-through">
+                            {originalPriceLabel}
+                          </span>
+                        )}
+                        <span className="text-lg font-semibold text-[color:var(--brand)]">
+                          {priceLabel}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>

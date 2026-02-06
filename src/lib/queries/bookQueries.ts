@@ -18,6 +18,12 @@ export type BookDetail = {
   title: string
   slug: string | null
   price_mzn: number | null
+  promo_type?: 'promocao' | 'pre-venda' | null
+  promo_price_mzn?: number | null
+  promo_start_date?: string | null
+  promo_end_date?: string | null
+  promo_is_active?: boolean | null
+  effective_price_mzn?: number | null
   stock: number | null
   description: string | null
   seo_description: string | null
@@ -42,10 +48,10 @@ export const useBook = (bookId: string, initialData?: BookDetail | null) => {
     queryKey: bookKeys.detail(bookId),
     queryFn: async () => {
       const selectFields =
-        'id, title, slug, price_mzn, stock, description, seo_description, cover_url, cover_path, isbn, publisher, category, language, authors:authors_books(author:authors(id, name, wp_slug))'
+        'id, title, slug, price_mzn, promo_type, promo_price_mzn, promo_start_date, promo_end_date, promo_is_active, effective_price_mzn, stock, description, seo_description, cover_url, cover_path, isbn, publisher, category, language, authors:authors_books(author:authors(id, name, wp_slug))'
 
       const { data: bySlug, error: slugError } = await publicSupabase
-        .from('books')
+        .from('books_shop')
         .select(selectFields)
         .eq('slug', bookId)
         .eq('is_active', true)
@@ -55,7 +61,7 @@ export const useBook = (bookId: string, initialData?: BookDetail | null) => {
       if (bySlug) return bySlug as BookDetail
 
       const { data: byId, error: idError } = await publicSupabase
-        .from('books')
+        .from('books_shop')
         .select(selectFields)
         .eq('id', bookId)
         .eq('is_active', true)
@@ -81,13 +87,19 @@ export const useRelatedBooks = (
       if (!category) return []
 
       const { data, error } = await publicSupabase
-        .from('books')
+        .from('books_shop')
         .select(
           `
           id,
           title,
           slug,
           price_mzn,
+          promo_type,
+          promo_price_mzn,
+          promo_start_date,
+          promo_end_date,
+          promo_is_active,
+          effective_price_mzn,
           stock,
           description,
           seo_description,

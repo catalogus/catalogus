@@ -79,6 +79,10 @@ create table if not exists public.books (
   cover_url text,
   cover_path text,
   featured boolean not null default false,
+  promo_type text,
+  promo_price_mzn numeric(12, 2),
+  promo_start_date date,
+  promo_end_date date,
   isbn text,
   publisher text,
   seo_title text,
@@ -87,7 +91,8 @@ create table if not exists public.books (
   language language_code not null default 'pt',
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint books_promo_type_check check (promo_type is null or promo_type in ('promocao', 'pre-venda'))
 );
 create index if not exists books_is_active_idx on public.books (is_active);
 create index if not exists books_category_idx on public.books (category);
