@@ -12,6 +12,7 @@ import {
 } from '../../components/search/SearchResultCards'
 import { buildSearchOrFilter, normalizeSearchTerm } from '../../lib/searchHelpers'
 import { publicSupabase } from '../../lib/supabasePublic'
+import { buildSeo } from '../../lib/seo'
 import type { SocialLinks } from '../../types/author'
 
 // Helper to merge profile data when claim is approved
@@ -130,6 +131,13 @@ export const Route = createFileRoute('/pesquisa/')({
       language,
     }
   },
+  head: () =>
+    buildSeo({
+      title: 'Pesquisa',
+      description: 'Resultados de pesquisa na Catalogus.',
+      path: '/pesquisa',
+      noindex: true,
+    }),
   component: SearchResultsPage,
 })
 

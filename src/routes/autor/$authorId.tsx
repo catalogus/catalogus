@@ -19,6 +19,13 @@ import { publicSupabase } from '../../lib/supabasePublic'
 import { useAuth } from '../../contexts/AuthProvider'
 import { toast } from 'sonner'
 import { ClaimAuthorModal } from '../../components/author/ClaimAuthorModal'
+import {
+  SEO_DEFAULTS,
+  buildBreadcrumbJsonLd,
+  buildPersonJsonLd,
+  buildSeo,
+  toAbsoluteUrl,
+} from '../../lib/seo'
 import type { AuthorRow, GalleryImage, PublishedWork, SocialLinks } from '../../types/author'
 
 export const Route = createFileRoute('/autor/$authorId')({
@@ -97,6 +104,49 @@ export const Route = createFileRoute('/autor/$authorId')({
       }
     }
     return { author: null, isProfileOnly: false, language: 'pt' as const }
+  },
+  head: ({ loaderData, params }) => {
+    const author = loaderData?.author ?? null
+    const slug = author?.wp_slug ?? params.authorId
+    const path = `/autor/${slug}`
+
+    if (!author) {
+      return buildSeo({
+        title: 'Autor nao encontrado',
+        description: SEO_DEFAULTS.description,
+        path,
+        noindex: true,
+      })
+    }
+
+    const photoUrl = resolvePhotoUrl(author.photo_url, author.photo_path)
+    const description = author.bio || SEO_DEFAULTS.description
+    const socialLinks = Object.values(author.social_links ?? {}).filter(
+      (value): value is string => typeof value === 'string' && value.length > 0,
+    )
+    const canonical = toAbsoluteUrl(path)
+
+    return buildSeo({
+      title: author.name,
+      description,
+      image: photoUrl,
+      path,
+      type: 'profile',
+      jsonLd: [
+        buildBreadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Autores', path: '/autores' },
+          { name: author.name, path },
+        ]),
+        buildPersonJsonLd({
+          name: author.name,
+          description,
+          image: photoUrl,
+          url: canonical,
+          sameAs: socialLinks,
+        }),
+      ],
+    })
   },
   component: AuthorPublicPage,
 })

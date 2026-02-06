@@ -6,6 +6,7 @@ import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { AuthorCard } from '../../components/author/AuthorCard'
 import { publicSupabase } from '../../lib/supabasePublic'
+import { buildSeo } from '../../lib/seo'
 import {
   Globe,
   Linkedin,
@@ -98,6 +99,13 @@ export const Route = createFileRoute('/autores/')({
       standaloneAuthors,
     }
   },
+  head: () =>
+    buildSeo({
+      title: 'Autores',
+      description: 'Conheca os autores em destaque na Catalogus.',
+      path: '/autores',
+      type: 'website',
+    }),
   component: AutoresListingPage,
 })
 

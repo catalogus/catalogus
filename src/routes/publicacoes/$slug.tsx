@@ -3,6 +3,13 @@ import { Suspense, lazy } from 'react'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { publicSupabase } from '../../lib/supabasePublic'
+import {
+  SEO_DEFAULTS,
+  buildBookJsonLd,
+  buildBreadcrumbJsonLd,
+  buildSeo,
+  toAbsoluteUrl,
+} from '../../lib/seo'
 import type { Publication, PublicationPage } from '../../types/publication'
 
 // Lazy load the flipbook viewer for better initial load
@@ -45,6 +52,54 @@ export const Route = createFileRoute('/publicacoes/$slug')({
       console.error('Publication loader failed:', error)
       return { publication: null, pages: [] as PublicationPage[], hasError: true }
     }
+  },
+  head: ({ loaderData, params }) => {
+    const publication = loaderData?.publication ?? null
+    const path = `/publicacoes/${params.slug}`
+
+    if (!publication) {
+      return buildSeo({
+        title: 'Publicacao nao encontrada',
+        description: SEO_DEFAULTS.description,
+        path,
+        noindex: true,
+      })
+    }
+
+    const coverUrl =
+      publication.cover_url ||
+      (publication.cover_path
+        ? publicSupabase.storage
+            .from('publications')
+            .getPublicUrl(publication.cover_path).data.publicUrl
+        : null)
+    const description =
+      publication.seo_description || publication.description || SEO_DEFAULTS.description
+    const canonical = toAbsoluteUrl(path)
+
+    return buildSeo({
+      title: publication.seo_title || publication.title,
+      description,
+      image: coverUrl,
+      path,
+      type: 'book',
+      publishedTime: publication.publish_date ?? publication.created_at,
+      modifiedTime: publication.updated_at ?? publication.publish_date ?? publication.created_at,
+      jsonLd: [
+        buildBreadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Publicacoes', path: '/publicacoes' },
+          { name: publication.title, path },
+        ]),
+        buildBookJsonLd({
+          title: publication.seo_title || publication.title,
+          description,
+          image: coverUrl,
+          url: canonical,
+          publisher: SEO_DEFAULTS.siteName,
+        }),
+      ],
+    })
   },
   component: PublicationViewerPage,
 })

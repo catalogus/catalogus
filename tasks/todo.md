@@ -115,3 +115,55 @@
 - [ ] Navigation works after idle without manual refresh.
 
 Notes: Likely idle expiry of Supabase access token without a proactive refresh; added scheduled refresh in AuthProvider.
+
+# Bug: books_shop.is_digital Missing
+
+## Spec (Draft)
+- UI error shows: `column books_shop.is_digital does not exist`.
+- Likely cause: production schema missing `books.is_digital` (digital books migration not applied) or stale `books_shop` view.
+
+## Plan
+- [x] Confirm schema expectations: `books.is_digital` + `digital_access` exist; `books_shop` view should include `b.*`.
+- [x] Add migration to ensure digital book columns/type exist (idempotent) and recreate `books_shop` view.
+- [ ] Verify local schema/migration ordering and ensure view includes `is_digital`.
+- [ ] Document that migration must be applied in production to resolve the error.
+
+## Review
+- [ ] `books_shop` includes `is_digital` and query no longer fails.
+
+# SEO: Full Implementation
+
+## Spec (Draft)
+- Establish global SEO defaults: site name, canonical base URL, default title/description, default OG image, favicon/manifest links.
+- Add per-route SEO (title, meta description, canonical, OG/Twitter) for public pages.
+- Use existing `seo_title`/`seo_description` on books/publications; define fallback rules for missing fields.
+- Add SEO fields where missing (e.g., posts/authors) if needed for control.
+- Implement structured data (JSON-LD):
+  - Site-wide `Organization` + `WebSite` (SearchAction).
+  - `Book` on book detail pages.
+  - `Article` on news posts.
+  - `Person` on author profiles.
+  - `BreadcrumbList` on detail pages.
+- Add `robots.txt` with disallow rules for admin/private pages and sitemap reference.
+- Add `sitemap.xml` (dynamic) covering static routes + dynamic slugs (books, authors, posts, publications) with `lastmod`.
+- Ensure correct `<html lang>` and consider hreflang if multi-lingual URLs are added.
+- Noindex for admin and private/customer pages (admin, account, checkout, search results, etc.).
+
+## Plan
+- [x] Confirm SEO inputs: canonical domain, default description, default OG image, and which routes should be indexable.
+- [x] Audit current routes/data and define SEO fallback rules per page type.
+- [x] Add shared SEO utilities/config (title template, meta builder, OG/Twitter helpers).
+- [x] Implement per-route `head` metadata for public pages (home, shop, book, author, news list/detail, projects, production, about, contacts, publications).
+- [x] Add structured data JSON-LD per page type.
+- [x] Implement `robots.txt` + `sitemap.xml` (dynamic) including lastmod.
+- [ ] Verify SSR HTML output for key routes and validate structured data.
+- [x] Document SEO behavior and admin guidance (if new fields added).
+
+## Review
+- [x] Global defaults in place (title/desc/OG/manifest/favicons).
+- [ ] Per-route SEO metadata renders server-side.
+- [ ] Structured data validates for Book/Article/Person pages.
+- [ ] Robots + sitemap working and accurate.
+
+### Test Notes
+- `pnpm test` failed: `listen EPERM: operation not permitted ::1` and Nitro dev worker init error.

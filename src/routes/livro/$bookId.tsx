@@ -27,6 +27,13 @@ import {
   truncateText,
 } from '../../lib/shopHelpers'
 import { publicSupabase } from '../../lib/supabasePublic'
+import {
+  SEO_DEFAULTS,
+  buildBreadcrumbJsonLd,
+  buildBookJsonLd,
+  buildSeo,
+  toAbsoluteUrl,
+} from '../../lib/seo'
 import { useBook, useRelatedBooks, type BookDetail } from '../../lib/queries/bookQueries'
 import { getFreeDigitalDownloadUrl } from '../../server/newsletter'
 
@@ -34,7 +41,7 @@ export const Route = createFileRoute('/livro/$bookId')({
   loader: async ({ params }) => {
     const { bookId } = params
     const selectFields =
-      'id, title, slug, price_mzn, is_digital, digital_access, promo_type, promo_price_mzn, promo_start_date, promo_end_date, promo_is_active, effective_price_mzn, stock, description, seo_description, cover_url, cover_path, isbn, publisher, category, language, authors:authors_books(author:authors(id, name, wp_slug))'
+      'id, title, slug, price_mzn, is_digital, digital_access, promo_type, promo_price_mzn, promo_start_date, promo_end_date, promo_is_active, effective_price_mzn, stock, description, seo_title, seo_description, cover_url, cover_path, isbn, publisher, category, language, authors:authors_books(author:authors(id, name, wp_slug))'
 
     const { data: bySlug, error: slugError } = await publicSupabase
       .from('books_shop')
@@ -100,6 +107,62 @@ export const Route = createFileRoute('/livro/$bookId')({
     }
 
     return { book: resolvedBook, relatedBooks }
+  },
+  head: ({ loaderData, params }) => {
+    const book = loaderData?.book ?? null
+    const slug = book?.slug ?? params.bookId
+    const path = `/livro/${slug}`
+
+    if (!book) {
+      return buildSeo({
+        title: 'Livro nao encontrado',
+        description: SEO_DEFAULTS.description,
+        path,
+        noindex: true,
+      })
+    }
+
+    const coverUrl = resolveCoverUrl(book)
+    const description = book.seo_description || book.description || SEO_DEFAULTS.description
+    const authorNames =
+      book.authors
+        ?.map((item) => item.author?.name ?? null)
+        .filter((name): name is string => Boolean(name)) ?? []
+    const priceValue = book.effective_price_mzn ?? book.price_mzn ?? null
+    const availability = book.is_digital
+      ? 'InStock'
+      : (book.stock ?? 0) > 0
+        ? 'InStock'
+        : 'OutOfStock'
+
+    const canonical = toAbsoluteUrl(path)
+
+    return buildSeo({
+      title: book.seo_title || book.title,
+      description,
+      image: coverUrl,
+      path,
+      type: 'book',
+      jsonLd: [
+        buildBreadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Loja', path: '/loja' },
+          { name: book.title, path },
+        ]),
+        buildBookJsonLd({
+          title: book.seo_title || book.title,
+          description,
+          image: coverUrl,
+          url: canonical,
+          isbn: book.isbn,
+          authorNames,
+          language: book.language,
+          publisher: book.publisher,
+          price: typeof priceValue === 'number' ? priceValue : null,
+          availability,
+        }),
+      ],
+    })
   },
   component: BookDetailPage,
 })

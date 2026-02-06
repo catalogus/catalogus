@@ -24,6 +24,7 @@ import { Route as CarrinhoIndexRouteImport } from './routes/carrinho/index'
 import { Route as AutoresIndexRouteImport } from './routes/autores/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
+import { Route as SitemapXmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PublicacoesSlugRouteImport } from './routes/publicacoes/$slug'
 import { Route as PedidoOrderIdRouteImport } from './routes/pedido/$orderId'
 import { Route as NoticiasSlugRouteImport } from './routes/noticias/$slug'
@@ -132,6 +133,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AccountIndexRoute = AccountIndexRouteImport.update({
   id: '/account/',
   path: '/account/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapXmlRoute = SitemapXmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PublicacoesSlugRoute = PublicacoesSlugRouteImport.update({
@@ -331,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/publicacoes/$slug': typeof PublicacoesSlugRoute
+  '/sitemap.xml': typeof SitemapXmlRoute
   '/account': typeof AccountIndexRoute
   '/admin': typeof AdminIndexRoute
   '/autores': typeof AutoresIndexRoute
@@ -382,6 +389,7 @@ export interface FileRoutesByTo {
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/publicacoes/$slug': typeof PublicacoesSlugRoute
+  '/sitemap.xml': typeof SitemapXmlRoute
   '/account': typeof AccountIndexRoute
   '/admin': typeof AdminIndexRoute
   '/autores': typeof AutoresIndexRoute
@@ -434,6 +442,7 @@ export interface FileRoutesById {
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/publicacoes/$slug': typeof PublicacoesSlugRoute
+  '/sitemap.xml': typeof SitemapXmlRoute
   '/account/': typeof AccountIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/autores/': typeof AutoresIndexRoute
@@ -487,6 +496,7 @@ export interface FileRouteTypes {
     | '/noticias/$slug'
     | '/pedido/$orderId'
     | '/publicacoes/$slug'
+    | '/sitemap.xml'
     | '/account'
     | '/admin'
     | '/autores'
@@ -538,6 +548,7 @@ export interface FileRouteTypes {
     | '/noticias/$slug'
     | '/pedido/$orderId'
     | '/publicacoes/$slug'
+    | '/sitemap.xml'
     | '/account'
     | '/admin'
     | '/autores'
@@ -589,6 +600,7 @@ export interface FileRouteTypes {
     | '/noticias/$slug'
     | '/pedido/$orderId'
     | '/publicacoes/$slug'
+    | '/sitemap.xml'
     | '/account/'
     | '/admin/'
     | '/autores/'
@@ -641,6 +653,7 @@ export interface RootRouteChildren {
   NoticiasSlugRoute: typeof NoticiasSlugRoute
   PedidoOrderIdRoute: typeof PedidoOrderIdRoute
   PublicacoesSlugRoute: typeof PublicacoesSlugRoute
+  SitemapXmlRoute: typeof SitemapXmlRoute
   AccountIndexRoute: typeof AccountIndexRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AutoresIndexRoute: typeof AutoresIndexRoute
@@ -769,6 +782,13 @@ declare module '@tanstack/react-router' {
       path: '/account'
       fullPath: '/account'
       preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapXmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/publicacoes/$slug': {
@@ -1054,6 +1074,7 @@ const rootRouteChildren: RootRouteChildren = {
   NoticiasSlugRoute: NoticiasSlugRoute,
   PedidoOrderIdRoute: PedidoOrderIdRoute,
   PublicacoesSlugRoute: PublicacoesSlugRoute,
+  SitemapXmlRoute: SitemapXmlRoute,
   AccountIndexRoute: AccountIndexRoute,
   AdminIndexRoute: AdminIndexRoute,
   AutoresIndexRoute: AutoresIndexRoute,

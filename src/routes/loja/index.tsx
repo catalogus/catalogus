@@ -9,6 +9,7 @@ import { FilterSidebar } from '../../components/shop/FilterSidebar'
 import { ProductCard, type ProductCardBook } from '../../components/shop/ProductCard'
 import { publicSupabase } from '../../lib/supabasePublic'
 import { useShopMetadata, type PriceRange } from '../../lib/queries/shopQueries'
+import { buildSeo } from '../../lib/seo'
 
 export const Route = createFileRoute('/loja/')({
   loader: async () => {
@@ -60,6 +61,13 @@ export const Route = createFileRoute('/loja/')({
       hasMore: books.length === 12,
     }
   },
+  head: () =>
+    buildSeo({
+      title: 'Loja',
+      description: 'Descubra a nossa colecao de livros e autores mocambicanos.',
+      path: '/loja',
+      type: 'website',
+    }),
   component: ShopListingPage,
 })
 
