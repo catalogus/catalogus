@@ -66,7 +66,7 @@ function AdminLoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--brand)] px-6">
-      <div className="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8">
+      <div className="w-full max-w-md bg-white/90 backdrop-blur-sm shadow-xl p-8">
         <div className="mb-4 flex justify-center">
           <Link
             to="/"
@@ -91,7 +91,7 @@ function AdminLoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/20"
+              className="w-full border border-gray-300 px-3 py-3 text-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/20"
               placeholder="admin@catalogus.co.mz"
             />
           </div>
@@ -105,7 +105,7 @@ function AdminLoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/20"
+              className="w-full border border-gray-300 px-3 py-3 text-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/20"
               placeholder="••••••••"
             />
           </div>
@@ -134,7 +134,7 @@ function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading || submitting}
-            className="w-full rounded-xl bg-red-600 text-white py-3 text-sm font-semibold hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-red-600 text-white py-3 text-sm font-semibold hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {submitting ? 'A verificar credenciais...' : 'Entrar como administrador'}
           </button>

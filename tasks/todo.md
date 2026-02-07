@@ -325,14 +325,14 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 ## Plan
 - [x] Add migration to drop public profile select policies and create `public_profiles` view.
 - [x] Update public routes (authors listing/detail, news detail) to use `public_profiles`.
-- [ ] Verify public pages still render author info and no emails/phones are exposed.
+- [x] Verify public pages still render author info and no emails/phones are exposed.
 
 ## Review
-- [ ] Public author/news pages read from `public_profiles`.
-- [ ] Direct `profiles` access requires auth (self/admin).
+- [x] Public author/news pages read from `public_profiles`.
+- [x] Direct `profiles` access requires auth (self/admin).
 
 ### Verification Notes
-- Not run locally; needs manual check of `/autores`, `/autor/:id`, `/noticias/:slug`.
+- User confirmed author info renders on public pages; no private fields reported.
 
 # Security: CSP Report-Only
 
@@ -372,15 +372,16 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 - [x] Add a shared helper to obtain a fresh access token (refresh if near expiry).
 - [x] Refresh session on window focus/visibility and invalidate admin queries on token refresh.
 - [x] Update admin REST/storage calls to use the fresh-token helper.
-- [ ] Verify admin actions after 5–10 minutes idle without full refresh.
+- [x] Verify admin actions after 5–10 minutes idle without full refresh.
 
 ## Review
-- [ ] Admin fetches/mutations succeed after idle without manual refresh.
-- [ ] Fresh token helper used for REST/storage operations.
-- [ ] Verification notes recorded.
+- [x] Admin fetches/mutations succeed after idle without manual refresh.
+- [x] Fresh token helper used for REST/storage operations.
+- [x] Verification notes recorded.
 
 ### Verification Notes
 - `pnpm build` succeeded. Warnings: `TT Norms Pro Regular Italic.otf` unresolved at build time, and chunk size warning (>500 kB after minification).
+- User confirmed idle session issue resolved without refresh.
 
 # Platform Improvements: Phase 3 (Performance/A11y Polish)
 
