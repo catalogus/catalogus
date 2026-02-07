@@ -359,3 +359,25 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 
 ## Review
 - [x] CSP reports accepted by server route (204 response).
+
+# Platform Improvements: Phase 3 (Performance/A11y Polish)
+
+## Spec
+- Tighten performance and accessibility polish for critical UI components.
+- Ensure mobile navigation uses an accessible, focus-trapped dialog.
+- Replace raw images in key public sections with optimized components or add missing performance attributes.
+- Verify improvements with targeted checks and document results.
+
+## Plan
+- [x] Convert mobile menu to Radix Dialog with focus trap, keyboard navigation, and screen reader-friendly labeling.
+- [x] Replace raw `img` usage in home/public sections with `BookCover`, `AuthorPhoto`, or `OptimizedImage` where appropriate.
+- [x] Add/verify `decoding`, `loading`, and `fetchPriority` for LCP-critical images and ensure width/height are set to reduce CLS.
+- [ ] Run targeted checks (manual a11y, Lighthouse or local audit) and document outcomes.
+
+## Review
+- [ ] Mobile menu passes keyboard navigation (Tab/Shift+Tab/Escape) and traps focus when open.
+- [ ] LCP/CLS risk reduced for home/public sections (images optimized or attributed).
+- [ ] Verification notes recorded with any remaining issues.
+
+### Verification Notes
+- `pnpm build` succeeded. Warnings: `TT Norms Pro Regular Italic.otf` path not resolved at build time, and large chunk size warning (>500 kB after minification).

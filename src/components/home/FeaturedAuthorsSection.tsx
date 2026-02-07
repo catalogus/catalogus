@@ -1,6 +1,7 @@
 import { Facebook, Globe, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { SocialLinks } from '../../types/author'
+import { AuthorPhoto } from '../OptimizedImage'
 
 type FeaturedAuthor = {
   id: string
@@ -76,19 +77,19 @@ export default function FeaturedAuthorsSection({
 
           {!hasError &&
             authors.map((author) => {
-              const photoUrl = author.photo_url
+              const photoSrc = author.photo_path || author.photo_url
               const typeLabel = author.author_type || t('home.featuredAuthors.typeFallback')
               const socialLinks = getSocialLinks(author)
               const authorHref = `/autor/${author.wp_slug || author.id}`
               return (
                 <div key={author.id} className="space-y-3">
                   <div className="group relative aspect-[4/5] w-full overflow-hidden bg-[#f4f1ec] rounded-none">
-                    {photoUrl ? (
-                      <img
-                        src={photoUrl}
-                        alt={author.name}
+                    {photoSrc ? (
+                      <AuthorPhoto
+                        src={photoSrc}
+                        name={author.name}
                         className="h-full w-full object-cover"
-                        loading="lazy"
+                        priority={false}
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-5xl font-semibold text-gray-300">

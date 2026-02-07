@@ -27,6 +27,7 @@ const pt = {
       signIn: 'Entrar',
     },
     menu: {
+      title: 'Menu',
       open: 'Abrir menu',
       close: 'Fechar menu',
     },

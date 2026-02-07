@@ -40,6 +40,7 @@ export default function PartnersSection() {
                   partner.className
                 )}
                 loading="lazy"
+                decoding="async"
               />
             </div>
           ))}

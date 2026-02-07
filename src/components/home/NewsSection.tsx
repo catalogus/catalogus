@@ -1,12 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
 import { ArrowUpRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { PostFeaturedImage } from '../OptimizedImage'
 import { publicSupabase } from '../../lib/supabasePublic'
 import type { PostRow } from '../../types/post'
 
 type NewsPost = Pick<
   PostRow,
-  'id' | 'title' | 'slug' | 'featured_image_url' | 'published_at' | 'created_at'
+  | 'id'
+  | 'title'
+  | 'slug'
+  | 'featured_image_url'
+  | 'featured_image_path'
+  | 'published_at'
+  | 'created_at'
 > & {
   categories?: { category?: { name?: string | null; slug?: string | null } | null }[] | null
 }
@@ -70,6 +77,7 @@ export default function NewsSection({
           title,
           slug,
           featured_image_url,
+          featured_image_path,
           published_at,
           created_at,
           categories:post_categories_map(category:post_categories(name, slug, name_en, slug_en))
@@ -130,6 +138,7 @@ export default function NewsSection({
                   ? category.name_en ?? category.name
                   : category.name
                 : null
+              const imageSrc = post.featured_image_path || post.featured_image_url
               const categoryClass = category?.slug
                 ? getCategoryBadgeClass(category.slug)
                 : categoryLabel
@@ -141,12 +150,12 @@ export default function NewsSection({
                   href={href}
                   className="group relative flex min-h-105 flex-col justify-end overflow-hidden border border-white/10 bg-white/5 text-left transition-transform hover:-translate-y-1 rounded-none"
                 >
-                  {post.featured_image_url ? (
-                    <img
-                      src={post.featured_image_url}
-                      alt={post.title}
+                  {imageSrc ? (
+                    <PostFeaturedImage
+                      src={imageSrc}
+                      title={post.title}
                       className="absolute inset-0 h-full w-full object-cover object-center"
-                      loading="lazy"
+                      priority={false}
                     />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-neutral-700 to-neutral-900" />
