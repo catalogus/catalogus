@@ -315,3 +315,21 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 ## Review
 - [x] RLS enabled for core tables with policies aligned to current app behavior.
 - [x] Security headers active in `vercel.json`.
+
+# Privacy: Public Profiles View
+
+## Spec
+- Remove public RLS policies from `profiles` and expose a safe `public_profiles` view.
+- Update public-facing queries to use the view instead of `profiles`.
+
+## Plan
+- [x] Add migration to drop public profile select policies and create `public_profiles` view.
+- [x] Update public routes (authors listing/detail, news detail) to use `public_profiles`.
+- [ ] Verify public pages still render author info and no emails/phones are exposed.
+
+## Review
+- [ ] Public author/news pages read from `public_profiles`.
+- [ ] Direct `profiles` access requires auth (self/admin).
+
+### Verification Notes
+- Not run locally; needs manual check of `/autores`, `/autor/:id`, `/noticias/:slug`.

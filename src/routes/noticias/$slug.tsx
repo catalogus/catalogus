@@ -4,6 +4,7 @@ import { type ReactNode, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { publicSupabase } from '../../lib/supabasePublic'
+import { fetchPublicProfileById } from '../../lib/publicProfiles'
 import {
   SEO_DEFAULTS,
   buildArticleJsonLd,
@@ -62,13 +63,14 @@ export const Route = createFileRoute('/noticias/$slug')({
 
     let author = null
     if (data.author_id) {
-      const { data: profile, error: profileError } = await publicSupabase
-        .from('profiles')
-        .select('id, name, email, photo_url')
-        .eq('id', data.author_id)
-        .maybeSingle()
-      if (!profileError) {
-        author = profile
+      const profile = await fetchPublicProfileById(data.author_id)
+      if (profile) {
+        author = {
+          id: profile.id,
+          name: profile.name ?? 'Autor',
+          email: null,
+          photo_url: profile.photo_url ?? null,
+        }
       }
     }
 
@@ -366,13 +368,14 @@ function NewsPostDetailPage() {
 
       let author = null
       if (data.author_id) {
-        const { data: profile, error: profileError } = await publicSupabase
-          .from('profiles')
-          .select('id, name, email, photo_url')
-          .eq('id', data.author_id)
-          .maybeSingle()
-        if (!profileError) {
-          author = profile
+        const profile = await fetchPublicProfileById(data.author_id)
+        if (profile) {
+          author = {
+            id: profile.id,
+            name: profile.name ?? 'Autor',
+            email: null,
+            photo_url: profile.photo_url ?? null,
+          }
         }
       }
 
