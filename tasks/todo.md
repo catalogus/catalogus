@@ -342,7 +342,20 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 
 ## Plan
 - [x] Add CSP report-only header.
-- [ ] Review against production asset domains and add report endpoint if needed.
+- [x] Review against production asset domains and add report endpoint if needed.
 
 ## Review
 - [x] CSP report-only header shipped.
+
+# Security: CSP Reporting Endpoint
+
+## Spec
+- Add `/csp-report` endpoint to collect CSP reports.
+- Wire CSP report-uri to the endpoint.
+
+## Plan
+- [x] Add server route for CSP reports.
+- [x] Update CSP report-uri directive.
+
+## Review
+- [x] CSP reports accepted by server route (204 response).

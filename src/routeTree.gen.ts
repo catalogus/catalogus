@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as CspReportRouteImport } from './routes/csp-report'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SobreIndexRouteImport } from './routes/sobre/index'
 import { Route as PublicacoesIndexRouteImport } from './routes/publicacoes/index'
@@ -63,6 +64,11 @@ import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ss
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CspReportRoute = CspReportRouteImport.update({
+  id: '/csp-report',
+  path: '/csp-report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -313,6 +319,7 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/csp-report': typeof CspReportRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account/profile': typeof AccountProfileRoute
   '/admin/author-claims': typeof AdminAuthorClaimsRoute
@@ -365,6 +372,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/csp-report': typeof CspReportRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account/profile': typeof AccountProfileRoute
   '/admin/author-claims': typeof AdminAuthorClaimsRoute
@@ -418,6 +426,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/csp-report': typeof CspReportRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account/profile': typeof AccountProfileRoute
   '/admin/author-claims': typeof AdminAuthorClaimsRoute
@@ -472,6 +481,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/csp-report'
     | '/sitemap.xml'
     | '/account/profile'
     | '/admin/author-claims'
@@ -524,6 +534,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/csp-report'
     | '/sitemap.xml'
     | '/account/profile'
     | '/admin/author-claims'
@@ -576,6 +587,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/csp-report'
     | '/sitemap.xml'
     | '/account/profile'
     | '/admin/author-claims'
@@ -629,6 +641,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CspReportRoute: typeof CspReportRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AccountProfileRoute: typeof AccountProfileRoute
   AdminAuthorClaimsRoute: typeof AdminAuthorClaimsRoute
@@ -684,6 +697,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/csp-report': {
+      id: '/csp-report'
+      path: '/csp-report'
+      fullPath: '/csp-report'
+      preLoaderRoute: typeof CspReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -1050,6 +1070,7 @@ const AdminContentRouteWithChildren = AdminContentRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CspReportRoute: CspReportRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   AccountProfileRoute: AccountProfileRoute,
   AdminAuthorClaimsRoute: AdminAuthorClaimsRoute,
