@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { DashboardLayout } from '../../components/admin/layout'
 import { withAdminGuard } from '../../components/admin/withAdminGuard'
 import { supabase } from '../../lib/supabaseClient'
+import { authorizedFetch, getFreshAccessToken } from '../../lib/supabaseAuth'
 import { useAuth } from '../../contexts/AuthProvider'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
@@ -383,23 +384,17 @@ function AdminPostsPage() {
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Missing Supabase configuration.')
     }
-    const accessToken = session?.access_token
-    if (!accessToken) {
-      throw new Error('Missing auth session. Please sign in again.')
-    }
-
     const path = `post-images/${postId}/${Date.now()}-${file.name}`
     const encodedPath = path.split('/').map(encodeURIComponent).join('/')
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 60_000)
     try {
-      const response = await fetch(
+      const response = await authorizedFetch(
         `${supabaseUrl}/storage/v1/object/post-images/${encodedPath}`,
         {
           method: 'POST',
           headers: {
             apikey: supabaseAnonKey,
-            Authorization: `Bearer ${accessToken}`,
             'Content-Type': file.type || 'application/octet-stream',
             'x-upsert': 'true',
           },
@@ -423,18 +418,13 @@ function AdminPostsPage() {
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Missing Supabase configuration.')
     }
-    const accessToken = session?.access_token
-    if (!accessToken) {
-      throw new Error('Missing auth session. Please sign in again.')
-    }
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 15_000)
     try {
-      const response = await fetch(`${supabaseUrl}/rest/v1/posts`, {
+      const response = await authorizedFetch(`${supabaseUrl}/rest/v1/posts`, {
         method: 'POST',
         headers: {
           apikey: supabaseAnonKey,
-          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
           Prefer: 'return=minimal',
         },
@@ -454,23 +444,18 @@ function AdminPostsPage() {
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Missing Supabase configuration.')
     }
-    const accessToken = session?.access_token
-    if (!accessToken) {
-      throw new Error('Missing auth session. Please sign in again.')
-    }
     if (ids.length === 0) return
 
     const idFilter = `id=in.(${ids.join(',')})`
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 15_000)
     try {
-      const response = await fetch(
+      const response = await authorizedFetch(
         `${supabaseUrl}/rest/v1/posts?${encodeURI(idFilter)}`,
         {
           method: 'PATCH',
           headers: {
             apikey: supabaseAnonKey,
-            Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
             Prefer: 'return=minimal',
           },
@@ -495,23 +480,18 @@ function AdminPostsPage() {
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Missing Supabase configuration.')
     }
-    const accessToken = session?.access_token
-    if (!accessToken) {
-      throw new Error('Missing auth session. Please sign in again.')
-    }
     if (ids.length === 0) return
 
     const idFilter = `id=in.(${ids.join(',')})`
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 15_000)
     try {
-      const response = await fetch(
+      const response = await authorizedFetch(
         `${supabaseUrl}/rest/v1/posts?${encodeURI(idFilter)}`,
         {
           method: 'DELETE',
           headers: {
             apikey: supabaseAnonKey,
-            Authorization: `Bearer ${accessToken}`,
             Prefer: 'return=minimal',
           },
           signal: controller.signal,
@@ -534,10 +514,8 @@ function AdminPostsPage() {
 
   const triggerTranslation = async (postId: string) => {
     try {
-      const { data: sessionData, error: sessionError } =
-        await supabase.auth.getSession()
-      const accessToken = sessionData?.session?.access_token
-      if (sessionError || !accessToken) {
+      const accessToken = await getFreshAccessToken()
+      if (!accessToken) {
         toast.error('Session expired. Please sign in again to translate posts.')
         return
       }

@@ -360,6 +360,28 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 ## Review
 - [x] CSP reports accepted by server route (204 response).
 
+# Bug: Admin Requires Page Refresh After Idle
+
+## Spec (Draft)
+- Admin pages should fetch/mutate reliably after idle without forcing a full refresh.
+- If session token expires or gets close to expiry, refresh it automatically on focus/visibility change.
+- Ensure manual REST/storage calls always use a fresh access token and retry once on auth failure.
+
+## Plan
+- [x] Identify where admin fetch/mutation uses raw `session.access_token` or relies on stale auth state.
+- [x] Add a shared helper to obtain a fresh access token (refresh if near expiry).
+- [x] Refresh session on window focus/visibility and invalidate admin queries on token refresh.
+- [x] Update admin REST/storage calls to use the fresh-token helper.
+- [ ] Verify admin actions after 5–10 minutes idle without full refresh.
+
+## Review
+- [ ] Admin fetches/mutations succeed after idle without manual refresh.
+- [ ] Fresh token helper used for REST/storage operations.
+- [ ] Verification notes recorded.
+
+### Verification Notes
+- `pnpm build` succeeded. Warnings: `TT Norms Pro Regular Italic.otf` unresolved at build time, and chunk size warning (>500 kB after minification).
+
 # Platform Improvements: Phase 3 (Performance/A11y Polish)
 
 ## Spec

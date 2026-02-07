@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useCallback } from 'reac
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
+import { getFreshSession } from '../lib/supabaseAuth'
 import type { UserRole } from '../types/admin'
 import type { SocialLinks, PublishedWork, GalleryImage } from '../types/author'
 
@@ -192,6 +193,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, [sessionQuery.data?.refresh_token, sessionQuery.data?.expires_at, queryClient])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    let mounted = true
+
+    const refreshOnFocus = async () => {
+      try {
+        const { session, refreshed } = await getFreshSession()
+        if (!mounted) return
+
+        if (!session) {
+          queryClient.setQueryData(['auth', 'session'], null)
+          queryClient.removeQueries({ queryKey: ['profile'] })
+          return
+        }
+
+        if (refreshed) {
+          queryClient.setQueryData(['auth', 'session'], session)
+          await queryClient.invalidateQueries({
+            queryKey: ['profile', session.user.id],
+          })
+          queryClient.invalidateQueries({ queryKey: ['admin'] })
+        }
+      } catch (error) {
+        console.warn('Session refresh on focus failed:', error)
+      }
+    }
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshOnFocus()
+      }
+    }
+
+    window.addEventListener('focus', refreshOnFocus)
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      mounted = false
+      window.removeEventListener('focus', refreshOnFocus)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [queryClient])
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
