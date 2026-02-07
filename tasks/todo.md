@@ -333,3 +333,16 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 
 ### Verification Notes
 - Not run locally; needs manual check of `/autores`, `/autor/:id`, `/noticias/:slug`.
+
+# Security: CSP Report-Only
+
+## Spec
+- Add `Content-Security-Policy-Report-Only` header in `vercel.json`.
+- Allow required external sources (fonts, Supabase, Vimeo/YouTube embeds).
+
+## Plan
+- [x] Add CSP report-only header.
+- [ ] Review against production asset domains and add report endpoint if needed.
+
+## Review
+- [x] CSP report-only header shipped.
