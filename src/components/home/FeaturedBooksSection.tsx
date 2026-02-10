@@ -1,6 +1,7 @@
 import { Link2, ShoppingCart } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { BookCover } from '../OptimizedImage'
 import {
   getDiscountPercent,
   getEffectivePrice,
@@ -103,7 +104,7 @@ export default function FeaturedBooksSection({
 
           {!hasError &&
             books.map((book) => {
-              const coverUrl = book.cover_url
+              const coverSrc = book.cover_path || book.cover_url
               const promoIsActive = isPromoActive(book)
               const discountPercent = getDiscountPercent(book)
               const effectivePrice = getEffectivePrice(book)
@@ -170,12 +171,12 @@ export default function FeaturedBooksSection({
                 <div key={book.id} className="group space-y-4">
                   <div className="relative bg-[#e6e0db] rounded-none">
                     <div className="aspect-[3/4] w-full overflow-hidden bg-white/60 rounded-none">
-                      {coverUrl ? (
-                        <img
-                          src={coverUrl}
-                          alt={book.title}
+                      {coverSrc ? (
+                        <BookCover
+                          src={coverSrc}
+                          title={book.title}
                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          loading="lazy"
+                          priority={false}
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-[0.3em] text-gray-400">

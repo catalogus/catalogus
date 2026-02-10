@@ -84,7 +84,7 @@ export type PostRow = {
   author?: {
     id: string
     name: string
-    email: string
+    email?: string | null
     photo_url?: string | null
   } | null
   categories?: Category[]

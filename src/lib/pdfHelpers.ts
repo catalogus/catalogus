@@ -1,4 +1,5 @@
 import type { ProcessingProgress, TableOfContentsItem } from '../types/publication'
+import pdfWorkerSrc from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
 
 type PdfjsModule = typeof import('pdfjs-dist/legacy/build/pdf.mjs')
 
@@ -16,7 +17,7 @@ const getPdfjs = async (): Promise<PdfjsModule> => {
 
   const pdfjs = await pdfjsPromise
   if (!workerConfigured) {
-    pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`
+    pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerSrc
     workerConfigured = true
   }
 

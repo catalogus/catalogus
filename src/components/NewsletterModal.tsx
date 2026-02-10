@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { NewsletterSignupForm } from './newsletter/NewsletterSignupForm'
+import { Dialog, DialogContent, DialogTitle } from './ui/dialog'
 
 const STORAGE_KEY = 'catalogus_newsletter_dismissed'
 const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
@@ -28,39 +29,32 @@ export function NewsletterModal() {
     return () => clearTimeout(timer)
   }, [])
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isOpen])
-
   const handleClose = () => {
     setIsOpen(false)
     localStorage.setItem(STORAGE_KEY, Date.now().toString())
   }
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) handleClose()
+  }
+
   if (!isOpen) return null
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
-      onClick={handleClose}
-    >
-      <div
-        className="relative w-full max-w-2xl overflow-hidden bg-white shadow-2xl lg:grid lg:grid-cols-[1fr_1.2fr]"
-        onClick={(e) => e.stopPropagation()}
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="relative w-full max-w-2xl overflow-hidden bg-white shadow-2xl lg:grid lg:grid-cols-[1fr_1.2fr] p-0 rounded-none border-0"
+        overlayClassName="bg-black/60"
+        showCloseButton={false}
       >
         {/* Image Side */}
         <div className="hidden lg:block">
           <img
-            src="/catalogos-1024x555.webp"
+            src="/covers_banners/catalogos.webp"
             alt=""
             className="h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
             onError={(e) => {
               // Fallback gradient if image doesn't exist
               e.currentTarget.style.display = 'none'
@@ -85,9 +79,9 @@ export function NewsletterModal() {
           <p className="text-xs uppercase tracking-[0.3em] text-[#9a8776]">
             {t('newsletter.modal.label')}
           </p>
-          <h2 className="mt-3 text-2xl font-semibold text-gray-900 md:text-3xl">
+          <DialogTitle className="mt-3 text-2xl font-semibold text-gray-900 md:text-3xl">
             {t('newsletter.modal.title')}
-          </h2>
+          </DialogTitle>
           <p className="mt-3 text-sm leading-relaxed text-gray-600 md:text-base">
             {t('newsletter.modal.body')}
           </p>
@@ -96,7 +90,7 @@ export function NewsletterModal() {
             <NewsletterSignupForm compact onSubmitted={handleClose} />
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

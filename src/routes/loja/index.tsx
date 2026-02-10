@@ -63,7 +63,7 @@ export const Route = createFileRoute('/loja/')({
   },
   head: () =>
     buildSeo({
-      title: 'Loja',
+      title: 'Editora',
       description: 'Descubra a nossa colecao de livros e autores mocambicanos.',
       path: '/loja',
       type: 'website',
@@ -254,7 +254,14 @@ function ShopListingPage() {
     <div className="min-h-screen bg-white text-gray-900">
       <Header />
 
-      <section className="bg-[#1c1b1a] text-white">
+      <section
+        className="bg-[#1c1b1a] text-white"
+        style={{
+          backgroundImage: "url('/oficinas.webp')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
         <div className="container mx-auto px-4 py-16 lg:px-15">
           <h1 className="text-4xl font-semibold md:text-6xl">
             {t('shop.listing.title')}

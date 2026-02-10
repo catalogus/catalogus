@@ -7,6 +7,37 @@ type HeroProps = {
   slides: HeroSlideWithContent[]
 }
 
+const LOCAL_ORIGINS = new Set(['http://localhost:3000', 'http://127.0.0.1:3000'])
+
+const isAbsoluteUrl = (value: string) => /^https?:\/\//i.test(value)
+
+const isSpecialScheme = (value: string) =>
+  value.startsWith('mailto:') || value.startsWith('tel:')
+
+const normalizeCtaUrl = (value?: string | null) => {
+  const trimmed = (value ?? '').trim()
+  if (!trimmed) return ''
+  if (trimmed.startsWith('#') || isSpecialScheme(trimmed)) return trimmed
+  if (!isAbsoluteUrl(trimmed)) {
+    return trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+  }
+
+  try {
+    const url = new URL(trimmed)
+    const currentOrigin =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : ''
+    if (LOCAL_ORIGINS.has(url.origin) || (currentOrigin && url.origin === currentOrigin)) {
+      return `${url.pathname}${url.search}${url.hash}`
+    }
+  } catch {
+    return trimmed
+  }
+
+  return trimmed
+}
+
 export function Hero({ slides }: HeroProps) {
   const { t } = useTranslation()
   const [activeIndex, setActiveIndex] = useState(0)
@@ -83,6 +114,17 @@ export function Hero({ slides }: HeroProps) {
           : isBookSlide
             ? slide.linked_content?.cover_url || null
             : null
+        const fallbackPostUrl =
+          slide.content_type === 'post' && slide.linked_content?.slug
+            ? `/noticias/${slide.linked_content.slug}`
+            : ''
+        const normalizedCtaUrl = normalizeCtaUrl(slide.cta_url)
+        const resolvedCtaUrl =
+          slide.content_type === 'post' && fallbackPostUrl
+            ? !normalizedCtaUrl || normalizedCtaUrl.startsWith('/post/')
+              ? fallbackPostUrl
+              : normalizedCtaUrl
+            : normalizedCtaUrl
         const visualName = isAuthorSlide
           ? slide.linked_content?.name || slide.title
           : isBookSlide
@@ -110,6 +152,9 @@ export function Hero({ slides }: HeroProps) {
                       src={slide.background_image_url}
                       alt={slide.title}
                       className="h-full w-full object-cover"
+                      loading={isActive ? 'eager' : 'lazy'}
+                      decoding={isActive ? 'sync' : 'async'}
+                      fetchPriority={isActive ? 'high' : 'auto'}
                     />
                   )}
                   <div className="absolute inset-0 bg-black/60" />
@@ -155,10 +200,10 @@ export function Hero({ slides }: HeroProps) {
                     )}
 
                     {/* CTA Button */}
-                    {slide.cta_text && slide.cta_url && (
+                    {slide.cta_text && resolvedCtaUrl && (
                       <div className="pt-2">
                         <a
-                          href={slide.cta_url}
+                          href={resolvedCtaUrl}
                           className="inline-flex items-center bg-white text-gray-900 px-6 py-3 text-sm font-semibold uppercase tracking-wider transition hover:bg-gray-100 hover:-translate-y-0.5"
                         >
                           {slide.cta_text}
@@ -177,7 +222,9 @@ export function Hero({ slides }: HeroProps) {
                               src={visualImageUrl}
                               alt={visualName}
                               className="h-full w-full object-cover"
-                              loading="lazy"
+                              loading={isActive ? 'eager' : 'lazy'}
+                              decoding={isActive ? 'sync' : 'async'}
+                              fetchPriority={isActive ? 'high' : 'auto'}
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-5xl font-semibold text-white/70">

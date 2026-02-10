@@ -7,6 +7,7 @@ import Footer from '../../components/Footer'
 import { AuthorCard } from '../../components/author/AuthorCard'
 import { publicSupabase } from '../../lib/supabasePublic'
 import { buildSeo } from '../../lib/seo'
+import { fetchPublicProfilesByIds } from '../../lib/publicProfiles'
 import {
   Globe,
   Linkedin,
@@ -24,34 +25,35 @@ export const Route = createFileRoute('/autores/')({
     const { data: featuredData, error: featuredError } = await publicSupabase
       .from('authors')
       .select(
-        `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id,
-          profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, bio, social_links)`,
+        `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id`,
       )
       .eq('featured', true)
 
     if (featuredError) throw featuredError
-    const featuredAuthor = featuredData?.length
-      ? getMergedAuthorData(featuredData[Math.floor(Math.random() * featuredData.length)] as AuthorData)
+    const featuredAuthorRaw = featuredData?.length
+      ? (featuredData[Math.floor(Math.random() * featuredData.length)] as AuthorData)
+      : null
+    const featuredAuthor = featuredAuthorRaw
+      ? getMergedAuthorData((await attachProfiles([featuredAuthorRaw]))[0])
       : null
 
     const { data: authorsData, error: authorsError } = await publicSupabase
       .from('authors')
       .select(
-        `id, wp_slug, name, author_type, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id,
-          profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, bio, social_links)`,
+        `id, wp_slug, name, author_type, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id`,
       )
       .order('name', { ascending: true })
       .neq('id', featuredAuthor?.id || '00000000-0000-0000-0000-000000000000')
       .range(0, 11)
 
     if (authorsError) throw authorsError
-    const authors = ((authorsData ?? []) as AuthorData[]).map(getMergedAuthorData)
+    const authorsWithProfiles = await attachProfiles((authorsData ?? []) as AuthorData[])
+    const authors = authorsWithProfiles.map(getMergedAuthorData)
 
     const { data: profiles, error: profilesError } = await publicSupabase
-      .from('profiles')
-      .select('id, name, bio, photo_url, photo_path, social_links, phone')
+      .from('public_profiles')
+      .select('id, name, bio, photo_url, photo_path, social_links, role, status')
       .eq('role', 'author')
-      .in('status', ['pending', 'approved'])
       .order('name', { ascending: true })
 
     if (profilesError) throw profilesError
@@ -147,6 +149,32 @@ const getMergedAuthorData = (author: AuthorData): AuthorData => {
   return author
 }
 
+const attachProfiles = async (authors: AuthorData[]) => {
+  const profileIds = authors
+    .map((author) => author.profile_id)
+    .filter((id): id is string => Boolean(id))
+
+  if (profileIds.length === 0) return authors
+
+  const profilesMap = await fetchPublicProfilesByIds(profileIds)
+
+  return authors.map((author) => {
+    const profile = author.profile_id ? profilesMap.get(author.profile_id) : null
+    if (!profile) return author
+    return {
+      ...author,
+      profile: {
+        id: profile.id,
+        name: profile.name ?? author.name,
+        photo_url: profile.photo_url ?? null,
+        photo_path: profile.photo_path ?? null,
+        bio: profile.bio ?? null,
+        social_links: profile.social_links ?? null,
+      },
+    }
+  })
+}
+
 // Helper function to resolve author photo URL
 const resolvePhotoUrl = (
   photoUrl?: string | null,
@@ -202,8 +230,7 @@ function AutoresListingPage() {
       const { data, error } = await publicSupabase
         .from('authors')
         .select(
-          `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id,
-          profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, bio, social_links)`,
+          `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id`,
         )
         .eq('featured', true)
 
@@ -213,7 +240,8 @@ function AutoresListingPage() {
       // Randomly select one featured author for spotlight
       const randomIndex = Math.floor(Math.random() * data.length)
       const author = data[randomIndex] as AuthorData
-      return getMergedAuthorData(author)
+      const [withProfile] = await attachProfiles([author])
+      return getMergedAuthorData(withProfile)
     },
     initialData: loaderData.featuredAuthor ?? null,
     staleTime: 60_000,
@@ -232,8 +260,7 @@ function AutoresListingPage() {
       let query = publicSupabase
         .from('authors')
         .select(
-          `id, wp_slug, name, author_type, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id,
-          profile:profiles!authors_profile_id_fkey(id, name, photo_url, photo_path, bio, social_links)`,
+          `id, wp_slug, name, author_type, photo_url, photo_path, social_links, residence_city, province, claim_status, profile_id`,
         )
         .order('name', { ascending: true })
         // Exclude hero author to avoid duplication - use fallback to prevent no match
@@ -248,8 +275,10 @@ function AutoresListingPage() {
 
       if (error) throw error
 
+      const authorsWithProfiles = await attachProfiles((data ?? []) as AuthorData[])
+
       return {
-        authors: ((data ?? []) as AuthorData[]).map(getMergedAuthorData),
+        authors: authorsWithProfiles.map(getMergedAuthorData),
         hasMore: !hasSearch && data?.length === pageSize,
       }
     },
@@ -274,10 +303,9 @@ function AutoresListingPage() {
     queryKey: ['authors', 'standalone', trimmedSearch, i18n.language],
     queryFn: async () => {
       let query = publicSupabase
-        .from('profiles')
-        .select('id, name, bio, photo_url, photo_path, social_links, phone')
+        .from('public_profiles')
+        .select('id, name, bio, photo_url, photo_path, social_links, role, status')
         .eq('role', 'author')
-        .in('status', ['pending', 'approved'])
         .order('name', { ascending: true })
 
       // Apply search filter if query exists

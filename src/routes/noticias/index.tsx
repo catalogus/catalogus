@@ -12,15 +12,20 @@ import {
 import { buildSeo } from '../../lib/seo'
 
 export const Route = createFileRoute('/noticias/')({
-  validateSearch: (search: Record<string, unknown>) => ({
-    q: typeof search.q === 'string' ? search.q : undefined,
-    categoria: typeof search.categoria === 'string' ? search.categoria : undefined,
-    tag: typeof search.tag === 'string' ? search.tag : undefined,
-  }),
+  validateSearch: (search?: Record<string, unknown>) => {
+    const safeSearch = search ?? {}
+    return {
+      q: typeof safeSearch.q === 'string' ? safeSearch.q : undefined,
+      categoria:
+        typeof safeSearch.categoria === 'string' ? safeSearch.categoria : undefined,
+      tag: typeof safeSearch.tag === 'string' ? safeSearch.tag : undefined,
+    }
+  },
   loader: async ({ search }) => {
     const language: 'pt' | 'en' = 'pt'
     const isEnglish = language === 'en'
-    const { q, categoria, tag } = search as {
+    const safeSearch = search ?? {}
+    const { q, categoria, tag } = safeSearch as {
       q?: string
       categoria?: string
       tag?: string
@@ -110,9 +115,9 @@ export const Route = createFileRoute('/noticias/')({
     }
   },
   head: ({ location }) => {
-    const params = new URLSearchParams(
-      location.search.startsWith('?') ? location.search.slice(1) : location.search,
-    )
+    const search = location?.search ?? ''
+    const normalizedSearch = search.startsWith('?') ? search.slice(1) : search
+    const params = new URLSearchParams(normalizedSearch)
     const hasFilters = !!(params.get('q') || params.get('categoria') || params.get('tag'))
     return buildSeo({
       title: 'Noticias',

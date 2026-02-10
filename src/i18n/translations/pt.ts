@@ -9,8 +9,8 @@ const pt = {
     nav: {
       authors: 'Autores',
       publisher: 'Editora',
-      news: 'Noticias',
-      literaryMap: 'Mapa Literario',
+      news: 'Notícias',
+      literaryMap: 'Mapa Literário',
       projects: 'Projectos',
       award: 'Prémio Literário Carlos Morgado',
       podcast: 'Anonimus Podcast',
@@ -27,6 +27,7 @@ const pt = {
       signIn: 'Entrar',
     },
     menu: {
+      title: 'Menu',
       open: 'Abrir menu',
       close: 'Fechar menu',
     },
@@ -52,7 +53,7 @@ const pt = {
       events: 'Eventos',
       about: 'Sobre nós',
       contacts: 'Contactos',
-      literaryMap: 'Mapa Literario',
+      literaryMap: 'Mapa Literário',
       whatsapp: 'Converse connosco',
       facebookSocial: 'Facebook',
       instagram: 'Instagram',
@@ -99,12 +100,12 @@ const pt = {
     news: {
       label: 'Fique a par',
       title: 'Últimas Notícias',
-      cta: 'Ver todas as atualizações',
+      cta: 'Ver todas as actualizações',
       error: 'Falha ao carregar as notícias.',
       empty: 'Sem noticias publicadas.',
     },
     featuredBooks: {
-      label: 'Loja',
+      label: '',
       title: 'Livros em destaque',
       error: 'Falha ao carregar os livros em destaque.',
       empty: 'Sem livros em destaque.',
@@ -124,15 +125,15 @@ const pt = {
       empty: 'Sem autores em destaque.',
       typeFallback: 'Autor',
       viewAuthor: 'Ver autor {{name}}',
-      joinTitle: 'Fazer parte do catalogus agora é gratuito',
+      joinTitle: 'Fazer parte da catalogus é gratuito',
       joinSubtitle:
         'Regista-te no mais completo portfólio de autores moçambicanos.',
       joinCta: 'Registar-me',
     },
     partners: {
-      label: 'Reconhecimento',
+      label: 'Parceiros',
       title:
-        'Desde 2020 trabalhamos com parceiros que impulsionam a cultura, educação e leitura.',
+        'Desde 2021 que trabalhamos com parceiros que caminham connosco no desenvolvimento de projectos culturais de impacto.',
     },
   },
   news: {
@@ -288,7 +289,7 @@ const pt = {
   },
   shop: {
     listing: {
-      title: 'Loja',
+      title: 'Editora',
       subtitle: 'Descubra a nossa colecao de livros',
       filters: 'Filtros',
       closeFilters: 'Fechar filtros',
@@ -352,7 +353,7 @@ const pt = {
       notFound: 'Livro nao encontrado.',
       breadcrumb: {
         home: 'Home',
-        shop: 'Loja',
+        shop: 'Editora',
       },
       descriptionFallback: 'Descricao indisponivel.',
       addToCart: 'Adicionar ao carrinho',
@@ -501,7 +502,7 @@ const pt = {
   newsletter: {
     section: {
       title: 'Subscreva a nossa newsletter!',
-      body: 'Receba actualizações mensais da plataforma Catalogus.',
+      body: 'Receba regularmente actualizações da Catalogus.',
     },
     modal: {
       label: 'Newsletter',
@@ -590,7 +591,7 @@ const pt = {
     hero: {
       title: 'Contacte-nos',
       subtitle:
-        'Entre em contacto connosco para qualquer questão, colaboração ou informação sobre os nossos serviços.',
+        'Se estiver a pensar em alguma coisa para mudar o mundo ou precisa de um parceiro para implementar ideias fora da caixa, entre em contacto connosco.',
     },
     info: {
       general: 'Informações gerais',
@@ -659,7 +660,8 @@ const pt = {
         title: 'Oficinas Criativas',
         slug: 'oficinas-criativas',
         eyebrow: 'Formação & prática',
-        description: '',
+        description:
+          'Ajudamos a desenvolver competências e a estimular o melhor talento criativo que pode ter dentro de cada um através de uma variedade de oficinas que passam pela escrita criativa, processos editoriais, performance, entre outras',
       },
     ],
   },
@@ -672,7 +674,7 @@ const pt = {
     },
     intro: {
       label: 'Projectos em destaque',
-      title: 'Cada produção é uma galeria viva',
+      title: 'Pensamos e Fazemos Acontecer!',
       body:
         'Aqui reunimos processos, performances e encontros que fazem a cultura respirar em Maputo e além. Cada projecto ganha um arquivo visual próprio com fotografias e vídeos.',
     },

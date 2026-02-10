@@ -60,7 +60,8 @@ function NewsletterVerifyPage() {
         data: { bookId: book, downloadToken },
       })
       setDownloadUrl(result.url)
-      window.open(result.url, '_blank')
+      const popup = window.open(result.url, '_blank', 'noopener')
+      if (popup) popup.opener = null
     } catch (error) {
       console.error('Download error', error)
       setMessage(t('newsletter.verify.downloadError'))

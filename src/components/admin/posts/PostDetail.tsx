@@ -1,5 +1,6 @@
 import { Calendar, User, Eye, Tag as TagIcon, FolderOpen } from 'lucide-react'
 import type { PostRow } from '../../../types/post'
+import { sanitizeRichText } from '../../../lib/sanitizeHtml'
 
 type PostDetailProps = {
   post: PostRow
@@ -161,7 +162,9 @@ export function PostDetail({ post }: PostDetailProps) {
         <h3 className="text-sm font-semibold text-gray-700">Content</h3>
         <div
           className="prose prose-sm max-w-none border-t border-gray-200 pt-4"
-          dangerouslySetInnerHTML={{ __html: post.body ?? '<p>No content</p>' }}
+          dangerouslySetInnerHTML={{
+            __html: sanitizeRichText(post.body ?? '<p>No content</p>'),
+          }}
         />
       </div>
 

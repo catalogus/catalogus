@@ -223,11 +223,23 @@ export const createOrderAndInitiateMpesa = createServerFn({ method: 'POST' })
 
     const orderId = result.order_id as string
     const orderNumber = result.order_number as string
+    let orderTotal = Number(result.total)
+    if (!Number.isFinite(orderTotal)) {
+      const { data: orderRow, error: totalError } = await serverSupabase
+        .from('orders')
+        .select('total')
+        .eq('id', orderId)
+        .single()
+      if (totalError || !orderRow) {
+        throw new Error('Unable to resolve order total')
+      }
+      orderTotal = Number(orderRow.total)
+    }
 
     const payload = {
       orderId,
       orderNumber,
-      amount: data.total,
+      amount: orderTotal,
       phone: data.customer.phone.trim(),
     }
 

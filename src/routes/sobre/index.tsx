@@ -46,7 +46,7 @@ function AboutPage() {
         <section className="relative overflow-hidden bg-[#f7f2ed]">
           <div className="absolute inset-0" aria-hidden="true">
             <img
-              src="/capulana-bg.jpg"
+              src="/covers_banners/quem-somos-1.jpg"
               alt=""
               className="h-full w-full object-cover opacity-20"
               loading="eager"
@@ -122,7 +122,7 @@ function AboutPage() {
         <section className="relative overflow-hidden bg-[#1f1b16] text-white">
           <div className="absolute inset-0" aria-hidden="true">
             <img
-              src="/capulana-bg.jpg"
+              src="/covers_banners/quem-somos-1.jpg"
               alt=""
               className="h-full w-full object-cover opacity-20"
               loading="lazy"

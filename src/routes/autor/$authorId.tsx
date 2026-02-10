@@ -26,14 +26,45 @@ import {
   buildSeo,
   toAbsoluteUrl,
 } from '../../lib/seo'
+import { fetchPublicProfileById } from '../../lib/publicProfiles'
 import type { AuthorRow, GalleryImage, PublishedWork, SocialLinks } from '../../types/author'
+
+const attachProfileToAuthor = async (author: AuthorRow) => {
+  if (author.claim_status !== 'approved' || !author.profile_id) return author
+  const profile = await fetchPublicProfileById(author.profile_id)
+  if (!profile) return author
+  return {
+    ...author,
+    name: profile.name ?? author.name,
+    bio: profile.bio ?? author.bio,
+    photo_url: profile.photo_url ?? author.photo_url,
+    photo_path: profile.photo_path ?? author.photo_path,
+    social_links: profile.social_links ?? author.social_links,
+    profile: {
+      id: profile.id,
+      name: profile.name ?? author.name,
+      bio: profile.bio ?? null,
+      photo_url: profile.photo_url ?? null,
+      photo_path: profile.photo_path ?? null,
+      social_links: profile.social_links ?? null,
+      birth_date: profile.birth_date ?? null,
+      residence_city: profile.residence_city ?? null,
+      province: profile.province ?? null,
+      published_works: profile.published_works ?? null,
+      author_gallery: profile.author_gallery ?? null,
+      featured_video: profile.featured_video ?? null,
+      author_type: profile.author_type ?? null,
+      status: (profile.status as any) ?? null,
+      role: (profile.role as any) ?? null,
+    },
+  }
+}
 
 export const Route = createFileRoute('/autor/$authorId')({
   loader: async ({ params }) => {
     const { authorId } = params
     const selectFields =
-      `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, claim_status, profile_id,
-        profile:profiles!authors_profile_id_fkey(id, name, bio, photo_url, photo_path, social_links)`
+      `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, claim_status, profile_id`
 
     const { data: bySlug, error: slugError } = await publicSupabase
       .from('authors')
@@ -42,21 +73,7 @@ export const Route = createFileRoute('/autor/$authorId')({
       .maybeSingle()
     if (slugError) throw slugError
     if (bySlug) {
-      const author = bySlug as AuthorRow
-      if (author.claim_status === 'approved' && author.profile) {
-        return {
-          author: {
-            ...author,
-            name: author.profile.name || author.name,
-            bio: author.profile.bio || author.bio,
-            photo_url: author.profile.photo_url || author.photo_url,
-            photo_path: author.profile.photo_path || author.photo_path,
-            social_links: author.profile.social_links || author.social_links,
-          },
-          isProfileOnly: false,
-          language: 'pt' as const,
-        }
-      }
+      const author = await attachProfileToAuthor(bySlug as AuthorRow)
       return { author, isProfileOnly: false, language: 'pt' as const }
     }
 
@@ -68,26 +85,12 @@ export const Route = createFileRoute('/autor/$authorId')({
         .maybeSingle()
       if (idError) throw idError
       if (byId) {
-        const author = byId as AuthorRow
-        if (author.claim_status === 'approved' && author.profile) {
-          return {
-            author: {
-              ...author,
-              name: author.profile.name || author.name,
-              bio: author.profile.bio || author.bio,
-              photo_url: author.profile.photo_url || author.photo_url,
-              photo_path: author.profile.photo_path || author.photo_path,
-              social_links: author.profile.social_links || author.social_links,
-            },
-            isProfileOnly: false,
-            language: 'pt' as const,
-          }
-        }
+        const author = await attachProfileToAuthor(byId as AuthorRow)
         return { author, isProfileOnly: false, language: 'pt' as const }
       }
 
       const { data: profileMatch, error: profileError } = await publicSupabase
-        .from('profiles')
+        .from('public_profiles')
         .select(
           'id, name, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type, status, role',
         )
@@ -314,8 +317,7 @@ function AuthorPublicPage() {
     queryKey: ['author', authorId, i18n.language],
     queryFn: async () => {
       const selectFields =
-        `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, claim_status, profile_id,
-        profile:profiles!authors_profile_id_fkey(id, name, bio, photo_url, photo_path, social_links)`
+        `id, wp_slug, name, author_type, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, claim_status, profile_id`
 
       const { data: bySlug, error: slugError } = await publicSupabase
         .from('authors')
@@ -324,21 +326,7 @@ function AuthorPublicPage() {
         .maybeSingle()
       if (slugError) throw slugError
       if (bySlug) {
-        const author = bySlug as AuthorRow
-        // Merge profile data if claim is approved
-        if (author.claim_status === 'approved' && author.profile) {
-          return {
-            author: {
-              ...author,
-              name: author.profile.name || author.name,
-              bio: author.profile.bio || author.bio,
-              photo_url: author.profile.photo_url || author.photo_url,
-              photo_path: author.profile.photo_path || author.photo_path,
-              social_links: author.profile.social_links || author.social_links,
-            },
-            isProfileOnly: false,
-          }
-        }
+        const author = await attachProfileToAuthor(bySlug as AuthorRow)
         return { author, isProfileOnly: false }
       }
 
@@ -348,28 +336,14 @@ function AuthorPublicPage() {
           .select(selectFields)
           .eq('id', authorId)
           .maybeSingle()
-        if (idError) throw idError
-        if (byId) {
-          const author = byId as AuthorRow
-          // Merge profile data if claim is approved
-          if (author.claim_status === 'approved' && author.profile) {
-            return {
-              author: {
-                ...author,
-                name: author.profile.name || author.name,
-                bio: author.profile.bio || author.bio,
-                photo_url: author.profile.photo_url || author.photo_url,
-                photo_path: author.profile.photo_path || author.photo_path,
-                social_links: author.profile.social_links || author.social_links,
-              },
-              isProfileOnly: false,
-            }
-          }
-          return { author, isProfileOnly: false }
-        }
+      if (idError) throw idError
+      if (byId) {
+        const author = await attachProfileToAuthor(byId as AuthorRow)
+        return { author, isProfileOnly: false }
+      }
 
         const { data: profileMatch, error: profileError } = await publicSupabase
-          .from('profiles')
+          .from('public_profiles')
           .select(
             'id, name, bio, photo_url, photo_path, social_links, birth_date, residence_city, province, published_works, author_gallery, featured_video, author_type, status, role',
           )

@@ -46,7 +46,7 @@ export function NewsletterSignupForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <label className="block text-sm font-medium text-gray-700" htmlFor="newsletter-email">
+      <label className="hidden text-sm font-medium text-gray-700" htmlFor="newsletter-email">
         {t('newsletter.form.label')}
       </label>
       <div className={compact ? 'flex flex-col gap-2' : 'flex flex-col gap-3 sm:flex-row'}>
@@ -56,13 +56,13 @@ export function NewsletterSignupForm({
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder={t('newsletter.form.placeholder')}
-          className="flex-1 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus:border-[color:var(--brand)] focus:outline-none"
+          className="flex-1 border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus:border-[color:var(--brand)] focus:outline-none"
           required
         />
         <button
           type="submit"
           disabled={status === 'submitting'}
-          className="rounded-full bg-[color:var(--brand)] px-6 py-2 text-sm font-semibold uppercase tracking-wider text-white hover:bg-[#a25a2c] disabled:cursor-not-allowed disabled:opacity-60"
+          className="bg-[color:var(--brand)] px-6 py-2 text-sm font-semibold uppercase tracking-wider text-white hover:bg-[#a25a2c] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {status === 'submitting'
             ? t('newsletter.form.submitting')
@@ -78,7 +78,6 @@ export function NewsletterSignupForm({
           {message}
         </p>
       )}
-      <p className="text-xs text-gray-500">{t('newsletter.form.disclaimer')}</p>
     </form>
   )
 }

@@ -30,11 +30,15 @@ const getMergedAuthorData = (author: any): SearchAuthor => {
 }
 
 export const Route = createFileRoute('/pesquisa/')({
-  validateSearch: (search: Record<string, unknown>) => ({
-    q: typeof search.q === 'string' ? search.q : undefined,
-  }),
+  validateSearch: (search?: Record<string, unknown>) => {
+    const safeSearch = search ?? {}
+    return {
+      q: typeof safeSearch.q === 'string' ? safeSearch.q : undefined,
+    }
+  },
   loader: async ({ search }) => {
-    const query = normalizeSearchTerm(search.q)
+    const safeSearch = search ?? {}
+    const query = normalizeSearchTerm(safeSearch.q as string | undefined)
     const language: 'pt' | 'en' = 'pt'
 
     if (!query) {

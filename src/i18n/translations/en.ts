@@ -27,6 +27,7 @@ const en = {
       signIn: 'Sign in',
     },
     menu: {
+      title: 'Menu',
       open: 'Open menu',
       close: 'Close menu',
     },

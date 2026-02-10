@@ -4,6 +4,7 @@ import { type ReactNode, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { publicSupabase } from '../../lib/supabasePublic'
+import { fetchPublicProfileById } from '../../lib/publicProfiles'
 import {
   SEO_DEFAULTS,
   buildArticleJsonLd,
@@ -11,6 +12,7 @@ import {
   buildSeo,
   toAbsoluteUrl,
 } from '../../lib/seo'
+import { sanitizeRichText } from '../../lib/sanitizeHtml'
 import type { PostRow } from '../../types/post'
 
 export const Route = createFileRoute('/noticias/$slug')({
@@ -61,13 +63,14 @@ export const Route = createFileRoute('/noticias/$slug')({
 
     let author = null
     if (data.author_id) {
-      const { data: profile, error: profileError } = await publicSupabase
-        .from('profiles')
-        .select('id, name, email, photo_url')
-        .eq('id', data.author_id)
-        .maybeSingle()
-      if (!profileError) {
-        author = profile
+      const profile = await fetchPublicProfileById(data.author_id)
+      if (profile) {
+        author = {
+          id: profile.id,
+          name: profile.name ?? 'Autor',
+          email: null,
+          photo_url: profile.photo_url ?? null,
+        }
       }
     }
 
@@ -365,13 +368,14 @@ function NewsPostDetailPage() {
 
       let author = null
       if (data.author_id) {
-        const { data: profile, error: profileError } = await publicSupabase
-          .from('profiles')
-          .select('id, name, email, photo_url')
-          .eq('id', data.author_id)
-          .maybeSingle()
-        if (!profileError) {
-          author = profile
+        const profile = await fetchPublicProfileById(data.author_id)
+        if (profile) {
+          author = {
+            id: profile.id,
+            name: profile.name ?? 'Autor',
+            email: null,
+            photo_url: profile.photo_url ?? null,
+          }
         }
       }
 
@@ -566,6 +570,7 @@ function NewsPostDetailPage() {
   const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
   const dateLabel = formatPostDate(post?.published_at ?? post?.created_at ?? null, locale)
   const excerpt = post?.excerpt?.trim() || buildExcerpt(post?.body)
+  const safeBody = post?.body ? sanitizeRichText(post.body) : ''
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -625,6 +630,9 @@ function NewsPostDetailPage() {
                 src={featuredImage}
                 alt={post.title}
                 className="absolute inset-0 h-full w-full object-cover"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-[#3d2f23] to-[#0f0c0a]" />
@@ -667,10 +675,10 @@ function NewsPostDetailPage() {
                     </p>
                   )}
                   
-                  {post.body ? (
+                  {safeBody ? (
                     <div
                       className="post-content text-gray-700"
-                      dangerouslySetInnerHTML={{ __html: post.body }}
+                      dangerouslySetInnerHTML={{ __html: safeBody }}
                     />
                   ) : (
                     <div className="border border-gray-200 bg-white p-6 text-sm text-gray-600 rounded-none">

@@ -108,12 +108,19 @@ const fetchHeroSlides = async () => {
         .map((slide) => slide.content_id as string),
     ),
   )
+  const postIds = Array.from(
+    new Set(
+      slides
+        .filter((slide) => slide.content_type === 'post' && slide.content_id)
+        .map((slide) => slide.content_id as string),
+    ),
+  )
 
-  if (authorIds.length === 0 && bookIds.length === 0) {
+  if (authorIds.length === 0 && bookIds.length === 0 && postIds.length === 0) {
     return slides as HeroSlideWithContent[]
   }
 
-  const [authorsResult, booksResult] = await Promise.all([
+  const [authorsResult, booksResult, postsResult] = await Promise.all([
     authorIds.length
       ? publicSupabase
           .from('authors')
@@ -126,10 +133,17 @@ const fetchHeroSlides = async () => {
           .select('id, title, cover_url, cover_path')
           .in('id', bookIds)
       : Promise.resolve({ data: [], error: null }),
+    postIds.length
+      ? publicSupabase
+          .from('posts')
+          .select('id, title, slug')
+          .in('id', postIds)
+      : Promise.resolve({ data: [], error: null }),
   ])
 
   if (authorsResult.error) throw authorsResult.error
   if (booksResult.error) throw booksResult.error
+  if (postsResult.error) throw postsResult.error
 
   const authorMap = new Map(
     (authorsResult.data ?? []).map((author: any) => {
@@ -155,6 +169,10 @@ const fetchHeroSlides = async () => {
     }),
   )
 
+  const postMap = new Map(
+    (postsResult.data ?? []).map((post: any) => [post.id, { ...post }]),
+  )
+
   return slides.map((slide) => {
     if (slide.content_type === 'author' && slide.content_id) {
       return {
@@ -166,6 +184,12 @@ const fetchHeroSlides = async () => {
       return {
         ...slide,
         linked_content: bookMap.get(slide.content_id) ?? null,
+      }
+    }
+    if (slide.content_type === 'post' && slide.content_id) {
+      return {
+        ...slide,
+        linked_content: postMap.get(slide.content_id) ?? null,
       }
     }
     return slide

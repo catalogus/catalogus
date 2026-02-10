@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { DashboardLayout } from '../../components/admin/layout'
 import { withAdminGuard } from '../../components/admin/withAdminGuard'
 import { supabase } from '../../lib/supabaseClient'
+import { authorizedFetch } from '../../lib/supabaseAuth'
 import { useAuth } from '../../contexts/AuthProvider'
 import { Button } from '../../components/ui/button'
 import {
@@ -123,11 +124,16 @@ function AdminHeroSlidesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('posts')
-        .select('id, title, featured_image_url')
+        .select('id, title, slug, featured_image_url')
         .eq('status', 'published')
         .order('title', { ascending: true })
       if (error) throw error
-      return data as { id: string; title: string; featured_image_url: string | null }[]
+      return data as {
+        id: string
+        title: string
+        slug: string | null
+        featured_image_url: string | null
+      }[]
     },
     staleTime: 60_000,
     enabled: canQuery,
@@ -141,23 +147,17 @@ function AdminHeroSlidesPage() {
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Missing Supabase configuration.')
     }
-    const accessToken = session?.access_token
-    if (!accessToken) {
-      throw new Error('Missing auth session. Please sign in again.')
-    }
-
     const path = `hero-backgrounds/${slideId}/${Date.now()}-${file.name}`
     const encodedPath = path.split('/').map(encodeURIComponent).join('/')
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 60_000)
     try {
-      const response = await fetch(
+      const response = await authorizedFetch(
         `${supabaseUrl}/storage/v1/object/hero-backgrounds/${encodedPath}`,
         {
           method: 'POST',
           headers: {
             apikey: supabaseAnonKey,
-            Authorization: `Bearer ${accessToken}`,
             'Content-Type': file.type || 'application/octet-stream',
             'x-upsert': 'true',
           },
@@ -181,18 +181,13 @@ function AdminHeroSlidesPage() {
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Missing Supabase configuration.')
     }
-    const accessToken = session?.access_token
-    if (!accessToken) {
-      throw new Error('Missing auth session. Please sign in again.')
-    }
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 15_000)
     try {
-      const response = await fetch(`${supabaseUrl}/rest/v1/hero_slides`, {
+      const response = await authorizedFetch(`${supabaseUrl}/rest/v1/hero_slides`, {
         method: 'POST',
         headers: {
           apikey: supabaseAnonKey,
-          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
           Prefer: 'return=minimal',
         },
@@ -212,22 +207,16 @@ function AdminHeroSlidesPage() {
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Missing Supabase configuration.')
     }
-    const accessToken = session?.access_token
-    if (!accessToken) {
-      throw new Error('Missing auth session. Please sign in again.')
-    }
-
     const idFilter = `id=eq.${id}`
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 15_000)
     try {
-      const response = await fetch(
+      const response = await authorizedFetch(
         `${supabaseUrl}/rest/v1/hero_slides?${idFilter}`,
         {
           method: 'PATCH',
           headers: {
             apikey: supabaseAnonKey,
-            Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
             Prefer: 'return=minimal',
           },
@@ -248,22 +237,16 @@ function AdminHeroSlidesPage() {
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Missing Supabase configuration.')
     }
-    const accessToken = session?.access_token
-    if (!accessToken) {
-      throw new Error('Missing auth session. Please sign in again.')
-    }
-
     const idFilter = `id=eq.${id}`
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 15_000)
     try {
-      const response = await fetch(
+      const response = await authorizedFetch(
         `${supabaseUrl}/rest/v1/hero_slides?${idFilter}`,
         {
           method: 'DELETE',
           headers: {
             apikey: supabaseAnonKey,
-            Authorization: `Bearer ${accessToken}`,
             Prefer: 'return=minimal',
           },
           signal: controller.signal,

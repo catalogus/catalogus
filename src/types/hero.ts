@@ -42,6 +42,7 @@ export type HeroSlideWithContent = HeroSlide & {
     id: string
     title?: string
     name?: string
+    slug?: string
     cover_url?: string
     photo_url?: string
   } | null

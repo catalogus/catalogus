@@ -135,7 +135,8 @@ function OrderConfirmationPage() {
     },
     onSuccess: (data) => {
       if (data?.url) {
-        window.open(data.url, '_blank')
+        const popup = window.open(data.url, '_blank', 'noopener')
+        if (popup) popup.opener = null
       }
     },
   })
