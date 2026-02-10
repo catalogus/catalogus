@@ -8,3 +8,4 @@
 - When using TanStack Router `validateSearch`/`loader`, guard `search` since it can be undefined; default to `{}` before reading query params.
 - Sanitize uploaded file names for Supabase Storage keys (remove spaces/diacritics/special chars) to avoid `InvalidKey` errors.
 - When a user requests SEO to be automatic, remove manual admin inputs and compute SEO fields from title/description during save.
+- When swapping hero background images, ensure any gradient/overlay layer has transparency so the image is visible.

@@ -118,6 +118,60 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 
 # Bug: books_shop.is_digital Missing
 
+# Admin Roles: Super Admin vs Content Admin
+
+## Spec (Draft)
+- Add two admin types:
+  - **Super Admin** (max 2 accounts): full access to all admin modules, data, and metrics.
+  - **Content Admin**: access to all admin modules except Transactions/Orders.
+- Dashboard:
+  - Same dashboard layout for both.
+  - Content Admins must **not** see commerce metrics (derived from orders/transactions).
+  - Commerce metrics to hide for Content Admins:
+    - Revenue, Paid Orders, Total Orders, Avg Order Value, Paid Rate, New Customers.
+    - Trend chart (revenue/orders), Order status breakdown, Top books (sales), Recent orders list.
+  - Content Admins can still see catalog + engagement metrics (inventory health, active/low stock, newsletter stats).
+- Storage model: any approach ok. Proposed: `profiles.admin_level` enum:
+  - `super_admin`, `content_admin` (nullable for non-admins).
+- Creation:
+  - Super Admin accounts can be created at any time, subject to the max-2 guardrail.
+  - No hardcoded backfill to specific emails; existing admin rows should default to `content_admin`.
+- Enforcement layers:
+  - UI navigation + route guards.
+  - Supabase RLS + storage policies.
+  - DB guardrail to cap Super Admins at 2.
+
+## Plan
+- [ ] Confirm access matrix (explicit list of modules available to Content Admins).
+- [ ] Add DB migration:
+  - `admin_level` enum + column on `profiles`.
+  - Backfill `admin` rows to `content_admin`.
+  - Guardrail trigger/constraint to cap `super_admin` at 2.
+  - Helper functions: `is_super_admin()` and updated `is_admin()` (or `is_content_admin()`).
+- [ ] Update RLS + storage policies:
+  - Orders/order_items restricted to `is_super_admin()`.
+  - Content modules remain `is_admin()`.
+- [ ] Update admin dashboard:
+  - For Content Admins, skip commerce RPC and hide commerce sections.
+  - Provide content-only metrics query (books + newsletter + inventory).
+- [ ] Update admin UI:
+  - Users page: add Admin Type selector when role = admin and show super-admin slot count.
+  - Route guards: add `SuperAdminGuard` for `/admin/orders`.
+  - Sidebar: hide Orders for Content Admin.
+  - TopBar badges: display `super_admin` vs `content_admin`.
+- [ ] Verify end-to-end:
+  - Super Admin can access everything.
+  - Content Admin can access everything except Orders/Transactions.
+  - Commerce metrics hidden for Content Admins.
+  - Creating a 3rd Super Admin is blocked with a clear error.
+
+## Review
+- [ ] Access matrix implemented and documented.
+- [ ] RLS/storage policies enforce access correctly.
+- [ ] Dashboard hides commerce metrics for Content Admins.
+- [ ] UI shows only allowed modules for Content Admin.
+- [ ] Super Admin limit (2) enforced at DB level and surfaced in UI errors.
+
 ## Spec (Draft)
 - UI error shows: `column books_shop.is_digital does not exist`.
 - Likely cause: production schema missing `books.is_digital` (digital books migration not applied) or stale `books_shop` view.
@@ -404,3 +458,110 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 
 ### Verification Notes
 - `pnpm build` succeeded. Warnings: `TT Norms Pro Regular Italic.otf` path not resolved at build time, and large chunk size warning (>500 kB after minification).
+
+# Dashboard Polish + Publishing/Staff UX
+
+## Spec (Draft)
+- Polish admin dashboard visuals and interactions for clarity and speed.
+- Make publishing flow (posts/publications/books) seamless and low-friction.
+- Make staff/user management (admin/user creation, role assignment) seamless and low-friction.
+
+## Plan
+- [ ] Run Rams design review on targeted admin files (dashboard + publishing + users/staff) and list issues by severity.
+- [ ] Define UX improvements for publishing (save state, validation, status feedback, preview flow).
+- [ ] Define UX improvements for staff management (invite/create, role change, success/error feedback).
+- [ ] Implement prioritized fixes with minimal code changes.
+- [ ] Verify key flows: create/edit/publish content; create staff user; role change; delete/disable.
+
+## Review
+- [ ] Dashboard UX issues addressed and validated.
+- [ ] Publishing flow feels seamless (clear states, no dead ends).
+- [ ] Staff management flow feels seamless (clear actions and confirmations).
+
+# UI Consistency: Remove Rounded Corners
+
+## Spec
+- Remove rounded corners across the entire UI (admin + public).
+- Ensure visuals remain consistent and intentional without rounding.
+
+## Plan
+- [x] Implement a global radius override in `src/styles.css` to force square corners.
+- [ ] Verify key screens (admin dashboard, posts, users; public home/shop) show no rounded corners.
+- [ ] Clean up any outliers if a component still renders rounded corners.
+
+## Review
+- [ ] No rounded corners remain across the app.
+- [ ] Key screens verified visually after the change.
+
+# Website Copy Update: Revisao do Site (9 de Fevereiro)
+
+## Spec (Draft)
+- Update public website copy based on the "REVISAO DO SITE _ 9 de FEVEREIRO.pdf" document.
+- Only adjust text content (no structural or design changes) unless explicitly called out in the document.
+- Track each copy change back to its page/section for verification.
+
+## Plan
+- [x] Review the PDF and extract required copy changes, organized by page/section.
+- [x] Locate the corresponding copy in the codebase and map each change to a file/route.
+- [x] Apply the copy updates with minimal impact.
+- [x] Verify updates across affected pages (manual spot check) and document results.
+
+## Review
+- [x] All requested copy changes applied.
+- [ ] Manual spot checks confirm updates on each affected page/section.
+Review Notes: Verified copy updates via `rg` and file diffs; UI spot checks not run.
+
+# UI: Featured Authors Background Image
+
+## Plan
+- [x] Locate the featured authors CTA background image usage.
+- [x] Swap the background image to `/catalogos-authors.webp`.
+- [x] Verify the section renders with the new background.
+
+## Review
+- [x] CTA background updated to the new image.
+Review Notes: Verified `FeaturedAuthorsSection` now references `/catalogos-authors.webp` and the file exists in `public/`; UI spot check not run.
+
+# UI: Shop Header Background Image
+
+## Plan
+- [x] Locate the shop header background image usage.
+- [x] Swap the background image to `/oficinas.webp`.
+- [x] Verify the header renders with the new background.
+
+## Review
+- [x] Shop header background updated to the new image.
+Review Notes: Verified `/oficinas.webp` exists in `public/` and is referenced in the shop header; UI spot check not run.
+
+# UI: Publications Header Background Image
+
+## Plan
+- [x] Locate the publications header background image usage.
+- [x] Swap the background image to `/Quem-somos-768x513.jpg`.
+- [x] Verify the header renders with the new background.
+
+## Review
+- [x] Publications header background updated to the new image.
+Review Notes: Verified `/Quem-somos-768x513.jpg` exists in `public/` and is referenced in the publications header; adjusted overlay gradient opacity so the image can show through; UI spot check not run.
+
+# UI: Active Header Nav Highlight
+
+## Plan
+- [x] Identify header/nav structure and current route detection.
+- [x] Implement active state styling for current page (desktop and mobile).
+- [x] Verify active state on a few key routes.
+
+## Review
+- [x] Current page is visibly highlighted in the header nav.
+Review Notes: Active styling now uses the current pathname (and hash for project anchors) to set underline/text color; UI spot check not run.
+
+# Repo: Batch Commits by Context
+
+## Plan
+- [x] Review diffs and group changes by context.
+- [x] Stage and commit each group with clear messages (exclude `REVISAO DO SITE _ 9 de FEVEREIRO.pdf`).
+- [x] Verify working tree state after commits.
+
+## Review
+- [x] Changes are split into logical commits and PDF remains untracked.
+Review Notes: Committed `Update section backgrounds` and `Highlight active nav item`; PDF remains untracked. Unrelated changes still present in working tree.
