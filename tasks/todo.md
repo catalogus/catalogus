@@ -576,3 +576,14 @@ Review Notes: Committed `Update section backgrounds` and `Highlight active nav i
 
 ## Review
 - [ ] Remaining changes committed with no broken asset references.
+
+# Bug: Hero CTA Uses Localhost URL
+
+## Plan
+- [x] Trace how hero CTA URLs are sourced and rendered.
+- [x] Normalize hero CTA URLs to avoid localhost origins (convert to relative path).
+- [x] Verify CTA link output for posts and ensure external links remain untouched.
+
+## Review
+- [x] Hero CTA no longer points to `http://localhost:3000/...` on production.
+Review Notes: CTA URLs are normalized in the hero render; post slides now resolve to `/noticias/{slug}` when available; admin auto-URL uses post slugs.

@@ -13,7 +13,7 @@ type HeroSlideFormProps = {
   submitting?: boolean
   books: { id: string; title: string; cover_url: string | null }[]
   authors: { id: string; name: string; photo_url: string | null }[]
-  posts: { id: string; title: string; featured_image_url: string | null }[]
+  posts: { id: string; title: string; slug: string | null; featured_image_url: string | null }[]
 }
 
 const defaultValues: HeroSlideFormValues = {
@@ -118,14 +118,17 @@ export function HeroSlideForm({
         autoUrl = `/autor/${values.content_id}`
         break
       case 'post':
-        autoUrl = `/post/${values.content_id}`
+        {
+          const selectedPost = posts.find((post) => post.id === values.content_id)
+          autoUrl = selectedPost?.slug ? `/noticias/${selectedPost.slug}` : ''
+        }
         break
     }
 
     if (autoUrl && values.cta_url !== autoUrl) {
       handleChange('cta_url', autoUrl)
     }
-  }, [values.content_type, values.content_id])
+  }, [values.content_type, values.content_id, posts])
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>

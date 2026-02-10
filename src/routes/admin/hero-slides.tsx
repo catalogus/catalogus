@@ -124,11 +124,16 @@ function AdminHeroSlidesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('posts')
-        .select('id, title, featured_image_url')
+        .select('id, title, slug, featured_image_url')
         .eq('status', 'published')
         .order('title', { ascending: true })
       if (error) throw error
-      return data as { id: string; title: string; featured_image_url: string | null }[]
+      return data as {
+        id: string
+        title: string
+        slug: string | null
+        featured_image_url: string | null
+      }[]
     },
     staleTime: 60_000,
     enabled: canQuery,
