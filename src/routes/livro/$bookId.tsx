@@ -146,7 +146,7 @@ export const Route = createFileRoute('/livro/$bookId')({
       jsonLd: [
         buildBreadcrumbJsonLd([
           { name: 'Home', path: '/' },
-          { name: 'Loja', path: '/loja' },
+          { name: 'Editora', path: '/loja' },
           { name: book.title, path },
         ]),
         buildBookJsonLd({

@@ -63,7 +63,7 @@ export const Route = createFileRoute('/loja/')({
   },
   head: () =>
     buildSeo({
-      title: 'Loja',
+      title: 'Editora',
       description: 'Descubra a nossa colecao de livros e autores mocambicanos.',
       path: '/loja',
       type: 'website',
