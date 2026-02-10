@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 import { Menu, X, User, LogOut, LayoutDashboard, ChevronDown } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -54,9 +54,38 @@ const isHashLink = (href: string) => href.includes('#')
 
 const shouldUseRouterLink = (href: string) => !isExternalHref(href) && !isHashLink(href)
 
+const getHrefBase = (href: string) => href.split('#')[0] ?? ''
+
+const getHrefHash = (href: string) => {
+  const hashIndex = href.indexOf('#')
+  if (hashIndex === -1) return ''
+  return href.slice(hashIndex)
+}
+
+const isActiveNavItem = (href: string, pathname: string) => {
+  if (isExternalHref(href)) return false
+  const base = getHrefBase(href)
+  if (!base) return false
+  return pathname === base || pathname.startsWith(`${base}/`)
+}
+
+const isActiveHashItem = (href: string, pathname: string, hash: string) => {
+  if (isExternalHref(href)) return false
+  const base = getHrefBase(href)
+  const hrefHash = getHrefHash(href)
+  if (!base || !hrefHash) return false
+  return pathname === base && hash === hrefHash
+}
+
 export default function Header() {
   const { t } = useTranslation()
   const { session, profile, signOut } = useAuth()
+  const { pathname, hash } = useRouterState({
+    select: (state) => ({
+      pathname: state.location.pathname,
+      hash: state.location.hash ?? '',
+    }),
+  })
   const [menuOpen, setMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -134,29 +163,51 @@ export default function Header() {
 
           <nav className="hidden items-center gap-6 lg:flex">
             {navItems.map((item) => {
+              const active = item.spa ? pathname === '/' : isActiveNavItem(item.href, pathname)
               const className =
                 "relative text-(--header-ink) transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-(--header-accent) after:transition-transform after:duration-300 after:content-[''] hover:text-(--header-accent) hover:after:scale-x-100"
+              const activeClassName = active
+                ? ' text-(--header-accent) after:scale-x-100'
+                : ''
 
               if (item.children && item.children.length > 0) {
                 return (
                   <div key={item.labelKey} className="relative group">
                     {shouldUseRouterLink(item.href) ? (
-                      <Link to={item.href} className={className} aria-haspopup="true">
+                      <Link
+                        to={item.href}
+                        className={`${className}${activeClassName}`}
+                        aria-haspopup="true"
+                        aria-current={active ? 'page' : undefined}
+                      >
                         {t(item.labelKey)}
                       </Link>
                     ) : (
-                      <a href={item.href} className={className} aria-haspopup="true">
+                      <a
+                        href={item.href}
+                        className={`${className}${activeClassName}`}
+                        aria-haspopup="true"
+                        aria-current={active ? 'page' : undefined}
+                      >
                         {t(item.labelKey)}
                       </a>
                     )}
                     <div className="pointer-events-none absolute left-0 top-full pt-3 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
                       <div className="min-w-[280px] border border-gray-200 bg-white py-3 shadow-lg">
-                        {item.children.map((child) =>
-                          shouldUseRouterLink(child.href) ? (
+                        {item.children.map((child) => {
+                          const childActive = isActiveHashItem(child.href, pathname, hash)
+                          const childClassName = `block px-5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-[#f4efe9] hover:text-[color:var(--header-accent)]${
+                            childActive
+                              ? ' bg-[#f4efe9] text-[color:var(--header-accent)]'
+                              : ''
+                          }`
+
+                          return shouldUseRouterLink(child.href) ? (
                             <Link
                               key={child.href}
                               to={child.href}
-                              className="block px-5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-[#f4efe9] hover:text-[color:var(--header-accent)]"
+                              className={childClassName}
+                              aria-current={childActive ? 'page' : undefined}
                             >
                               {t(child.labelKey)}
                             </Link>
@@ -164,12 +215,13 @@ export default function Header() {
                             <a
                               key={child.href}
                               href={child.href}
-                              className="block px-5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-[#f4efe9] hover:text-[color:var(--header-accent)]"
+                              className={childClassName}
+                              aria-current={childActive ? 'page' : undefined}
                             >
                               {t(child.labelKey)}
                             </a>
-                          ),
-                        )}
+                          )
+                        })}
                       </div>
                     </div>
                   </div>
@@ -178,17 +230,32 @@ export default function Header() {
 
               if (item.spa) {
                 return (
-                  <Link key={item.labelKey} to="/" className={className}>
+                  <Link
+                    key={item.labelKey}
+                    to="/"
+                    className={`${className}${activeClassName}`}
+                    aria-current={active ? 'page' : undefined}
+                  >
                     {t(item.labelKey)}
                   </Link>
                 )
               }
               return shouldUseRouterLink(item.href) ? (
-                <Link key={item.labelKey} to={item.href} className={className}>
+                <Link
+                  key={item.labelKey}
+                  to={item.href}
+                  className={`${className}${activeClassName}`}
+                  aria-current={active ? 'page' : undefined}
+                >
                   {t(item.labelKey)}
                 </Link>
               ) : (
-                <a key={item.labelKey} href={item.href} className={className}>
+                <a
+                  key={item.labelKey}
+                  href={item.href}
+                  className={`${className}${activeClassName}`}
+                  aria-current={active ? 'page' : undefined}
+                >
                   {t(item.labelKey)}
                 </a>
               )
@@ -332,17 +399,24 @@ export default function Header() {
 
                 <div className="flex flex-col gap-4 pt-4 text-lg">
                   {navItems.map((item, index) => {
+                    const active = item.spa
+                      ? pathname === '/'
+                      : isActiveNavItem(item.href, pathname)
                     const baseClass =
                       "flex items-center justify-between border-b border-white/10 pb-3 text-white font-semibold transition-all duration-300 hover:translate-x-1 hover:text-[color:var(--header-accent)]"
+                    const activeClassName = active
+                      ? ' text-[color:var(--header-accent)] border-[color:var(--header-accent)]'
+                      : ''
                     const style = { transitionDelay: `${index * 40}ms` }
                     if (item.spa) {
                       return (
                         <Link
                           key={item.labelKey}
                           to="/"
-                          className={baseClass}
+                          className={`${baseClass}${activeClassName}`}
                           style={style}
                           onClick={() => setMenuOpen(false)}
+                          aria-current={active ? 'page' : undefined}
                         >
                           {t(item.labelKey)}
                         </Link>
@@ -352,9 +426,10 @@ export default function Header() {
                       <Link
                         key={item.labelKey}
                         to={item.href}
-                        className={baseClass}
+                        className={`${baseClass}${activeClassName}`}
                         style={style}
                         onClick={() => setMenuOpen(false)}
+                        aria-current={active ? 'page' : undefined}
                       >
                         {t(item.labelKey)}
                       </Link>
@@ -362,9 +437,10 @@ export default function Header() {
                       <a
                         key={item.labelKey}
                         href={item.href}
-                        className={baseClass}
+                        className={`${baseClass}${activeClassName}`}
                         style={style}
                         onClick={() => setMenuOpen(false)}
+                        aria-current={active ? 'page' : undefined}
                       >
                         {t(item.labelKey)}
                       </a>
