@@ -25,8 +25,9 @@ export const Route = createFileRoute('/publicacoes/')({
   },
   head: () =>
     buildSeo({
-      title: 'Publicacoes',
-      description: 'Explore as publicacoes digitais da Catalogus.',
+      title: 'Mapa Literário',
+      description:
+        'O teu satélite de tudo que acontece no mercado literário em Moçambique.',
       path: '/publicacoes',
       type: 'website',
     }),
@@ -45,22 +46,29 @@ function PublicationsListingPage() {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-[#1c1b1a] text-white">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#3d2f23] to-[#0f0c0a]" />
+      <section
+        className="relative overflow-hidden bg-[#1c1b1a] text-white"
+        style={{
+          backgroundImage: "url('/Quem-somos-768x513.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-[#3d2f23]/70 to-[#0f0c0a]/70" />
 
         <div className="relative z-10">
           <div className="container mx-auto px-4 py-24 lg:px-15">
             <div className="max-w-3xl space-y-5">
               <p className="text-xs uppercase tracking-[0.4em] text-white/70">
-                {t('publications.listing.label', 'Biblioteca Digital')}
+                {t('publications.listing.label', '')}
               </p>
               <h1 className="text-2xl font-semibold leading-tight md:text-4xl">
-                {t('publications.listing.title', 'Publicações')}
+                {t('publications.listing.title', 'Mapa Literário')}
               </h1>
               <p className="text-lg text-white/80">
                 {t(
                   'publications.listing.subtitle',
-                  'Explore as nossas publicações digitais em formato de livro interactivo.'
+                  'O teu satélite de tudo que acontece no mercado literário em Moçambique.'
                 )}
               </p>
             </div>

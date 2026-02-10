@@ -143,7 +143,7 @@ export default function FeaturedAuthorsSection({
           <div
             className="relative overflow-hidden border border-white/10 text-white"
             style={{
-              backgroundImage: "url('/capulana-bg.jpg')",
+              backgroundImage: "url('/catalogos-authors.webp')",
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
