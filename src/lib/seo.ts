@@ -40,7 +40,7 @@ export const SEO_DEFAULTS = {
   title: 'Catalogus',
   description:
     'Catalogus e uma plataforma cultural e editorial de Mocambique, promovendo autores, livros e projectos literarios.',
-  image: '/catalogos-1024x555.webp',
+  image: '/covers_banners/catalogos.webp',
   locale: 'pt_MZ',
   twitterCard: 'summary_large_image' as const,
 }

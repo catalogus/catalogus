@@ -50,7 +50,7 @@ export function NewsletterModal() {
         {/* Image Side */}
         <div className="hidden lg:block">
           <img
-            src="/catalogos-1024x555.webp"
+            src="/covers_banners/catalogos.webp"
             alt=""
             className="h-full w-full object-cover"
             loading="lazy"

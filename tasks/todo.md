@@ -565,3 +565,14 @@ Review Notes: Active styling now uses the current pathname (and hash for project
 ## Review
 - [x] Changes are split into logical commits and PDF remains untracked.
 Review Notes: Committed `Update section backgrounds` and `Highlight active nav item`; PDF remains untracked. Unrelated changes still present in working tree.
+
+# Repo: Commit Remaining Changes
+
+## Plan
+- [ ] Review remaining diffs and identify any risky deletions or broken references.
+- [ ] Confirm whether to keep asset deletions or update references.
+- [ ] Stage and commit remaining changes by context.
+- [ ] Verify working tree state (PDF remains untracked).
+
+## Review
+- [ ] Remaining changes committed with no broken asset references.

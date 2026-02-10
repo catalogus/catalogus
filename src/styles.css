@@ -52,6 +52,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* UI consistency: remove rounded corners across the app */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
 .admin-shell {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
     "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
