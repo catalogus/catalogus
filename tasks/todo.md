@@ -587,3 +587,68 @@ Review Notes: Committed `Update section backgrounds` and `Highlight active nav i
 ## Review
 - [x] Hero CTA no longer points to `http://localhost:3000/...` on production.
 Review Notes: CTA URLs are normalized in the hero render; post slides now resolve to `/noticias/{slug}` when available; admin auto-URL uses post slugs.
+
+# Favicon Update
+
+## Plan
+- [x] Review new favicon assets in `public/` and confirm desired filenames.
+- [x] Update head links to reference new favicon and manifest files.
+- [x] Align web manifest metadata/icons with new favicon set.
+- [x] Verify favicon links resolve (no 404s) and document results.
+
+## Review
+- [x] Head references point to the new favicon assets.
+- [x] Manifest(s) include the new icon sizes.
+Review Notes: Verified file presence for all new favicon assets and manifest references in `src/routes/__root.tsx`.
+
+# Favicon SVG
+
+## Plan
+- [x] Review `public/favicon.svg` and current head icon links.
+- [x] Update head links to include the SVG favicon (keep PNG/ICO fallbacks).
+- [x] Verify the SVG is referenced and resolves in the built head output.
+
+## Review
+- [x] SVG favicon referenced in head.
+Review Notes: `src/routes/__root.tsx` now includes a `rel="icon"` link for `/favicon.svg`, and both manifest files include the SVG icon.
+
+# Favicon SVG Fallback
+
+## Plan
+- [x] Generate `public/favicon.ico` from the PNG fallback.
+- [x] Restore the ICO `<link rel="icon">` in the document head.
+- [x] Add cache-busting query params and a `shortcut icon` link for wider browser support.
+- [ ] Verify the favicon renders (hard refresh or new private window) in Arc/Chrome/Safari.
+
+## Review
+- [ ] ICO fallback is present and referenced in head.
+
+# Bug: Delete Book Fails With Order Items FK
+
+## Spec (Draft)
+- Deleting a book with existing `order_items` fails due to FK `order_items_book_id_fkey`.
+- Expected: admin sees a clear message; book is removed from sale without breaking order history.
+
+## Plan
+- [x] Locate the admin delete action and confirm FK restriction source.
+- [x] Decide behavior: block delete when order items exist and archive the book instead.
+- [x] Implement delete flow: check order_items count; if >0, set `is_active=false` (and `featured=false`) with a clear toast; else delete.
+- [ ] Verify delete/archival paths and document results.
+
+## Review
+- [ ] Deleting a book with orders no longer throws FK error.
+- [ ] Book is archived (inactive, unfeatured) with a clear admin message.
+
+# UI: Book Covers Should Not Crop
+
+## Spec (Draft)
+- Book covers in listing/featured/detail are cropped due to `object-cover`.
+- Expected: show full cover (no cropping), even if it letterboxes within the 3:4 card.
+
+## Plan
+- [ ] Find all `BookCover` usages in shop listing, featured grid, and book detail.
+- [ ] Switch cover images to `object-contain` and remove hover scaling to avoid edge cropping.
+- [ ] Verify layouts still align and covers are fully visible.
+
+## Review
+- [ ] Listing/featured/detail covers render without cropping.

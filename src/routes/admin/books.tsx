@@ -399,14 +399,34 @@ function AdminBooksPage() {
 
   const deleteBook = useMutation({
     mutationFn: async (id: string) => {
+      const { count, error: countError } = await supabase
+        .from('order_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('book_id', id)
+      if (countError) throw countError
+
+      if ((count ?? 0) > 0) {
+        const { error: archiveError } = await supabase
+          .from('books')
+          .update({ is_active: false, featured: false })
+          .eq('id', id)
+        if (archiveError) throw archiveError
+        return { archived: true }
+      }
+
       const { error } = await supabase.from('books').delete().eq('id', id)
       if (error) throw error
+      return { archived: false }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'books'] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'books-kpis'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'featured-books'] })
-      toast.success('Book deleted')
+      if (result?.archived) {
+        toast.success('Book has orders; archived instead of deleted')
+      } else {
+        toast.success('Book deleted')
+      }
     },
     onError: (err) => toast.error(err.message ?? 'Failed to delete book'),
   })

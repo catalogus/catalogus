@@ -30,6 +30,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     const pathname = location?.pathname ?? '/'
     const search = location?.search ?? ''
     const noindex = shouldNoIndex(pathname, search)
+    const faviconVersion = '20260212'
     const seo = buildSeo({
       title: SEO_DEFAULTS.title,
       description: SEO_DEFAULTS.description,
@@ -68,15 +69,39 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         },
         {
           rel: 'icon',
-          href: '/favicon.ico',
+          href: `/favicon.ico?v=${faviconVersion}`,
+          type: 'image/x-icon',
+        },
+        {
+          rel: 'shortcut icon',
+          href: `/favicon.ico?v=${faviconVersion}`,
+        },
+        {
+          rel: 'icon',
+          type: 'image/svg+xml',
+          sizes: 'any',
+          href: `/favicon.svg?v=${faviconVersion}`,
+        },
+        {
+          rel: 'icon',
+          type: 'image/png',
+          sizes: '32x32',
+          href: `/favicon-32x32.png?v=${faviconVersion}`,
+        },
+        {
+          rel: 'icon',
+          type: 'image/png',
+          sizes: '16x16',
+          href: `/favicon-16x16.png?v=${faviconVersion}`,
         },
         {
           rel: 'apple-touch-icon',
-          href: '/logo.svg',
+          sizes: '180x180',
+          href: `/apple-touch-icon.png?v=${faviconVersion}`,
         },
         {
           rel: 'manifest',
-          href: '/manifest.json',
+          href: `/site.webmanifest?v=${faviconVersion}`,
         },
         {
           rel: 'stylesheet',
