@@ -102,17 +102,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data, error } = await supabase.auth.getSession()
         if (error) {
           console.error('Session fetch error:', error)
-          return null
+          throw error
         }
         return data.session ?? null
       } catch (err) {
         console.error('Session query failed:', err)
-        return null
+        throw err
       }
     },
-    staleTime: Infinity,
-    retry: 1,
-    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     networkMode: 'online',
   })
 
@@ -164,6 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const REFRESH_MARGIN_MS = 60_000
     const MIN_REFRESH_DELAY_MS = 5_000
     let timeoutId: number | null = null
+    let isActive = true
 
     const scheduleRefresh = () => {
       const now = Date.now()
@@ -173,14 +176,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       )
 
       timeoutId = window.setTimeout(async () => {
-        const { data, error } = await supabase.auth.refreshSession()
-        if (error) {
-          console.warn('Session refresh error:', error)
-          timeoutId = window.setTimeout(scheduleRefresh, 30_000)
-          return
-        }
-        if (data.session) {
-          queryClient.setQueryData(['auth', 'session'], data.session)
+        if (!isActive) return
+        
+        try {
+          const { data, error } = await supabase.auth.refreshSession()
+          if (!isActive) return
+          
+          if (error) {
+            console.warn('Session refresh error:', error)
+            // Force session refetch to check current state
+            await queryClient.invalidateQueries({ queryKey: ['auth', 'session'] })
+            // Retry refresh in 30 seconds
+            timeoutId = window.setTimeout(scheduleRefresh, 30_000)
+            return
+          }
+          
+          if (data.session) {
+            queryClient.setQueryData(['auth', 'session'], data.session)
+          } else {
+            // No session returned, invalidate to trigger re-authentication
+            await queryClient.invalidateQueries({ queryKey: ['auth', 'session'] })
+          }
+        } catch (err) {
+          console.error('Unexpected error during session refresh:', err)
+          if (isActive) {
+            await queryClient.invalidateQueries({ queryKey: ['auth', 'session'] })
+            timeoutId = window.setTimeout(scheduleRefresh, 30_000)
+          }
         }
       }, refreshInMs)
     }
@@ -188,6 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     scheduleRefresh()
 
     return () => {
+      isActive = false
       if (timeoutId) {
         window.clearTimeout(timeoutId)
       }
@@ -200,7 +223,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const refreshOnFocus = async () => {
       try {
-        const { session, refreshed } = await getFreshSession()
+        const { session } = await getFreshSession()
         if (!mounted) return
 
         if (!session) {
@@ -209,13 +232,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return
         }
 
-        if (refreshed) {
-          queryClient.setQueryData(['auth', 'session'], session)
-          await queryClient.invalidateQueries({
-            queryKey: ['profile', session.user.id],
-          })
-          queryClient.invalidateQueries({ queryKey: ['admin'] })
-        }
+        // Always update session data and invalidate queries on focus
+        queryClient.setQueryData(['auth', 'session'], session)
+        await queryClient.invalidateQueries({
+          queryKey: ['profile', session.user.id],
+        })
+        // Always invalidate admin queries on focus to ensure fresh data
+        queryClient.invalidateQueries({ queryKey: ['admin'] })
       } catch (error) {
         console.warn('Session refresh on focus failed:', error)
       }
@@ -227,13 +250,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    const handleOnline = () => {
+      console.log('Network is back online, refreshing session and data...')
+      void refreshOnFocus()
+    }
+
     window.addEventListener('focus', refreshOnFocus)
     document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('online', handleOnline)
 
     return () => {
       mounted = false
       window.removeEventListener('focus', refreshOnFocus)
       document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('online', handleOnline)
     }
   }, [queryClient])
 
