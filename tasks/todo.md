@@ -612,6 +612,17 @@ Review Notes: Verified file presence for all new favicon assets and manifest ref
 - [x] SVG favicon referenced in head.
 Review Notes: `src/routes/__root.tsx` now includes a `rel="icon"` link for `/favicon.svg`, and both manifest files include the SVG icon.
 
+# Favicon SVG Fallback
+
+## Plan
+- [x] Generate `public/favicon.ico` from the PNG fallback.
+- [x] Restore the ICO `<link rel="icon">` in the document head.
+- [x] Add cache-busting query params and a `shortcut icon` link for wider browser support.
+- [ ] Verify the favicon renders (hard refresh or new private window) in Arc/Chrome/Safari.
+
+## Review
+- [ ] ICO fallback is present and referenced in head.
+
 # Bug: Delete Book Fails With Order Items FK
 
 ## Spec (Draft)

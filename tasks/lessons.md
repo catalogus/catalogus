@@ -10,3 +10,6 @@
 - When a user requests SEO to be automatic, remove manual admin inputs and compute SEO fields from title/description during save.
 - When swapping hero background images, ensure any gradient/overlay layer has transparency so the image is visible.
 - When updating favicons, include the SVG in the head and keep PNG/ICO fallbacks, and align both web manifests with the new icon set.
+- When changing cover image fit, confirm the desired visual (contain vs cover) before applying globally to avoid unwanted layout changes.
+- When SVG favicons fail to render in some browsers, ensure an `.ico` fallback exists and is linked in the head.
+- When favicon changes aren't reflected, add cache-busting query params and a `shortcut icon` link to force reloads across browsers.
