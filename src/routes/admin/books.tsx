@@ -694,7 +694,7 @@ function AdminBooksPage() {
             </SheetContent>
           </Sheet>
           <Dialog open={!!detailBook} onOpenChange={() => setDetailBook(null)}>
-            <DialogContent className="sm:max-w-xl">
+            <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-hidden">
               <DialogHeader>
                 <DialogTitle>{detailBook?.title ?? 'Book detail'}</DialogTitle>
                 <DialogDescription>
@@ -704,141 +704,160 @@ function AdminBooksPage() {
                 </DialogDescription>
               </DialogHeader>
               {detailBook && (
-                <div className="space-y-4">
-                  {coverUrlFor(detailBook) && (
-                    <img
-                      src={coverUrlFor(detailBook) ?? ''}
-                      alt={detailBook.title}
-                      className="w-full max-h-64 rounded-xl object-cover border border-gray-200"
-                    />
-                  )}
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">Price</p>
-                      <p className="font-semibold text-gray-900">
-                        {formatPrice(detailBook.price_mzn)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Stock</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.stock}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Category</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.category ?? '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Language</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.language?.toUpperCase()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">ISBN</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.isbn ?? '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Publisher</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.publisher ?? '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Featured</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.featured ? 'Yes' : 'No'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Promo type</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.promo_type ?? '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Promo price</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.promo_price_mzn !== null &&
-                        detailBook.promo_price_mzn !== undefined
-                          ? formatPrice(detailBook.promo_price_mzn)
-                          : '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Promo start</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.promo_start_date ?? '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Promo end</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.promo_end_date ?? '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Digital</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.is_digital ? 'Yes' : 'No'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Digital access</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.digital_access ?? '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Digital file</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.digital_file_path
-                          ? detailBook.digital_file_path.split('/').pop()
-                          : '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Active</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.is_active ? 'Yes' : 'No'}
-                      </p>
-                    </div>
+                <div className="flex gap-6 min-h-0">
+                  {/* Left: Cover image only */}
+                  <div className="shrink-0 w-48">
+                    {coverUrlFor(detailBook) ? (
+                      <img
+                        src={coverUrlFor(detailBook) ?? ''}
+                        alt={detailBook.title}
+                        className="w-full rounded-xl object-cover border border-gray-200 sticky top-0"
+                      />
+                    ) : (
+                      <div className="w-full aspect-[2/3] rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs">
+                        No cover
+                      </div>
+                    )}
                   </div>
-                  {detailBook.authors && detailBook.authors.length > 0 && (
-                    <div className="space-y-1">
-                      <p className="text-gray-500 text-sm">Authors</p>
-                      <p className="font-semibold text-gray-900">
-                        {detailBook.authors
-                          .map((a) => a.authors?.name)
-                          .filter(Boolean)
-                          .join(', ')}
-                      </p>
+
+                  {/* Right: All details */}
+                  <div className="flex-1 overflow-y-auto min-h-0 space-y-5 pr-1">
+                    {/* Status badges */}
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="inline-flex items-center rounded-full bg-gray-100 text-gray-700 px-2 py-0.5 text-xs font-medium">
+                        {detailBook.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                      {detailBook.featured && (
+                        <span className="inline-flex items-center rounded-full bg-gray-100 text-gray-700 px-2 py-0.5 text-xs font-medium">
+                          Featured
+                        </span>
+                      )}
+                      {detailBook.is_digital && (
+                        <span className="inline-flex items-center rounded-full bg-gray-100 text-gray-700 px-2 py-0.5 text-xs font-medium">
+                          Digital
+                        </span>
+                      )}
+                      {detailBook.promo_type && (
+                        <span className="inline-flex items-center rounded-full bg-gray-100 text-gray-700 px-2 py-0.5 text-xs font-medium capitalize">
+                          {detailBook.promo_type}
+                        </span>
+                      )}
                     </div>
-                  )}
-                  {detailBook.description && (
-                    <div className="space-y-1">
-                      <p className="text-gray-500 text-sm">Description</p>
-                      <p className="text-gray-900 whitespace-pre-line">
-                        {detailBook.description}
+
+                    {/* Authors */}
+                    {detailBook.authors && detailBook.authors.length > 0 && (
+                      <p className="text-sm text-gray-600">
+                        by{' '}
+                        <span className="font-medium text-gray-900">
+                          {detailBook.authors
+                            .map((a) => a.authors?.name)
+                            .filter(Boolean)
+                            .join(', ')}
+                        </span>
                       </p>
+                    )}
+
+                    {/* Pricing & Stock */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="rounded-lg bg-gray-50 px-3 py-2">
+                        <p className="text-xs text-gray-500">Price</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {formatPrice(detailBook.price_mzn)}
+                        </p>
+                      </div>
+                      {detailBook.promo_price_mzn != null && (
+                        <div className="rounded-lg bg-gray-50 px-3 py-2">
+                          <p className="text-xs text-gray-500">Promo price</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {formatPrice(detailBook.promo_price_mzn)}
+                          </p>
+                        </div>
+                      )}
+                      <div className="rounded-lg bg-gray-50 px-3 py-2">
+                        <p className="text-xs text-gray-500">Stock</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {detailBook.is_digital ? '∞' : detailBook.stock}
+                        </p>
+                      </div>
                     </div>
-                  )}
-                  {(detailBook.seo_title || detailBook.seo_description) && (
-                    <div className="space-y-1">
-                      <p className="text-gray-500 text-sm">SEO</p>
-                      <p className="text-gray-900 font-semibold">
-                        {detailBook.seo_title}
-                      </p>
-                      <p className="text-gray-700 text-sm">
-                        {detailBook.seo_description}
-                      </p>
+
+                    {/* Details grid */}
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                      <div>
+                        <p className="text-xs text-gray-500">Category</p>
+                        <p className="font-medium text-gray-900">
+                          {detailBook.category ?? '—'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Language</p>
+                        <p className="font-medium text-gray-900">
+                          {detailBook.language?.toUpperCase()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">ISBN</p>
+                        <p className="font-medium text-gray-900">
+                          {detailBook.isbn ?? '—'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Publisher</p>
+                        <p className="font-medium text-gray-900">
+                          {detailBook.publisher ?? '—'}
+                        </p>
+                      </div>
                     </div>
-                  )}
+
+                    {/* Promo details */}
+                    {detailBook.promo_type && (
+                      <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                        <p className="text-xs font-medium text-gray-700 mb-1">Promotion</p>
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+                          <div>
+                            <p className="text-xs text-gray-500">Start</p>
+                            <p className="font-medium text-gray-900">{detailBook.promo_start_date ?? '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">End</p>
+                            <p className="font-medium text-gray-900">{detailBook.promo_end_date ?? '—'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Digital details */}
+                    {detailBook.is_digital && (
+                      <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                        <p className="text-xs font-medium text-gray-700 mb-1">Digital</p>
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+                          <div>
+                            <p className="text-xs text-gray-500">Access</p>
+                            <p className="font-medium text-gray-900">{detailBook.digital_access ?? '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">File</p>
+                            <p className="font-medium text-gray-900 truncate">
+                              {detailBook.digital_file_path
+                                ? detailBook.digital_file_path.split('/').pop()
+                                : '—'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Description */}
+                    {detailBook.description && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Description</p>
+                        <p className="text-sm text-gray-900 whitespace-pre-line leading-relaxed">
+                          {detailBook.description}
+                        </p>
+                      </div>
+                    )}
+
+                  </div>
                 </div>
               )}
             </DialogContent>
