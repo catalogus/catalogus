@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useMemo, useCallback } from 'reac
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
-import { getFreshSession } from '../lib/supabaseAuth'
 import type { UserRole } from '../types/admin'
 import type { SocialLinks, PublishedWork, GalleryImage } from '../types/author'
 
@@ -158,89 +157,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queryClient])
 
+  // Invalidate active queries when the tab becomes visible again so data is fresh.
+  // Token refresh itself is handled automatically by Supabase (autoRefreshToken: true).
   useEffect(() => {
     if (typeof window === 'undefined') return
-    let mounted = true
-
-    const refreshOnFocus = async () => {
-      try {
-        const { session } = await getFreshSession()
-        if (!mounted) return
-
-        if (!session) {
-          queryClient.setQueryData(['auth', 'session'], null)
-          queryClient.removeQueries({ queryKey: ['profile'] })
-          return
-        }
-
-        // Always update session data and invalidate queries on focus
-        queryClient.setQueryData(['auth', 'session'], session)
-        await queryClient.invalidateQueries({
-          queryKey: ['profile', session.user.id],
-        })
-        // Always invalidate admin queries on focus to ensure fresh data
-        queryClient.invalidateQueries({ queryKey: ['admin'] })
-      } catch (error) {
-        console.warn('Session refresh on focus failed:', error)
-      }
-    }
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        void refreshOnFocus()
+        queryClient.invalidateQueries({ refetchType: 'active' })
       }
     }
 
-    const handleOnline = () => {
-      console.log('Network is back online, refreshing session and data...')
-      void refreshOnFocus()
-    }
-
-    window.addEventListener('focus', refreshOnFocus)
     document.addEventListener('visibilitychange', handleVisibility)
-    window.addEventListener('online', handleOnline)
-
-    return () => {
-      mounted = false
-      window.removeEventListener('focus', refreshOnFocus)
-      document.removeEventListener('visibilitychange', handleVisibility)
-      window.removeEventListener('online', handleOnline)
-    }
-  }, [queryClient])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    let mounted = true
-
-    const refreshSessionHealth = async () => {
-      try {
-        const { session, refreshed } = await getFreshSession()
-        if (!mounted) return
-
-        if (!session) {
-          queryClient.setQueryData(['auth', 'session'], null)
-          queryClient.removeQueries({ queryKey: ['profile'] })
-          return
-        }
-
-        if (refreshed) {
-          queryClient.setQueryData(['auth', 'session'], session)
-          await queryClient.invalidateQueries({
-            queryKey: ['profile', session.user.id],
-          })
-          queryClient.invalidateQueries({ queryKey: ['admin'] })
-        }
-      } catch (error) {
-        console.warn('Periodic session health refresh failed:', error)
-      }
-    }
-
-    const intervalId = window.setInterval(refreshSessionHealth, 60_000)
-
-    return () => {
-      mounted = false
-      window.clearInterval(intervalId)
-    }
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [queryClient])
 
   const signIn = useCallback(async (email: string, password: string) => {
