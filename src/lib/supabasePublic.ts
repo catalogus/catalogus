@@ -19,6 +19,7 @@ export const publicSupabase = createClient(
   supabaseAnonKey ?? 'placeholder-key',
   {
     auth: {
+      storageKey: 'sb-public-auth-token',
       persistSession: false,
       autoRefreshToken: false,
       detectSessionInUrl: false,

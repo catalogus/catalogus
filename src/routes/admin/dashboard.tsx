@@ -1,7 +1,7 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { RefreshCcw, AlertCircle } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { RefreshCcw } from 'lucide-react'
 import { DashboardLayout } from '../../components/admin/layout'
 import { withAdminGuard } from '../../components/admin/withAdminGuard'
 import { Badge } from '../../components/ui/badge'
@@ -24,6 +24,7 @@ import {
   TableRow,
 } from '../../components/ui/table'
 import { useAuth } from '../../contexts/AuthProvider'
+import { getFreshSession } from '../../lib/supabaseAuth'
 import { supabase } from '../../lib/supabaseClient'
 
 export const Route = createFileRoute('/admin/dashboard')({
@@ -31,6 +32,7 @@ export const Route = createFileRoute('/admin/dashboard')({
 })
 
 const MAPUTO_TZ = 'Africa/Maputo'
+const DASHBOARD_RPC_TIMEOUT_MS = 20_000
 
 const currencyFormatter = new Intl.NumberFormat('pt-MZ', {
   style: 'currency',
@@ -159,12 +161,10 @@ const statusBadges: Record<string, string> = {
 
 function AdminDashboardPage() {
   const { profile, session, signOut } = useAuth()
-  const queryClient = useQueryClient()
   const userName = profile?.name ?? session?.user.email ?? 'Admin'
   const userEmail = session?.user.email ?? ''
   const authKey = session?.user.id ?? 'anon'
   const canQuery = !!session?.access_token
-  const [isStuck, setIsStuck] = useState(false)
 
   const [rangePreset, setRangePreset] = useState<RangePreset>('7d')
   const [customStart, setCustomStart] = useState('')
@@ -214,60 +214,54 @@ function AdminDashboardPage() {
     }
   }, [rangePreset, customStart, customEnd])
 
-  const metricsQuery = useQuery({
-    queryKey: [
-      'admin',
-      'dashboard-metrics',
-      authKey,
-      range.start,
-      range.end,
-    ],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc(
-        'get_admin_dashboard_metrics',
-        {
-          p_start_date: range.start,
-          p_end_date: range.end,
-          p_timezone: MAPUTO_TZ,
-          p_low_stock_threshold: 5,
-          p_top_books_limit: 5,
-          p_recent_orders_limit: 6,
-        },
-      )
+  const metricsQueryKey = useMemo(
+    () => ['admin', 'dashboard-metrics', authKey, range.start, range.end],
+    [authKey, range.start, range.end],
+  )
 
-      if (error) throw error
-      return data as DashboardMetrics
+  const metricsQuery = useQuery({
+    queryKey: metricsQueryKey,
+    queryFn: async ({ signal }) => {
+      const { session: freshSession } = await getFreshSession()
+      if (!freshSession?.access_token) {
+        throw new Error('Missing auth session. Please sign in again.')
+      }
+
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => {
+        controller.abort()
+      }, DASHBOARD_RPC_TIMEOUT_MS)
+
+      const handleAbort = () => controller.abort()
+      signal.addEventListener('abort', handleAbort, { once: true })
+
+      try {
+        const { data, error } = await supabase
+          .rpc('get_admin_dashboard_metrics', {
+            p_start_date: range.start,
+            p_end_date: range.end,
+            p_timezone: MAPUTO_TZ,
+            p_low_stock_threshold: 5,
+            p_top_books_limit: 5,
+            p_recent_orders_limit: 6,
+          })
+          .abortSignal(controller.signal)
+
+        if (error) throw error
+        return data as DashboardMetrics
+      } catch (error) {
+        if (controller.signal.aborted) {
+          throw new Error('Dashboard metrics request timed out. Please try again.')
+        }
+        throw error
+      } finally {
+        clearTimeout(timeoutId)
+        signal.removeEventListener('abort', handleAbort)
+      }
     },
     enabled: canQuery,
     staleTime: 60_000,
   })
-
-  // Detect if query is stuck fetching for too long
-  useEffect(() => {
-    if (!metricsQuery.isFetching) {
-      setIsStuck(false)
-      return
-    }
-
-    const timer = setTimeout(() => {
-      if (metricsQuery.isFetching) {
-        setIsStuck(true)
-      }
-    }, 10000) // 10 seconds threshold
-
-    return () => clearTimeout(timer)
-  }, [metricsQuery.isFetching])
-
-  const handleForceReset = async () => {
-    console.log('Force session reset triggered...')
-    // Invalidate session to force a fresh fetch
-    await queryClient.invalidateQueries({ queryKey: ['auth', 'session'] })
-    // Wait a bit for session to refresh
-    await new Promise(resolve => setTimeout(resolve, 500))
-    // Refetch metrics
-    await metricsQuery.refetch()
-    setIsStuck(false)
-  }
 
   const summary = metricsQuery.data?.summary
   const compare = metricsQuery.data?.summary_compare ?? {}
@@ -432,33 +426,8 @@ function AdminDashboardPage() {
             Last updated:{' '}
             {lastUpdated ? formatDateTime(lastUpdated, MAPUTO_TZ) : '—'}
           </span>
-          {metricsQuery.isFetching && !isStuck && <span>Refreshing data…</span>}
+          {metricsQuery.isFetching && <span>Refreshing data…</span>}
         </div>
-
-        {isStuck && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-medium text-amber-900">
-                  Data loading is stuck. This might be a session issue.
-                </p>
-                <p className="text-amber-700 mt-1">
-                  Click the button below to force a session refresh.
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleForceReset}
-                  className="mt-3 gap-2 border-amber-300 bg-white hover:bg-amber-100 text-amber-900"
-                >
-                  <RefreshCcw className="h-4 w-4" />
-                  Force Session Reset
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {metricsQuery.isError && (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
