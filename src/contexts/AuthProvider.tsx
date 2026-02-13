@@ -114,7 +114,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    networkMode: 'online',
   })
 
   const profileQuery = useQuery({
@@ -131,7 +130,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     staleTime: 5 * 60 * 1000,
     retry: 1,
     refetchOnWindowFocus: false,
-    networkMode: 'online',
   })
 
   const loading =

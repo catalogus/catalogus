@@ -15,7 +15,6 @@ export const queryClient = new QueryClient({
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
-      networkMode: 'online',
     },
     mutations: {
       retry: (failureCount, error) => {
@@ -23,35 +22,57 @@ export const queryClient = new QueryClient({
         return failureCount < 1
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
-      networkMode: 'online',
     },
   },
   queryCache: new QueryCache({
-    onError: (error, query) => {
+    onError: async (error, query) => {
       if (!isAuthError(error) || authRecoveryInFlight) return
       authRecoveryInFlight = true
-      console.warn('Auth error in query; resetting auth session', {
-        queryKey: query.queryKey,
-      })
-      void supabase.auth.signOut().finally(() => {
+
+      try {
+        const { error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError) {
+          throw refreshError
+        }
+        // Refresh successful, retry the query
+        await queryClient.invalidateQueries({ queryKey: query.queryKey })
+      } catch (err) {
+        console.warn('Auth error recovery failed; signing out', {
+          originalError: error,
+          refreshError: err,
+        })
+        await supabase.auth.signOut()
         queryClient.setQueryData(['auth', 'session'], null)
         queryClient.removeQueries({ queryKey: ['profile'] })
+      } finally {
         authRecoveryInFlight = false
-      })
+      }
     },
   }),
   mutationCache: new MutationCache({
-    onError: (error, _variables, _context, mutation) => {
+    onError: async (error, _variables, _context, mutation) => {
       if (!isAuthError(error) || authRecoveryInFlight) return
       authRecoveryInFlight = true
-      console.warn('Auth error in mutation; resetting auth session', {
-        mutationKey: mutation.options.mutationKey,
-      })
-      void supabase.auth.signOut().finally(() => {
+
+      try {
+        const { error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError) {
+          throw refreshError
+        }
+        // Refresh successful - mutations are harder to retry automatically,
+        // but at least we saved the session for the next attempt.
+      } catch (err) {
+        console.warn('Auth error in mutation; recovery failed', {
+          originalError: error,
+          refreshError: err,
+          mutationKey: mutation.options.mutationKey,
+        })
+        await supabase.auth.signOut()
         queryClient.setQueryData(['auth', 'session'], null)
         queryClient.removeQueries({ queryKey: ['profile'] })
+      } finally {
         authRecoveryInFlight = false
-      })
+      }
     },
   }),
 })
