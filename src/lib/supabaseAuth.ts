@@ -2,8 +2,6 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabaseClient'
 
 const REFRESH_BUFFER_MS = 60_000
-const MIN_REFRESH_INTERVAL_MS = 10_000
-let lastRefreshAt = 0
 
 type FreshSessionResult = {
   session: Session | null
@@ -33,18 +31,12 @@ export const getFreshSession = async (
     return { session, refreshed: false }
   }
 
-  const now = Date.now()
-  if (now - lastRefreshAt < MIN_REFRESH_INTERVAL_MS) {
-    return { session, refreshed: false }
-  }
-
   const { data: refreshed, error: refreshError } =
     await supabase.auth.refreshSession()
   if (refreshError) {
     throw new Error(refreshError.message)
   }
 
-  lastRefreshAt = now
   return { session: refreshed.session ?? session, refreshed: true }
 }
 
@@ -53,7 +45,6 @@ export const forceRefreshSession = async () => {
   if (error) {
     throw new Error(error.message)
   }
-  lastRefreshAt = Date.now()
   return data.session ?? null
 }
 

@@ -19,9 +19,16 @@ export const publicSupabase = createClient(
   supabaseAnonKey ?? 'placeholder-key',
   {
     auth: {
+      storageKey: 'sb-public-auth-token',
       persistSession: false,
       autoRefreshToken: false,
       detectSessionInUrl: false,
+      // Use memory storage to avoid conflicts with the main supabase client
+      storage: {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {},
+      },
     },
   },
 )

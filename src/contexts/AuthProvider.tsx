@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useMemo, useCallback } from 'reac
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
-import { getFreshSession } from '../lib/supabaseAuth'
 import type { UserRole } from '../types/admin'
 import type { SocialLinks, PublishedWork, GalleryImage } from '../types/author'
 
@@ -115,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    networkMode: 'online',
+    networkMode: 'always',
   })
 
   const profileQuery = useQuery({
@@ -132,7 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     staleTime: 5 * 60 * 1000,
     retry: 1,
     refetchOnWindowFocus: false,
-    networkMode: 'online',
+    networkMode: 'always',
   })
 
   const loading =
@@ -158,113 +157,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queryClient])
 
-  useEffect(() => {
-    const refreshToken = sessionQuery.data?.refresh_token
-    const expiresAt = sessionQuery.data?.expires_at
-    if (!refreshToken || !expiresAt) return
-
-    const REFRESH_MARGIN_MS = 60_000
-    const MIN_REFRESH_DELAY_MS = 5_000
-    let timeoutId: number | null = null
-    let isActive = true
-
-    const scheduleRefresh = () => {
-      const now = Date.now()
-      const refreshInMs = Math.max(
-        expiresAt * 1000 - now - REFRESH_MARGIN_MS,
-        MIN_REFRESH_DELAY_MS,
-      )
-
-      timeoutId = window.setTimeout(async () => {
-        if (!isActive) return
-        
-        try {
-          const { data, error } = await supabase.auth.refreshSession()
-          if (!isActive) return
-          
-          if (error) {
-            console.warn('Session refresh error:', error)
-            // Force session refetch to check current state
-            await queryClient.invalidateQueries({ queryKey: ['auth', 'session'] })
-            // Retry refresh in 30 seconds
-            timeoutId = window.setTimeout(scheduleRefresh, 30_000)
-            return
-          }
-          
-          if (data.session) {
-            queryClient.setQueryData(['auth', 'session'], data.session)
-          } else {
-            // No session returned, invalidate to trigger re-authentication
-            await queryClient.invalidateQueries({ queryKey: ['auth', 'session'] })
-          }
-        } catch (err) {
-          console.error('Unexpected error during session refresh:', err)
-          if (isActive) {
-            await queryClient.invalidateQueries({ queryKey: ['auth', 'session'] })
-            timeoutId = window.setTimeout(scheduleRefresh, 30_000)
-          }
-        }
-      }, refreshInMs)
-    }
-
-    scheduleRefresh()
-
-    return () => {
-      isActive = false
-      if (timeoutId) {
-        window.clearTimeout(timeoutId)
-      }
-    }
-  }, [sessionQuery.data?.refresh_token, sessionQuery.data?.expires_at, queryClient])
-
+  // Invalidate active queries when the tab becomes visible again so data is fresh.
+  // Token refresh itself is handled automatically by Supabase (autoRefreshToken: true).
   useEffect(() => {
     if (typeof window === 'undefined') return
-    let mounted = true
-
-    const refreshOnFocus = async () => {
-      try {
-        const { session } = await getFreshSession()
-        if (!mounted) return
-
-        if (!session) {
-          queryClient.setQueryData(['auth', 'session'], null)
-          queryClient.removeQueries({ queryKey: ['profile'] })
-          return
-        }
-
-        // Always update session data and invalidate queries on focus
-        queryClient.setQueryData(['auth', 'session'], session)
-        await queryClient.invalidateQueries({
-          queryKey: ['profile', session.user.id],
-        })
-        // Always invalidate admin queries on focus to ensure fresh data
-        queryClient.invalidateQueries({ queryKey: ['admin'] })
-      } catch (error) {
-        console.warn('Session refresh on focus failed:', error)
-      }
-    }
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        void refreshOnFocus()
+        queryClient.invalidateQueries({ refetchType: 'active' })
       }
     }
 
-    const handleOnline = () => {
-      console.log('Network is back online, refreshing session and data...')
-      void refreshOnFocus()
-    }
-
-    window.addEventListener('focus', refreshOnFocus)
     document.addEventListener('visibilitychange', handleVisibility)
-    window.addEventListener('online', handleOnline)
-
-    return () => {
-      mounted = false
-      window.removeEventListener('focus', refreshOnFocus)
-      document.removeEventListener('visibilitychange', handleVisibility)
-      window.removeEventListener('online', handleOnline)
-    }
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [queryClient])
 
   const signIn = useCallback(async (email: string, password: string) => {
@@ -437,7 +342,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export const useAuth = () => {
+export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
   return ctx

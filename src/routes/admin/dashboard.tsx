@@ -24,6 +24,7 @@ import {
   TableRow,
 } from '../../components/ui/table'
 import { useAuth } from '../../contexts/AuthProvider'
+import { getFreshSession } from '../../lib/supabaseAuth'
 import { supabase } from '../../lib/supabaseClient'
 
 export const Route = createFileRoute('/admin/dashboard')({
@@ -31,6 +32,7 @@ export const Route = createFileRoute('/admin/dashboard')({
 })
 
 const MAPUTO_TZ = 'Africa/Maputo'
+const DASHBOARD_RPC_TIMEOUT_MS = 20_000
 
 const currencyFormatter = new Intl.NumberFormat('pt-MZ', {
   style: 'currency',
@@ -212,29 +214,50 @@ function AdminDashboardPage() {
     }
   }, [rangePreset, customStart, customEnd])
 
-  const metricsQuery = useQuery({
-    queryKey: [
-      'admin',
-      'dashboard-metrics',
-      authKey,
-      range.start,
-      range.end,
-    ],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc(
-        'get_admin_dashboard_metrics',
-        {
-          p_start_date: range.start,
-          p_end_date: range.end,
-          p_timezone: MAPUTO_TZ,
-          p_low_stock_threshold: 5,
-          p_top_books_limit: 5,
-          p_recent_orders_limit: 6,
-        },
-      )
+  const metricsQueryKey = useMemo(
+    () => ['admin', 'dashboard-metrics', authKey, range.start, range.end],
+    [authKey, range.start, range.end],
+  )
 
-      if (error) throw error
-      return data as DashboardMetrics
+  const metricsQuery = useQuery({
+    queryKey: metricsQueryKey,
+    queryFn: async ({ signal }) => {
+      const { session: freshSession } = await getFreshSession()
+      if (!freshSession?.access_token) {
+        throw new Error('Missing auth session. Please sign in again.')
+      }
+
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => {
+        controller.abort()
+      }, DASHBOARD_RPC_TIMEOUT_MS)
+
+      const handleAbort = () => controller.abort()
+      signal.addEventListener('abort', handleAbort, { once: true })
+
+      try {
+        const { data, error } = await supabase
+          .rpc('get_admin_dashboard_metrics', {
+            p_start_date: range.start,
+            p_end_date: range.end,
+            p_timezone: MAPUTO_TZ,
+            p_low_stock_threshold: 5,
+            p_top_books_limit: 5,
+            p_recent_orders_limit: 6,
+          })
+          .abortSignal(controller.signal)
+
+        if (error) throw error
+        return data as DashboardMetrics
+      } catch (error) {
+        if (controller.signal.aborted) {
+          throw new Error('Dashboard metrics request timed out. Please try again.')
+        }
+        throw error
+      } finally {
+        clearTimeout(timeoutId)
+        signal.removeEventListener('abort', handleAbort)
+      }
     },
     enabled: canQuery,
     staleTime: 60_000,
