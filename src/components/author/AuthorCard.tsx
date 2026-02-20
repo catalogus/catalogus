@@ -80,7 +80,13 @@ export function AuthorCard({ author }: { author: AuthorCardData }) {
         )}
 
         {socialLinks.length > 0 && (
-          <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div
+            className={`absolute inset-0 bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${
+              socialLinks.length > 5
+                ? 'grid grid-cols-3 place-content-center gap-3 px-8'
+                : 'flex items-center justify-center gap-3'
+            }`}
+          >
             {socialLinks.map((item) => {
               const Icon = item.icon
               return (

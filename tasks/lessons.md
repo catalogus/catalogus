@@ -13,3 +13,7 @@
 - When changing cover image fit, confirm the desired visual (contain vs cover) before applying globally to avoid unwanted layout changes.
 - When SVG favicons fail to render in some browsers, ensure an `.ico` fallback exists and is linked in the head.
 - When favicon changes aren't reflected, add cache-busting query params and a `shortcut icon` link to force reloads across browsers.
+- When a user asks for root-cause fixes, prioritize eliminating the underlying failure before adding manual recovery UI.
+- When a modal shows only a dark backdrop, verify dialog overlay/content stacking (`z-index`) and avoid relying on animation utility states that can leave content effectively invisible.
+- If a shared modal primitive still renders only backdrop after z-index fixes, isolate the affected modal with a simple fixed overlay/panel implementation to prove behavior and unblock users fast.
+- For cross-domain auth work, confirm exact production hostnames upfront (e.g., `admin.catalogus.co.mz` vs `cms.catalogus.co.mz`) before wiring redirect URLs and bridge logic.

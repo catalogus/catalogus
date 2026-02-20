@@ -15,7 +15,7 @@ export type PublicProfileRow = {
   author_gallery?: GalleryImage[] | null
   featured_video?: string | null
   author_type?: string | null
-  role?: 'admin' | 'author' | 'customer' | null
+  role?: 'author' | 'customer' | null
   status?: string | null
 }
 

@@ -19,13 +19,6 @@ const en = {
       about: 'About',
       contacts: 'Contacts',
     },
-    auth: {
-      adminPanel: 'Admin Panel',
-      myProfile: 'My Profile',
-      myAccount: 'My Account',
-      signOut: 'Sign out',
-      signIn: 'Sign in',
-    },
     menu: {
       title: 'Menu',
       open: 'Open menu',
@@ -33,7 +26,12 @@ const en = {
     },
     mobile: {
       tagline: 'Bookshop & culture',
-      userFallback: 'User',
+    },
+    auth: {
+      signIn: 'Sign in',
+      signUp: 'Sign up',
+      signOut: 'Sign out',
+      myProfileCms: 'My profile (CMS)',
     },
   },
   footer: {
@@ -218,21 +216,6 @@ const en = {
       home: 'Home',
       authors: 'Authors',
     },
-    claim: {
-      unclaimedLabel: 'Profile not claimed',
-      unclaimedTitle: 'Is this you?',
-      unclaimedBody:
-        'Claim this profile to manage your public information.',
-      unclaimedCta: 'Claim This Profile',
-      pendingTitle: 'Claim Pending',
-      pendingStatus: 'Under review',
-      pendingBody:
-        'Your claim is awaiting approval from an administrator.',
-      linkedTitle: 'Profile Linked',
-      linkedBody: 'This is your author profile',
-      manage: 'Manage at',
-      myProfile: 'My Profile',
-    },
     socialTitle: 'Social links',
     bio: {
       label: 'Biography',
@@ -252,39 +235,6 @@ const en = {
       title: 'Conversation with the author',
       frameTitle: 'Video of {{name}}',
       watch: 'Watch video',
-    },
-    toasts: {
-      claimSubmitted:
-        'Claim submitted successfully! An administrator will review it.',
-      claimCompleteError: 'Failed to complete claim. Please try again.',
-      claimRequireAccount:
-        'Please create an account to complete the claim.',
-      claimSubmitError: 'Failed to submit claim. Please try again.',
-    },
-    modal: {
-      title: 'Claim Author Profile',
-      subtitle: 'Identity verification',
-      close: 'Close',
-      profileLabel: 'Profile to claim',
-      intro:
-        'To verify this profile is yours, provide the following information. An administrator will review your request before approving.',
-      emailLabel: 'Email',
-      phoneLabel: 'Phone',
-      messageLabel: 'Why is this profile yours?',
-      emailPlaceholder: 'you@email.com',
-      phonePlaceholder: '+258 XX XXX XXXX',
-      messagePlaceholder:
-        'Explain why this profile belongs to you. Include details only the author would know, such as published works, events attended, or other verifiable information...',
-      minChars: 'Minimum 20 characters • {{count}}/20',
-      cancel: 'Cancel',
-      submit: 'Continue to Create Account',
-      errors: {
-        emailRequired: 'Email is required',
-        emailInvalid: 'Invalid email',
-        phoneRequired: 'Phone is required',
-        messageRequired: 'Message is required',
-        messageMin: 'Message must be at least 20 characters',
-      },
     },
   },
   shop: {
@@ -412,13 +362,6 @@ const en = {
       body: 'Add books before completing your purchase.',
       cta: 'Go to shop',
     },
-    loading: 'Loading session...',
-    login: {
-      title: 'Sign in to complete your purchase',
-      body: 'Need an account? Create one to continue.',
-      signIn: 'Sign in',
-      signUp: 'Create account',
-    },
     customer: {
       title: 'Customer details',
       subtitle: 'Fill in the details to complete the order.',
@@ -445,7 +388,6 @@ const en = {
     },
     toasts: {
       cartEmpty: 'The cart is empty',
-      loginRequired: 'Sign in to complete your purchase',
       paymentInitiated:
         'Payment request sent. Confirm the payment on your phone using your M-Pesa PIN.',
       paymentInitError:
@@ -470,7 +412,6 @@ const en = {
       notFound: 'Order not found.',
       confirmed: 'Order confirmed',
       customer: 'Customer',
-      contact: 'Contact',
       items: 'Items',
       total: 'Total',
       paymentTitle: 'M-Pesa payment',
@@ -480,23 +421,9 @@ const en = {
       paymentPaid: 'Payment confirmed. Thank you for your order.',
       paymentFailed:
         'Payment failed or was cancelled. Please try again or contact support.',
-      refreshStatus: 'Check status',
-      refreshingStatus: 'Checking...',
       print: 'Print order',
       backToShop: 'Back to shop',
       bookFallback: 'Book',
-      download: 'Download',
-    },
-    history: {
-      title: 'My orders',
-      loginPrompt: 'Sign in to view your orders',
-      signIn: 'Sign in',
-      filterLabel: 'Filter status',
-      filterAll: 'All',
-      error: 'Failed to load orders. Please try again.',
-      empty: 'No orders found.',
-      viewDetails: 'View details',
-      downloads: 'Downloads',
     },
   },
   newsletter: {
@@ -737,15 +664,6 @@ const en = {
         gallery: 'encontro',
       },
     ],
-  },
-  admin: {
-    posts: {
-      filters: {
-        languageAll: 'All languages',
-        languagePortuguese: 'Portuguese',
-        languageEnglish: 'English',
-      },
-    },
   },
 }
 

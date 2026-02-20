@@ -1,9 +1,8 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
-import { useAuth } from '../../contexts/AuthProvider'
 import { useCart } from '../../lib/useCart'
 import {
   formatPrice,
@@ -25,7 +24,6 @@ type CustomerFormState = {
 function CheckoutPage() {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
-  const { session, profile, loading } = useAuth()
   const { items, total, clearCart } = useCart()
   const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -36,16 +34,7 @@ function CheckoutPage() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    setFormState((prev) => ({
-      name: prev.name || profile?.name || '',
-      email: prev.email || profile?.email || session?.user?.email || '',
-      phone: prev.phone || profile?.phone || '',
-    }))
-  }, [profile, session])
-
   const isCartEmpty = items.length === 0
-  const isAuthenticated = !!session?.user?.id
 
   const orderItems = useMemo(
     () =>
@@ -102,24 +91,13 @@ function CheckoutPage() {
       return
     }
 
-    if (!isAuthenticated) {
-      toast.error(t('checkout.toasts.loginRequired'))
-      navigate({ to: '/auth/sign-in' })
-      return
-    }
-
     if (!validateForm()) return
 
     try {
       setIsSubmitting(true)
 
-      if (!session?.access_token) {
-        throw new Error('Missing session access token')
-      }
-
       const paymentResult = await createOrderAndInitiateMpesa({
         data: {
-          accessToken: session.access_token,
           customer: {
             name: formState.name.trim(),
             email: formState.email.trim(),
@@ -226,36 +204,6 @@ function CheckoutPage() {
             >
               {t('checkout.cartEmpty.cta')}
             </Link>
-          </div>
-        ) : loading ? (
-          <div className="mt-8 border border-gray-200 bg-white p-8 text-center text-sm text-gray-600">
-            {t('checkout.loading')}
-          </div>
-        ) : !isAuthenticated ? (
-          <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
-            <div className="border border-gray-200 bg-white p-8 text-center">
-              <p className="text-lg font-semibold text-gray-900">
-                {t('checkout.login.title')}
-              </p>
-              <p className="mt-2 text-sm text-gray-600">
-                {t('checkout.login.body')}
-              </p>
-              <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                <Link
-                  to="/auth/sign-in"
-                  className="inline-flex w-full items-center justify-center bg-[color:var(--brand)] px-6 py-2.5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-[#a25a2c] sm:w-auto"
-                >
-                  {t('checkout.login.signIn')}
-                </Link>
-                <Link
-                  to="/auth/sign-up"
-                  className="inline-flex w-full items-center justify-center border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400 sm:w-auto"
-                >
-                  {t('checkout.login.signUp')}
-                </Link>
-              </div>
-            </div>
-            {orderSummary}
           </div>
         ) : (
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">

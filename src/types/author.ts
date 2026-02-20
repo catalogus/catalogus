@@ -86,7 +86,7 @@ export type AuthorRow = {
     featured_video?: string | null
     author_type?: string | null
     status?: AuthorStatus
-    role?: 'admin' | 'author' | 'customer'
+    role?: 'author' | 'customer'
   } | null
 
   created_at?: string

@@ -18,44 +18,21 @@ import { Route as ProjectosIndexRouteImport } from './routes/projectos/index'
 import { Route as ProducaoIndexRouteImport } from './routes/producao/index'
 import { Route as PesquisaIndexRouteImport } from './routes/pesquisa/index'
 import { Route as NoticiasIndexRouteImport } from './routes/noticias/index'
-import { Route as MeusPedidosIndexRouteImport } from './routes/meus-pedidos/index'
 import { Route as LojaIndexRouteImport } from './routes/loja/index'
 import { Route as ContactosIndexRouteImport } from './routes/contactos/index'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout/index'
 import { Route as CarrinhoIndexRouteImport } from './routes/carrinho/index'
 import { Route as AutoresIndexRouteImport } from './routes/autores/index'
-import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as PublicacoesSlugRouteImport } from './routes/publicacoes/$slug'
 import { Route as PedidoOrderIdRouteImport } from './routes/pedido/$orderId'
 import { Route as NoticiasSlugRouteImport } from './routes/noticias/$slug'
 import { Route as NewsletterVerifyRouteImport } from './routes/newsletter/verify'
 import { Route as LivroBookIdRouteImport } from './routes/livro/$bookId'
 import { Route as AutorAuthorIdRouteImport } from './routes/autor/$authorId'
-import { Route as AuthorSignUpRouteImport } from './routes/author/sign-up'
-import { Route as AuthorSignInRouteImport } from './routes/author/sign-in'
-import { Route as AuthorProfileRouteImport } from './routes/author/profile'
-import { Route as AuthorClaimProfileRouteImport } from './routes/author/claim-profile'
-import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
-import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
-import { Route as AdminUsersRouteImport } from './routes/admin/users'
-import { Route as AdminPublicationsRouteImport } from './routes/admin/publications'
-import { Route as AdminPostsRouteImport } from './routes/admin/posts'
-import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
-import { Route as AdminLoginRouteImport } from './routes/admin/login'
-import { Route as AdminHeroSlidesRouteImport } from './routes/admin/hero-slides'
-import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
-import { Route as AdminContentRouteImport } from './routes/admin/content'
-import { Route as AdminBooksRouteImport } from './routes/admin/books'
-import { Route as AdminAuthorsRouteImport } from './routes/admin/authors'
-import { Route as AdminAuthorClaimsRouteImport } from './routes/admin/author-claims'
-import { Route as AccountProfileRouteImport } from './routes/account/profile'
+import { Route as AuthBridgeRouteImport } from './routes/auth/bridge'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
-import { Route as AdminContentServicesRouteImport } from './routes/admin/content.services'
-import { Route as AdminContentProjectsRouteImport } from './routes/admin/content.projects'
-import { Route as AdminContentPartnersRouteImport } from './routes/admin/content.partners'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
@@ -106,11 +83,6 @@ const NoticiasIndexRoute = NoticiasIndexRouteImport.update({
   path: '/noticias/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MeusPedidosIndexRoute = MeusPedidosIndexRouteImport.update({
-  id: '/meus-pedidos/',
-  path: '/meus-pedidos/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LojaIndexRoute = LojaIndexRouteImport.update({
   id: '/loja/',
   path: '/loja/',
@@ -134,16 +106,6 @@ const CarrinhoIndexRoute = CarrinhoIndexRouteImport.update({
 const AutoresIndexRoute = AutoresIndexRouteImport.update({
   id: '/autores/',
   path: '/autores/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AccountIndexRoute = AccountIndexRouteImport.update({
-  id: '/account/',
-  path: '/account/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PublicacoesSlugRoute = PublicacoesSlugRouteImport.update({
@@ -176,94 +138,9 @@ const AutorAuthorIdRoute = AutorAuthorIdRouteImport.update({
   path: '/autor/$authorId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthorSignUpRoute = AuthorSignUpRouteImport.update({
-  id: '/author/sign-up',
-  path: '/author/sign-up',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthorSignInRoute = AuthorSignInRouteImport.update({
-  id: '/author/sign-in',
-  path: '/author/sign-in',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthorProfileRoute = AuthorProfileRouteImport.update({
-  id: '/author/profile',
-  path: '/author/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthorClaimProfileRoute = AuthorClaimProfileRouteImport.update({
-  id: '/author/claim-profile',
-  path: '/author/claim-profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthSignUpRoute = AuthSignUpRouteImport.update({
-  id: '/auth/sign-up',
-  path: '/auth/sign-up',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthSignInRoute = AuthSignInRouteImport.update({
-  id: '/auth/sign-in',
-  path: '/auth/sign-in',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminUsersRoute = AdminUsersRouteImport.update({
-  id: '/admin/users',
-  path: '/admin/users',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminPublicationsRoute = AdminPublicationsRouteImport.update({
-  id: '/admin/publications',
-  path: '/admin/publications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminPostsRoute = AdminPostsRouteImport.update({
-  id: '/admin/posts',
-  path: '/admin/posts',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminOrdersRoute = AdminOrdersRouteImport.update({
-  id: '/admin/orders',
-  path: '/admin/orders',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/admin/login',
-  path: '/admin/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminHeroSlidesRoute = AdminHeroSlidesRouteImport.update({
-  id: '/admin/hero-slides',
-  path: '/admin/hero-slides',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminDashboardRoute = AdminDashboardRouteImport.update({
-  id: '/admin/dashboard',
-  path: '/admin/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminContentRoute = AdminContentRouteImport.update({
-  id: '/admin/content',
-  path: '/admin/content',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminBooksRoute = AdminBooksRouteImport.update({
-  id: '/admin/books',
-  path: '/admin/books',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminAuthorsRoute = AdminAuthorsRouteImport.update({
-  id: '/admin/authors',
-  path: '/admin/authors',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminAuthorClaimsRoute = AdminAuthorClaimsRouteImport.update({
-  id: '/admin/author-claims',
-  path: '/admin/author-claims',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AccountProfileRoute = AccountProfileRouteImport.update({
-  id: '/account/profile',
-  path: '/account/profile',
+const AuthBridgeRoute = AuthBridgeRouteImport.update({
+  id: '/auth/bridge',
+  path: '/auth/bridge',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
@@ -280,21 +157,6 @@ const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
   id: '/demo/api/names',
   path: '/demo/api/names',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AdminContentServicesRoute = AdminContentServicesRouteImport.update({
-  id: '/services',
-  path: '/services',
-  getParentRoute: () => AdminContentRoute,
-} as any)
-const AdminContentProjectsRoute = AdminContentProjectsRouteImport.update({
-  id: '/projects',
-  path: '/projects',
-  getParentRoute: () => AdminContentRoute,
-} as any)
-const AdminContentPartnersRoute = AdminContentPartnersRouteImport.update({
-  id: '/partners',
-  path: '/partners',
-  getParentRoute: () => AdminContentRoute,
 } as any)
 const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
   id: '/demo/start/ssr/',
@@ -321,47 +183,24 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/csp-report': typeof CspReportRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/account/profile': typeof AccountProfileRoute
-  '/admin/author-claims': typeof AdminAuthorClaimsRoute
-  '/admin/authors': typeof AdminAuthorsRoute
-  '/admin/books': typeof AdminBooksRoute
-  '/admin/content': typeof AdminContentRouteWithChildren
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/hero-slides': typeof AdminHeroSlidesRoute
-  '/admin/login': typeof AdminLoginRoute
-  '/admin/orders': typeof AdminOrdersRoute
-  '/admin/posts': typeof AdminPostsRoute
-  '/admin/publications': typeof AdminPublicationsRoute
-  '/admin/users': typeof AdminUsersRoute
-  '/auth/sign-in': typeof AuthSignInRoute
-  '/auth/sign-up': typeof AuthSignUpRoute
-  '/author/claim-profile': typeof AuthorClaimProfileRoute
-  '/author/profile': typeof AuthorProfileRoute
-  '/author/sign-in': typeof AuthorSignInRoute
-  '/author/sign-up': typeof AuthorSignUpRoute
+  '/auth/bridge': typeof AuthBridgeRoute
   '/autor/$authorId': typeof AutorAuthorIdRoute
   '/livro/$bookId': typeof LivroBookIdRoute
   '/newsletter/verify': typeof NewsletterVerifyRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/publicacoes/$slug': typeof PublicacoesSlugRoute
-  '/account': typeof AccountIndexRoute
-  '/admin': typeof AdminIndexRoute
   '/autores': typeof AutoresIndexRoute
   '/carrinho': typeof CarrinhoIndexRoute
   '/checkout': typeof CheckoutIndexRoute
   '/contactos': typeof ContactosIndexRoute
   '/loja': typeof LojaIndexRoute
-  '/meus-pedidos': typeof MeusPedidosIndexRoute
   '/noticias': typeof NoticiasIndexRoute
   '/pesquisa': typeof PesquisaIndexRoute
   '/producao': typeof ProducaoIndexRoute
   '/projectos': typeof ProjectosIndexRoute
   '/publicacoes': typeof PublicacoesIndexRoute
   '/sobre': typeof SobreIndexRoute
-  '/admin/content/partners': typeof AdminContentPartnersRoute
-  '/admin/content/projects': typeof AdminContentProjectsRoute
-  '/admin/content/services': typeof AdminContentServicesRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
@@ -374,47 +213,24 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/csp-report': typeof CspReportRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/account/profile': typeof AccountProfileRoute
-  '/admin/author-claims': typeof AdminAuthorClaimsRoute
-  '/admin/authors': typeof AdminAuthorsRoute
-  '/admin/books': typeof AdminBooksRoute
-  '/admin/content': typeof AdminContentRouteWithChildren
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/hero-slides': typeof AdminHeroSlidesRoute
-  '/admin/login': typeof AdminLoginRoute
-  '/admin/orders': typeof AdminOrdersRoute
-  '/admin/posts': typeof AdminPostsRoute
-  '/admin/publications': typeof AdminPublicationsRoute
-  '/admin/users': typeof AdminUsersRoute
-  '/auth/sign-in': typeof AuthSignInRoute
-  '/auth/sign-up': typeof AuthSignUpRoute
-  '/author/claim-profile': typeof AuthorClaimProfileRoute
-  '/author/profile': typeof AuthorProfileRoute
-  '/author/sign-in': typeof AuthorSignInRoute
-  '/author/sign-up': typeof AuthorSignUpRoute
+  '/auth/bridge': typeof AuthBridgeRoute
   '/autor/$authorId': typeof AutorAuthorIdRoute
   '/livro/$bookId': typeof LivroBookIdRoute
   '/newsletter/verify': typeof NewsletterVerifyRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/publicacoes/$slug': typeof PublicacoesSlugRoute
-  '/account': typeof AccountIndexRoute
-  '/admin': typeof AdminIndexRoute
   '/autores': typeof AutoresIndexRoute
   '/carrinho': typeof CarrinhoIndexRoute
   '/checkout': typeof CheckoutIndexRoute
   '/contactos': typeof ContactosIndexRoute
   '/loja': typeof LojaIndexRoute
-  '/meus-pedidos': typeof MeusPedidosIndexRoute
   '/noticias': typeof NoticiasIndexRoute
   '/pesquisa': typeof PesquisaIndexRoute
   '/producao': typeof ProducaoIndexRoute
   '/projectos': typeof ProjectosIndexRoute
   '/publicacoes': typeof PublicacoesIndexRoute
   '/sobre': typeof SobreIndexRoute
-  '/admin/content/partners': typeof AdminContentPartnersRoute
-  '/admin/content/projects': typeof AdminContentProjectsRoute
-  '/admin/content/services': typeof AdminContentServicesRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
@@ -428,47 +244,24 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/csp-report': typeof CspReportRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/account/profile': typeof AccountProfileRoute
-  '/admin/author-claims': typeof AdminAuthorClaimsRoute
-  '/admin/authors': typeof AdminAuthorsRoute
-  '/admin/books': typeof AdminBooksRoute
-  '/admin/content': typeof AdminContentRouteWithChildren
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/hero-slides': typeof AdminHeroSlidesRoute
-  '/admin/login': typeof AdminLoginRoute
-  '/admin/orders': typeof AdminOrdersRoute
-  '/admin/posts': typeof AdminPostsRoute
-  '/admin/publications': typeof AdminPublicationsRoute
-  '/admin/users': typeof AdminUsersRoute
-  '/auth/sign-in': typeof AuthSignInRoute
-  '/auth/sign-up': typeof AuthSignUpRoute
-  '/author/claim-profile': typeof AuthorClaimProfileRoute
-  '/author/profile': typeof AuthorProfileRoute
-  '/author/sign-in': typeof AuthorSignInRoute
-  '/author/sign-up': typeof AuthorSignUpRoute
+  '/auth/bridge': typeof AuthBridgeRoute
   '/autor/$authorId': typeof AutorAuthorIdRoute
   '/livro/$bookId': typeof LivroBookIdRoute
   '/newsletter/verify': typeof NewsletterVerifyRoute
   '/noticias/$slug': typeof NoticiasSlugRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/publicacoes/$slug': typeof PublicacoesSlugRoute
-  '/account/': typeof AccountIndexRoute
-  '/admin/': typeof AdminIndexRoute
   '/autores/': typeof AutoresIndexRoute
   '/carrinho/': typeof CarrinhoIndexRoute
   '/checkout/': typeof CheckoutIndexRoute
   '/contactos/': typeof ContactosIndexRoute
   '/loja/': typeof LojaIndexRoute
-  '/meus-pedidos/': typeof MeusPedidosIndexRoute
   '/noticias/': typeof NoticiasIndexRoute
   '/pesquisa/': typeof PesquisaIndexRoute
   '/producao/': typeof ProducaoIndexRoute
   '/projectos/': typeof ProjectosIndexRoute
   '/publicacoes/': typeof PublicacoesIndexRoute
   '/sobre/': typeof SobreIndexRoute
-  '/admin/content/partners': typeof AdminContentPartnersRoute
-  '/admin/content/projects': typeof AdminContentProjectsRoute
-  '/admin/content/services': typeof AdminContentServicesRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
@@ -483,47 +276,24 @@ export interface FileRouteTypes {
     | '/'
     | '/csp-report'
     | '/sitemap.xml'
-    | '/account/profile'
-    | '/admin/author-claims'
-    | '/admin/authors'
-    | '/admin/books'
-    | '/admin/content'
-    | '/admin/dashboard'
-    | '/admin/hero-slides'
-    | '/admin/login'
-    | '/admin/orders'
-    | '/admin/posts'
-    | '/admin/publications'
-    | '/admin/users'
-    | '/auth/sign-in'
-    | '/auth/sign-up'
-    | '/author/claim-profile'
-    | '/author/profile'
-    | '/author/sign-in'
-    | '/author/sign-up'
+    | '/auth/bridge'
     | '/autor/$authorId'
     | '/livro/$bookId'
     | '/newsletter/verify'
     | '/noticias/$slug'
     | '/pedido/$orderId'
     | '/publicacoes/$slug'
-    | '/account'
-    | '/admin'
     | '/autores'
     | '/carrinho'
     | '/checkout'
     | '/contactos'
     | '/loja'
-    | '/meus-pedidos'
     | '/noticias'
     | '/pesquisa'
     | '/producao'
     | '/projectos'
     | '/publicacoes'
     | '/sobre'
-    | '/admin/content/partners'
-    | '/admin/content/projects'
-    | '/admin/content/services'
     | '/demo/api/names'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
@@ -536,47 +306,24 @@ export interface FileRouteTypes {
     | '/'
     | '/csp-report'
     | '/sitemap.xml'
-    | '/account/profile'
-    | '/admin/author-claims'
-    | '/admin/authors'
-    | '/admin/books'
-    | '/admin/content'
-    | '/admin/dashboard'
-    | '/admin/hero-slides'
-    | '/admin/login'
-    | '/admin/orders'
-    | '/admin/posts'
-    | '/admin/publications'
-    | '/admin/users'
-    | '/auth/sign-in'
-    | '/auth/sign-up'
-    | '/author/claim-profile'
-    | '/author/profile'
-    | '/author/sign-in'
-    | '/author/sign-up'
+    | '/auth/bridge'
     | '/autor/$authorId'
     | '/livro/$bookId'
     | '/newsletter/verify'
     | '/noticias/$slug'
     | '/pedido/$orderId'
     | '/publicacoes/$slug'
-    | '/account'
-    | '/admin'
     | '/autores'
     | '/carrinho'
     | '/checkout'
     | '/contactos'
     | '/loja'
-    | '/meus-pedidos'
     | '/noticias'
     | '/pesquisa'
     | '/producao'
     | '/projectos'
     | '/publicacoes'
     | '/sobre'
-    | '/admin/content/partners'
-    | '/admin/content/projects'
-    | '/admin/content/services'
     | '/demo/api/names'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
@@ -589,47 +336,24 @@ export interface FileRouteTypes {
     | '/'
     | '/csp-report'
     | '/sitemap.xml'
-    | '/account/profile'
-    | '/admin/author-claims'
-    | '/admin/authors'
-    | '/admin/books'
-    | '/admin/content'
-    | '/admin/dashboard'
-    | '/admin/hero-slides'
-    | '/admin/login'
-    | '/admin/orders'
-    | '/admin/posts'
-    | '/admin/publications'
-    | '/admin/users'
-    | '/auth/sign-in'
-    | '/auth/sign-up'
-    | '/author/claim-profile'
-    | '/author/profile'
-    | '/author/sign-in'
-    | '/author/sign-up'
+    | '/auth/bridge'
     | '/autor/$authorId'
     | '/livro/$bookId'
     | '/newsletter/verify'
     | '/noticias/$slug'
     | '/pedido/$orderId'
     | '/publicacoes/$slug'
-    | '/account/'
-    | '/admin/'
     | '/autores/'
     | '/carrinho/'
     | '/checkout/'
     | '/contactos/'
     | '/loja/'
-    | '/meus-pedidos/'
     | '/noticias/'
     | '/pesquisa/'
     | '/producao/'
     | '/projectos/'
     | '/publicacoes/'
     | '/sobre/'
-    | '/admin/content/partners'
-    | '/admin/content/projects'
-    | '/admin/content/services'
     | '/demo/api/names'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
@@ -643,38 +367,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CspReportRoute: typeof CspReportRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  AccountProfileRoute: typeof AccountProfileRoute
-  AdminAuthorClaimsRoute: typeof AdminAuthorClaimsRoute
-  AdminAuthorsRoute: typeof AdminAuthorsRoute
-  AdminBooksRoute: typeof AdminBooksRoute
-  AdminContentRoute: typeof AdminContentRouteWithChildren
-  AdminDashboardRoute: typeof AdminDashboardRoute
-  AdminHeroSlidesRoute: typeof AdminHeroSlidesRoute
-  AdminLoginRoute: typeof AdminLoginRoute
-  AdminOrdersRoute: typeof AdminOrdersRoute
-  AdminPostsRoute: typeof AdminPostsRoute
-  AdminPublicationsRoute: typeof AdminPublicationsRoute
-  AdminUsersRoute: typeof AdminUsersRoute
-  AuthSignInRoute: typeof AuthSignInRoute
-  AuthSignUpRoute: typeof AuthSignUpRoute
-  AuthorClaimProfileRoute: typeof AuthorClaimProfileRoute
-  AuthorProfileRoute: typeof AuthorProfileRoute
-  AuthorSignInRoute: typeof AuthorSignInRoute
-  AuthorSignUpRoute: typeof AuthorSignUpRoute
+  AuthBridgeRoute: typeof AuthBridgeRoute
   AutorAuthorIdRoute: typeof AutorAuthorIdRoute
   LivroBookIdRoute: typeof LivroBookIdRoute
   NewsletterVerifyRoute: typeof NewsletterVerifyRoute
   NoticiasSlugRoute: typeof NoticiasSlugRoute
   PedidoOrderIdRoute: typeof PedidoOrderIdRoute
   PublicacoesSlugRoute: typeof PublicacoesSlugRoute
-  AccountIndexRoute: typeof AccountIndexRoute
-  AdminIndexRoute: typeof AdminIndexRoute
   AutoresIndexRoute: typeof AutoresIndexRoute
   CarrinhoIndexRoute: typeof CarrinhoIndexRoute
   CheckoutIndexRoute: typeof CheckoutIndexRoute
   ContactosIndexRoute: typeof ContactosIndexRoute
   LojaIndexRoute: typeof LojaIndexRoute
-  MeusPedidosIndexRoute: typeof MeusPedidosIndexRoute
   NoticiasIndexRoute: typeof NoticiasIndexRoute
   PesquisaIndexRoute: typeof PesquisaIndexRoute
   ProducaoIndexRoute: typeof ProducaoIndexRoute
@@ -755,13 +459,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NoticiasIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/meus-pedidos/': {
-      id: '/meus-pedidos/'
-      path: '/meus-pedidos'
-      fullPath: '/meus-pedidos'
-      preLoaderRoute: typeof MeusPedidosIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/loja/': {
       id: '/loja/'
       path: '/loja'
@@ -795,20 +492,6 @@ declare module '@tanstack/react-router' {
       path: '/autores'
       fullPath: '/autores'
       preLoaderRoute: typeof AutoresIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/': {
-      id: '/admin/'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/account/': {
-      id: '/account/'
-      path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AccountIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/publicacoes/$slug': {
@@ -853,130 +536,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AutorAuthorIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/author/sign-up': {
-      id: '/author/sign-up'
-      path: '/author/sign-up'
-      fullPath: '/author/sign-up'
-      preLoaderRoute: typeof AuthorSignUpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/author/sign-in': {
-      id: '/author/sign-in'
-      path: '/author/sign-in'
-      fullPath: '/author/sign-in'
-      preLoaderRoute: typeof AuthorSignInRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/author/profile': {
-      id: '/author/profile'
-      path: '/author/profile'
-      fullPath: '/author/profile'
-      preLoaderRoute: typeof AuthorProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/author/claim-profile': {
-      id: '/author/claim-profile'
-      path: '/author/claim-profile'
-      fullPath: '/author/claim-profile'
-      preLoaderRoute: typeof AuthorClaimProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/sign-up': {
-      id: '/auth/sign-up'
-      path: '/auth/sign-up'
-      fullPath: '/auth/sign-up'
-      preLoaderRoute: typeof AuthSignUpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/sign-in': {
-      id: '/auth/sign-in'
-      path: '/auth/sign-in'
-      fullPath: '/auth/sign-in'
-      preLoaderRoute: typeof AuthSignInRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/users': {
-      id: '/admin/users'
-      path: '/admin/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AdminUsersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/publications': {
-      id: '/admin/publications'
-      path: '/admin/publications'
-      fullPath: '/admin/publications'
-      preLoaderRoute: typeof AdminPublicationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/posts': {
-      id: '/admin/posts'
-      path: '/admin/posts'
-      fullPath: '/admin/posts'
-      preLoaderRoute: typeof AdminPostsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/orders': {
-      id: '/admin/orders'
-      path: '/admin/orders'
-      fullPath: '/admin/orders'
-      preLoaderRoute: typeof AdminOrdersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/login': {
-      id: '/admin/login'
-      path: '/admin/login'
-      fullPath: '/admin/login'
-      preLoaderRoute: typeof AdminLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/hero-slides': {
-      id: '/admin/hero-slides'
-      path: '/admin/hero-slides'
-      fullPath: '/admin/hero-slides'
-      preLoaderRoute: typeof AdminHeroSlidesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/dashboard': {
-      id: '/admin/dashboard'
-      path: '/admin/dashboard'
-      fullPath: '/admin/dashboard'
-      preLoaderRoute: typeof AdminDashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/content': {
-      id: '/admin/content'
-      path: '/admin/content'
-      fullPath: '/admin/content'
-      preLoaderRoute: typeof AdminContentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/books': {
-      id: '/admin/books'
-      path: '/admin/books'
-      fullPath: '/admin/books'
-      preLoaderRoute: typeof AdminBooksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/authors': {
-      id: '/admin/authors'
-      path: '/admin/authors'
-      fullPath: '/admin/authors'
-      preLoaderRoute: typeof AdminAuthorsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/author-claims': {
-      id: '/admin/author-claims'
-      path: '/admin/author-claims'
-      fullPath: '/admin/author-claims'
-      preLoaderRoute: typeof AdminAuthorClaimsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/account/profile': {
-      id: '/account/profile'
-      path: '/account/profile'
-      fullPath: '/account/profile'
-      preLoaderRoute: typeof AccountProfileRouteImport
+    '/auth/bridge': {
+      id: '/auth/bridge'
+      path: '/auth/bridge'
+      fullPath: '/auth/bridge'
+      preLoaderRoute: typeof AuthBridgeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/start/server-funcs': {
@@ -999,27 +563,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/demo/api/names'
       preLoaderRoute: typeof DemoApiNamesRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/admin/content/services': {
-      id: '/admin/content/services'
-      path: '/services'
-      fullPath: '/admin/content/services'
-      preLoaderRoute: typeof AdminContentServicesRouteImport
-      parentRoute: typeof AdminContentRoute
-    }
-    '/admin/content/projects': {
-      id: '/admin/content/projects'
-      path: '/projects'
-      fullPath: '/admin/content/projects'
-      preLoaderRoute: typeof AdminContentProjectsRouteImport
-      parentRoute: typeof AdminContentRoute
-    }
-    '/admin/content/partners': {
-      id: '/admin/content/partners'
-      path: '/partners'
-      fullPath: '/admin/content/partners'
-      preLoaderRoute: typeof AdminContentPartnersRouteImport
-      parentRoute: typeof AdminContentRoute
     }
     '/demo/start/ssr/': {
       id: '/demo/start/ssr/'
@@ -1052,58 +595,22 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AdminContentRouteChildren {
-  AdminContentPartnersRoute: typeof AdminContentPartnersRoute
-  AdminContentProjectsRoute: typeof AdminContentProjectsRoute
-  AdminContentServicesRoute: typeof AdminContentServicesRoute
-}
-
-const AdminContentRouteChildren: AdminContentRouteChildren = {
-  AdminContentPartnersRoute: AdminContentPartnersRoute,
-  AdminContentProjectsRoute: AdminContentProjectsRoute,
-  AdminContentServicesRoute: AdminContentServicesRoute,
-}
-
-const AdminContentRouteWithChildren = AdminContentRoute._addFileChildren(
-  AdminContentRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CspReportRoute: CspReportRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  AccountProfileRoute: AccountProfileRoute,
-  AdminAuthorClaimsRoute: AdminAuthorClaimsRoute,
-  AdminAuthorsRoute: AdminAuthorsRoute,
-  AdminBooksRoute: AdminBooksRoute,
-  AdminContentRoute: AdminContentRouteWithChildren,
-  AdminDashboardRoute: AdminDashboardRoute,
-  AdminHeroSlidesRoute: AdminHeroSlidesRoute,
-  AdminLoginRoute: AdminLoginRoute,
-  AdminOrdersRoute: AdminOrdersRoute,
-  AdminPostsRoute: AdminPostsRoute,
-  AdminPublicationsRoute: AdminPublicationsRoute,
-  AdminUsersRoute: AdminUsersRoute,
-  AuthSignInRoute: AuthSignInRoute,
-  AuthSignUpRoute: AuthSignUpRoute,
-  AuthorClaimProfileRoute: AuthorClaimProfileRoute,
-  AuthorProfileRoute: AuthorProfileRoute,
-  AuthorSignInRoute: AuthorSignInRoute,
-  AuthorSignUpRoute: AuthorSignUpRoute,
+  AuthBridgeRoute: AuthBridgeRoute,
   AutorAuthorIdRoute: AutorAuthorIdRoute,
   LivroBookIdRoute: LivroBookIdRoute,
   NewsletterVerifyRoute: NewsletterVerifyRoute,
   NoticiasSlugRoute: NoticiasSlugRoute,
   PedidoOrderIdRoute: PedidoOrderIdRoute,
   PublicacoesSlugRoute: PublicacoesSlugRoute,
-  AccountIndexRoute: AccountIndexRoute,
-  AdminIndexRoute: AdminIndexRoute,
   AutoresIndexRoute: AutoresIndexRoute,
   CarrinhoIndexRoute: CarrinhoIndexRoute,
   CheckoutIndexRoute: CheckoutIndexRoute,
   ContactosIndexRoute: ContactosIndexRoute,
   LojaIndexRoute: LojaIndexRoute,
-  MeusPedidosIndexRoute: MeusPedidosIndexRoute,
   NoticiasIndexRoute: NoticiasIndexRoute,
   PesquisaIndexRoute: PesquisaIndexRoute,
   ProducaoIndexRoute: ProducaoIndexRoute,

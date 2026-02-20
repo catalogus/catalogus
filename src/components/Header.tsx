@@ -1,8 +1,9 @@
 import { Link, useRouterState } from '@tanstack/react-router'
-import { Menu, X, User, LogOut, LayoutDashboard, ChevronDown } from 'lucide-react'
+import { ChevronDown, LogOut, Menu, User, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthProvider'
+import { buildCmsAuthUrl, buildCmsBridgeTransferUrl } from '../lib/crossSiteAuth'
 import { CartButton } from './shop/CartButton'
 import { FloatingSearch } from './search/FloatingSearch'
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from './ui/dialog'
@@ -79,7 +80,7 @@ const isActiveHashItem = (href: string, pathname: string, hash: string) => {
 
 export default function Header() {
   const { t } = useTranslation()
-  const { session, profile, signOut } = useAuth()
+  const { session, profile, loading, signOut } = useAuth()
   const { pathname, hash } = useRouterState({
     select: (state) => ({
       pathname: state.location.pathname,
@@ -89,6 +90,18 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+
+  const currentPath = `${pathname}${hash || ''}`
+  const cmsLoginUrl = buildCmsAuthUrl('login', currentPath)
+  const cmsSignupUrl = buildCmsAuthUrl('sign-up', currentPath)
+
+  const handleOpenCmsProfile = () => {
+    if (!session) {
+      window.location.href = cmsLoginUrl
+      return
+    }
+    window.location.href = buildCmsBridgeTransferUrl(session, '/perfil')
+  }
 
   // Set CSS custom property for header height
   useEffect(() => {
@@ -138,13 +151,11 @@ export default function Header() {
     }
   }, [menuOpen])
 
-  // Close user menu on scroll
   useEffect(() => {
     if (!userMenuOpen) return
-
-    const handleScroll = () => setUserMenuOpen(false)
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
+    const closeMenu = () => setUserMenuOpen(false)
+    window.addEventListener('scroll', closeMenu, { passive: true })
+    return () => window.removeEventListener('scroll', closeMenu)
   }, [userMenuOpen])
 
   return (
@@ -264,70 +275,48 @@ export default function Header() {
 
           <div className="hidden items-center gap-3 lg:flex">
             <CartButton className="bg-white/0" />
-            {session && profile ? (
+            {!loading && session ? (
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 bg-(--header-ink) px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-(--header-accent)"
+                  onClick={() => setUserMenuOpen((current) => !current)}
+                  className="flex items-center gap-2 bg-[color:var(--header-ink)] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[color:var(--header-accent)]"
                 >
-                  {profile.photo_url ? (
+                  {profile?.photo_url ? (
                     <img
                       src={profile.photo_url}
-                      alt={profile.name ?? 'User'}
+                      alt={profile?.name || session.user.email || 'User'}
                       className="h-6 w-6 object-cover"
                     />
                   ) : (
                     <User className="h-4 w-4" />
                   )}
-                  <span>{profile.name ?? session.user.email}</span>
+                  <span>{profile?.name || session.user.email}</span>
                   <ChevronDown className="h-4 w-4" />
                 </button>
 
                 {userMenuOpen && (
                   <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setUserMenuOpen(false)}
-                    />
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 shadow-lg z-50">
-                      {profile.role === 'admin' && (
-                        <Link
-                          to="/admin/dashboard"
-                          className="flex items-center gap-2 px-4 py-3 text-sm text-gray-900 hover:bg-gray-100 transition-colors"
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <LayoutDashboard className="h-4 w-4" />
-                          {t('header.auth.adminPanel')}
-                        </Link>
-                      )}
-                      {profile.role === 'author' && (
-                        <Link
-                          to="/author/profile"
-                          className="flex items-center gap-2 px-4 py-3 text-sm text-gray-900 hover:bg-gray-100 transition-colors"
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <User className="h-4 w-4" />
-                          {t('header.auth.myProfile')}
-                        </Link>
-                      )}
-                      {profile.role === 'customer' && (
-                        <Link
-                          to="/account/profile"
-                          className="flex items-center gap-2 px-4 py-3 text-sm text-gray-900 hover:bg-gray-100 transition-colors"
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <User className="h-4 w-4" />
-                          {t('header.auth.myAccount')}
-                        </Link>
-                      )}
+                    <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                    <div className="absolute right-0 top-full z-50 mt-2 w-56 border border-gray-200 bg-white shadow-lg">
                       <button
                         type="button"
+                        className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-gray-900 transition-colors hover:bg-gray-100"
+                        onClick={() => {
+                          setUserMenuOpen(false)
+                          handleOpenCmsProfile()
+                        }}
+                      >
+                        <User className="h-4 w-4" />
+                        {t('header.auth.myProfileCms')}
+                      </button>
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-gray-900 transition-colors hover:bg-gray-100"
                         onClick={async () => {
                           setUserMenuOpen(false)
                           await signOut()
                         }}
-                        className="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-900 hover:bg-gray-100 transition-colors"
                       >
                         <LogOut className="h-4 w-4" />
                         {t('header.auth.signOut')}
@@ -337,12 +326,20 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              <Link
-                to="/auth/sign-in"
-                className="bg-[color:var(--header-ink)] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[color:var(--header-accent)]"
-              >
-                {t('header.auth.signIn')}
-              </Link>
+              <>
+                <a
+                  href={cmsSignupUrl}
+                  className="border border-[color:var(--header-ink)] px-4 py-2 text-sm font-semibold text-[color:var(--header-ink)] transition-colors hover:border-[color:var(--header-accent)] hover:text-[color:var(--header-accent)]"
+                >
+                  {t('header.auth.signUp')}
+                </a>
+                <a
+                  href={cmsLoginUrl}
+                  className="bg-[color:var(--header-ink)] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[color:var(--header-accent)]"
+                >
+                  {t('header.auth.signIn')}
+                </a>
+              </>
             )}
           </div>
 
@@ -448,85 +445,51 @@ export default function Header() {
                   })}
                 </div>
 
-                <div className="mt-auto space-y-3">
-                  {session && profile ? (
+                <div className="mt-auto space-y-3 border-t border-white/10 pt-4">
+                  {!loading && session ? (
                     <>
-                      <div className="border-t border-white/10 pt-3">
-                        <div className="flex items-center gap-3 px-4 py-2">
-                          {profile.photo_url ? (
-                            <img
-                              src={profile.photo_url}
-                              alt={profile.name ?? 'User'}
-                              className="h-10 w-10 object-cover border-2 border-white/20"
-                            />
-                          ) : (
-                            <div className="flex h-10 w-10 items-center justify-center bg-white/10 border-2 border-white/20">
-                              <User className="h-5 w-5" />
-                            </div>
-                          )}
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-white">
-                              {profile.name ?? t('header.mobile.userFallback')}
-                            </p>
-                            <p className="text-xs text-white/60">{session.user.email}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {profile.role === 'admin' && (
-                        <Link
-                          to="/admin/dashboard"
-                          className="flex items-center gap-2 bg-white/10 px-4 py-3 text-sm font-semibold text-white border border-white/20 hover:bg-white/20 transition-colors"
-                          onClick={() => setMenuOpen(false)}
-                        >
-                          <LayoutDashboard className="h-4 w-4" />
-                          {t('header.auth.adminPanel')}
-                        </Link>
-                      )}
-
-                      {profile.role === 'author' && (
-                        <Link
-                          to="/author/profile"
-                          className="flex items-center gap-2 bg-white/10 px-4 py-3 text-sm font-semibold text-white border border-white/20 hover:bg-white/20 transition-colors"
-                          onClick={() => setMenuOpen(false)}
-                        >
-                          <User className="h-4 w-4" />
-                          {t('header.auth.myProfile')}
-                        </Link>
-                      )}
-
-                      {profile.role === 'customer' && (
-                        <Link
-                          to="/account/profile"
-                          className="flex items-center gap-2 bg-white/10 px-4 py-3 text-sm font-semibold text-white border border-white/20 hover:bg-white/20 transition-colors"
-                          onClick={() => setMenuOpen(false)}
-                        >
-                          <User className="h-4 w-4" />
-                          {t('header.auth.myAccount')}
-                        </Link>
-                      )}
-
                       <button
                         type="button"
+                        className="flex w-full items-center gap-2 border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+                        onClick={() => {
+                          setMenuOpen(false)
+                          handleOpenCmsProfile()
+                        }}
+                      >
+                        <User className="h-4 w-4" />
+                        {t('header.auth.myProfileCms')}
+                      </button>
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 bg-white px-4 py-3 text-sm font-semibold text-[color:var(--header-ink)]"
                         onClick={async () => {
                           setMenuOpen(false)
                           await signOut()
                         }}
-                        className="flex w-full items-center gap-2 bg-white px-4 py-3 text-sm font-semibold text-[color:var(--header-ink)] hover:bg-gray-100 transition-colors"
                       >
                         <LogOut className="h-4 w-4" />
                         {t('header.auth.signOut')}
                       </button>
                     </>
                   ) : (
-                    <Link
-                      to="/auth/sign-in"
-                      className="flex items-center justify-between bg-white px-4 py-3 text-sm font-semibold text-[color:var(--header-ink)]"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      {t('header.auth.signIn')}
-                    </Link>
+                    <>
+                      <a
+                        href={cmsSignupUrl}
+                        className="flex items-center justify-center border border-white/20 px-4 py-3 text-sm font-semibold text-white"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        {t('header.auth.signUp')}
+                      </a>
+                      <a
+                        href={cmsLoginUrl}
+                        className="flex items-center justify-center bg-white px-4 py-3 text-sm font-semibold text-[color:var(--header-ink)]"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        {t('header.auth.signIn')}
+                      </a>
+                    </>
                   )}
+                  <div className="text-xs text-white/65">Catalogus</div>
                 </div>
               </div>
             </DialogContent>

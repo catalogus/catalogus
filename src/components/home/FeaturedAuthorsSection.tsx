@@ -1,5 +1,6 @@
 import { Facebook, Globe, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { buildCmsAuthUrl } from '../../lib/crossSiteAuth'
 import type { SocialLinks } from '../../types/author'
 import { AuthorPhoto } from '../OptimizedImage'
 
@@ -44,6 +45,7 @@ export default function FeaturedAuthorsSection({
   hasError = false,
 }: FeaturedAuthorsSectionProps) {
   const { t } = useTranslation()
+  const signupHref = buildCmsAuthUrl('sign-up', '/autores')
 
   return (
     <section className="bg-[#f4efe9] text-gray-900">
@@ -158,7 +160,7 @@ export default function FeaturedAuthorsSection({
                 {t('home.featuredAuthors.joinSubtitle')}
               </p>
               <a
-                href="/author/sign-up"
+                href={signupHref}
                 className="mt-2 inline-flex items-center justify-center bg-[color:var(--brand)] px-8 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#a25a2c]"
               >
                 {t('home.featuredAuthors.joinCta')}
