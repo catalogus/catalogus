@@ -100,7 +100,12 @@ export default function Header() {
       window.location.href = cmsLoginUrl
       return
     }
-    window.location.href = buildCmsBridgeTransferUrl(session, '/perfil')
+
+    const metadataRole = (session.user.user_metadata as { role?: string } | undefined)?.role
+    const effectiveRole = profile?.role ?? metadataRole
+    const cmsNextPath = effectiveRole === 'author' ? '/perfil' : '/'
+
+    window.location.href = buildCmsBridgeTransferUrl(session, cmsNextPath)
   }
 
   // Set CSS custom property for header height
