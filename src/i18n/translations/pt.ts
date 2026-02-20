@@ -19,13 +19,6 @@ const pt = {
       about: 'Sobre',
       contacts: 'Contactos',
     },
-    auth: {
-      adminPanel: 'Painel Admin',
-      myProfile: 'Meu Perfil',
-      myAccount: 'Minha Conta',
-      signOut: 'Sair',
-      signIn: 'Entrar',
-    },
     menu: {
       title: 'Menu',
       open: 'Abrir menu',
@@ -33,7 +26,12 @@ const pt = {
     },
     mobile: {
       tagline: 'Livraria & cultura',
-      userFallback: 'Usuário',
+    },
+    auth: {
+      signIn: 'Entrar',
+      signUp: 'Registar-me',
+      signOut: 'Sair',
+      myProfileCms: 'Meu perfil (CMS)',
     },
   },
   footer: {
@@ -218,21 +216,6 @@ const pt = {
       home: 'Home',
       authors: 'Autores',
     },
-    claim: {
-      unclaimedLabel: 'Perfil não reivindicado',
-      unclaimedTitle: 'É você este autor?',
-      unclaimedBody:
-        'Reivindique este perfil para gerir as suas informações públicas.',
-      unclaimedCta: 'Reivindicar Este Perfil',
-      pendingTitle: 'Reivindicação Pendente',
-      pendingStatus: 'Em análise',
-      pendingBody:
-        'A sua reivindicação está a aguardar aprovação de um administrador.',
-      linkedTitle: 'Perfil Vinculado',
-      linkedBody: 'Este é o seu perfil de autor',
-      manage: 'Gerir em',
-      myProfile: 'Meu Perfil',
-    },
     socialTitle: 'Redes sociais',
     bio: {
       label: 'Biografia',
@@ -252,39 +235,6 @@ const pt = {
       title: 'Conversa com o autor',
       frameTitle: 'Video de {{name}}',
       watch: 'Assistir video',
-    },
-    toasts: {
-      claimSubmitted:
-        'Reivindicação submetida com sucesso! Um administrador irá revisar.',
-      claimCompleteError: 'Falha ao completar reivindicação. Tente novamente.',
-      claimRequireAccount:
-        'Por favor, crie uma conta para completar a reivindicação.',
-      claimSubmitError: 'Falha ao submeter reivindicação. Tente novamente.',
-    },
-    modal: {
-      title: 'Reivindicar Perfil de Autor',
-      subtitle: 'Verificação de identidade',
-      close: 'Fechar',
-      profileLabel: 'Perfil a reivindicar',
-      intro:
-        'Para verificar que este perfil é seu, forneça as seguintes informações. Um administrador irá revisar a sua solicitação antes de aprovar.',
-      emailLabel: 'Email',
-      phoneLabel: 'Telefone',
-      messageLabel: 'Porque este perfil é seu?',
-      emailPlaceholder: 'seu@email.com',
-      phonePlaceholder: '+258 XX XXX XXXX',
-      messagePlaceholder:
-        'Explique porque este perfil pertence a você. Inclua detalhes que apenas o autor conheceria, como obras publicadas, eventos em que participou, ou outras informações verificáveis...',
-      minChars: 'Mínimo 20 caracteres • {{count}}/20',
-      cancel: 'Cancelar',
-      submit: 'Continuar para Criar Conta',
-      errors: {
-        emailRequired: 'Email é obrigatório',
-        emailInvalid: 'Email inválido',
-        phoneRequired: 'Telefone é obrigatório',
-        messageRequired: 'Mensagem é obrigatória',
-        messageMin: 'A mensagem deve ter pelo menos 20 caracteres',
-      },
     },
   },
   shop: {
@@ -412,13 +362,6 @@ const pt = {
       body: 'Adicione livros antes de finalizar a compra.',
       cta: 'Ir para a loja',
     },
-    loading: 'A carregar sessao...',
-    login: {
-      title: 'Faça login para finalizar a compra',
-      body: 'Precisa de uma conta? Crie uma para continuar.',
-      signIn: 'Entrar',
-      signUp: 'Criar conta',
-    },
     customer: {
       title: 'Dados do cliente',
       subtitle: 'Preencha os dados para concluir o pedido.',
@@ -445,7 +388,6 @@ const pt = {
     },
     toasts: {
       cartEmpty: 'O carrinho esta vazio',
-      loginRequired: 'Faça login para finalizar a compra',
       paymentInitiated:
         'Pedido de pagamento enviado. Confirme o pagamento no seu telefone usando o seu PIN M-Pesa.',
       paymentInitError:
@@ -470,7 +412,6 @@ const pt = {
       notFound: 'Pedido nao encontrado.',
       confirmed: 'Pedido confirmado',
       customer: 'Cliente',
-      contact: 'Contacto',
       items: 'Itens',
       total: 'Total',
       paymentTitle: 'Pagamento M-Pesa',
@@ -480,23 +421,9 @@ const pt = {
       paymentPaid: 'Pagamento confirmado. Obrigado pela sua compra.',
       paymentFailed:
         'O pagamento falhou ou foi cancelado. Tente novamente ou contacte o suporte.',
-      refreshStatus: 'Atualizar estado',
-      refreshingStatus: 'A verificar...',
       print: 'Imprimir pedido',
       backToShop: 'Voltar a loja',
       bookFallback: 'Livro',
-      download: 'Transferir',
-    },
-    history: {
-      title: 'Meus pedidos',
-      loginPrompt: 'Faça login para ver os seus pedidos',
-      signIn: 'Entrar',
-      filterLabel: 'Filtrar status',
-      filterAll: 'Todos',
-      error: 'Falha ao carregar pedidos. Tente novamente.',
-      empty: 'Nenhum pedido encontrado.',
-      viewDetails: 'Ver detalhes',
-      downloads: 'Downloads',
     },
   },
   newsletter: {
@@ -738,15 +665,6 @@ const pt = {
         gallery: 'encontro',
       },
     ],
-  },
-  admin: {
-    posts: {
-      filters: {
-        languageAll: 'Todos os idiomas',
-        languagePortuguese: 'Português',
-        languageEnglish: 'English',
-      },
-    },
   },
 }
 

@@ -1,12 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { formatPrice, getOrderStatusColor } from '../../lib/shopHelpers'
 import { supabase } from '../../lib/supabaseClient'
-import { useAuth } from '../../contexts/AuthProvider'
-import { refreshMpesaStatus } from '../../server/mpesa'
-import { getPaidDigitalDownloadUrl } from '../../server/newsletter'
 
 type OrderItem = {
   id: number
@@ -50,7 +47,6 @@ export const Route = createFileRoute('/pedido/$orderId')({
 function OrderConfirmationPage() {
   const { orderId } = Route.useParams()
   const { t, i18n } = useTranslation()
-  const { session } = useAuth()
   const locale = i18n.language === 'en' ? 'en-US' : 'pt-PT'
 
   const orderQuery = useQuery({
@@ -106,41 +102,6 @@ function OrderConfirmationPage() {
         : t('orders.detail.paymentPending')
     : t('orders.detail.paymentFallback')
 
-  const refreshStatusMutation = useMutation({
-    mutationFn: async () => {
-      if (!session?.access_token || !order?.id) {
-        throw new Error('Missing access token')
-      }
-      return refreshMpesaStatus({
-        data: { orderId: order.id, accessToken: session.access_token },
-      })
-    },
-    onSuccess: async () => {
-      await orderQuery.refetch()
-    },
-  })
-
-  const downloadMutation = useMutation({
-    mutationFn: async (bookId: string) => {
-      if (!session?.access_token) {
-        throw new Error('Missing access token')
-      }
-      return getPaidDigitalDownloadUrl({
-        data: {
-          orderId,
-          bookId,
-          accessToken: session.access_token,
-        },
-      })
-    },
-    onSuccess: (data) => {
-      if (data?.url) {
-        const popup = window.open(data.url, '_blank', 'noopener')
-        if (popup) popup.opener = null
-      }
-    },
-  })
-
   return (
     <div className="min-h-screen bg-[#f8f4ef] text-gray-900">
       <Header />
@@ -193,14 +154,6 @@ function OrderConfirmationPage() {
                 </span>
                 <span>{order.customer_name}</span>
               </div>
-              <div>
-                <span className="block text-xs uppercase tracking-wider text-gray-500">
-                  {t('orders.detail.contact')}
-                </span>
-                <span>
-                  {order.customer_email} | {order.customer_phone}
-                </span>
-              </div>
             </div>
 
             <div id="downloads" className="border-t border-gray-200 pt-4">
@@ -230,18 +183,6 @@ function OrderConfirmationPage() {
                       <p className="text-xs text-gray-600">
                         {item.quantity} x {formatPrice(item.price, locale)}
                       </p>
-                      {order.status === 'paid' &&
-                        item.book?.is_digital &&
-                        item.book.digital_access === 'paid' && (
-                          <button
-                            type="button"
-                            onClick={() => downloadMutation.mutate(item.book!.id)}
-                            className="mt-2 inline-flex items-center border border-gray-300 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400"
-                            disabled={downloadMutation.isPending}
-                          >
-                            {t('orders.detail.download')}
-                          </button>
-                        )}
                     </div>
                     <span className="text-sm font-semibold text-gray-900">
                       {formatPrice(item.price * item.quantity, locale)}
@@ -263,19 +204,6 @@ function OrderConfirmationPage() {
                 {t('orders.detail.paymentTitle')}
               </h3>
               <p className="mt-2">{paymentMessage}</p>
-              {order &&
-                !['paid', 'failed', 'cancelled'].includes(order.status) && (
-                  <button
-                    type="button"
-                    onClick={() => refreshStatusMutation.mutate()}
-                    disabled={refreshStatusMutation.isPending}
-                    className="mt-4 border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {refreshStatusMutation.isPending
-                      ? t('orders.detail.refreshingStatus')
-                      : t('orders.detail.refreshStatus')}
-                  </button>
-                )}
             </div>
 
             <div className="flex flex-wrap gap-3 border-t border-gray-200 pt-4">

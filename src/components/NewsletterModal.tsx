@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { NewsletterSignupForm } from './newsletter/NewsletterSignupForm'
-import { Dialog, DialogContent, DialogTitle } from './ui/dialog'
 
 const STORAGE_KEY = 'catalogus_newsletter_dismissed'
 const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
@@ -34,18 +33,19 @@ export function NewsletterModal() {
     localStorage.setItem(STORAGE_KEY, Date.now().toString())
   }
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) handleClose()
-  }
-
   if (!isOpen) return null
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent
-        className="relative w-full max-w-2xl overflow-hidden bg-white shadow-2xl lg:grid lg:grid-cols-[1fr_1.2fr] p-0 rounded-none border-0"
-        overlayClassName="bg-black/60"
-        showCloseButton={false}
+    <div
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 p-4"
+      onClick={handleClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('newsletter.modal.title')}
+        className="relative w-full max-w-2xl overflow-hidden bg-white shadow-2xl lg:grid lg:grid-cols-[1fr_1.2fr]"
+        onClick={(event) => event.stopPropagation()}
       >
         {/* Image Side */}
         <div className="hidden lg:block">
@@ -79,9 +79,9 @@ export function NewsletterModal() {
           <p className="text-xs uppercase tracking-[0.3em] text-[#9a8776]">
             {t('newsletter.modal.label')}
           </p>
-          <DialogTitle className="mt-3 text-2xl font-semibold text-gray-900 md:text-3xl">
+          <h2 className="mt-3 text-2xl font-semibold text-gray-900 md:text-3xl">
             {t('newsletter.modal.title')}
-          </DialogTitle>
+          </h2>
           <p className="mt-3 text-sm leading-relaxed text-gray-600 md:text-base">
             {t('newsletter.modal.body')}
           </p>
@@ -90,7 +90,7 @@ export function NewsletterModal() {
             <NewsletterSignupForm compact onSubmitted={handleClose} />
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   )
 }

@@ -302,14 +302,9 @@ export const shouldNoIndex = (pathname: string, search: string) => {
   const path = normalizePath(pathname)
 
   const privatePrefixes = [
-    '/admin',
-    '/account',
-    '/auth',
-    '/author',
     '/checkout',
     '/carrinho',
     '/pedido',
-    '/meus-pedidos',
     '/newsletter',
     '/demo',
   ]

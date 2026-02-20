@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Browser-only client (admin actions rely on a browser session token)
+// Browser-only client
 const isBrowser = typeof window !== 'undefined'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
