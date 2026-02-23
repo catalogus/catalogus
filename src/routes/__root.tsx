@@ -108,7 +108,14 @@ export const Route = createRootRouteWithContext<RouterContext>()({
           href: appCss,
         },
       ],
-      headScripts: seo.headScripts,
+      headScripts: [
+        ...(seo.headScripts || []),
+        {
+          src: 'https://cloud.umami.is/script.js',
+          'data-website-id': '20a42f0d-d00b-47b2-8597-0564396b24bc',
+          defer: true,
+        },
+      ],
     }
   },
 
