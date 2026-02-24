@@ -164,6 +164,40 @@ const resolveGalleryUrl = (image: GalleryImage) => {
   return ''
 }
 
+const resolveWorkCoverUrl = (work: PublishedWork) => {
+  if (work.cover_url) return work.cover_url
+  if (work.cover_path) {
+    return publicSupabase.storage.from('covers').getPublicUrl(work.cover_path).data.publicUrl
+  }
+  return ''
+}
+
+const normalizeText = (value?: string | null) => {
+  if (!value) return ''
+  return value.trim()
+}
+
+const areSameLocation = (first?: string | null, second?: string | null) => {
+  const normalizedFirst = normalizeText(first).toLocaleLowerCase()
+  const normalizedSecond = normalizeText(second).toLocaleLowerCase()
+  return normalizedFirst.length > 0 && normalizedFirst === normalizedSecond
+}
+
+const getLocationParts = (city?: string | null, province?: string | null) => {
+  const normalizedCity = normalizeText(city)
+  const normalizedProvince = normalizeText(province)
+  if (!normalizedCity && !normalizedProvince) return [] as string[]
+  if (areSameLocation(normalizedCity, normalizedProvince)) return [normalizedCity]
+  return [normalizedCity, normalizedProvince].filter(Boolean)
+}
+
+const getValidGalleryImages = (gallery?: GalleryImage[] | null) => {
+  if (!Array.isArray(gallery)) return [] as Array<{ image: GalleryImage; url: string }>
+  return gallery
+    .map((image) => ({ image, url: resolveGalleryUrl(image) }))
+    .filter(({ url }) => url.length > 0)
+}
+
 const formatDate = (value: string | null | undefined, locale: string) => {
   if (!value) return null
   const date = new Date(value)
@@ -363,6 +397,8 @@ function AuthorPublicPage() {
   const socialLinks = getSocialLinks(author)
   const birthDateLabel = formatDate(author?.birth_date, locale)
   const embedUrl = buildEmbedUrl(author?.featured_video)
+  const locationParts = getLocationParts(author?.residence_city, author?.province)
+  const galleryItems = getValidGalleryImages(author?.author_gallery)
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -449,16 +485,10 @@ function AuthorPublicPage() {
                       )}
                     </div>
                     <div className="mt-6 space-y-3 text-sm text-gray-600">
-                      {author.residence_city && (
+                      {locationParts.length > 0 && (
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-gray-500" />
-                          <span>{author.residence_city}</span>
-                        </div>
-                      )}
-                      {author.province && (
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-gray-500" />
-                          <span>{author.province}</span>
+                          <span>{locationParts.join(', ')}</span>
                         </div>
                       )}
                       {birthDateLabel && (
@@ -527,53 +557,55 @@ function AuthorPublicPage() {
 
                         <div className="mt-8 grid gap-6 md:grid-cols-2">
                           {(author.published_works as PublishedWork[]).map(
-                            (work, index) => (
-                              <article
-                                key={`${work.title}-${index}`}
-                                className="border border-gray-200 bg-[#fdfbf7] p-5 rounded-none"
-                              >
-                                <div className="flex gap-4">
-                                  {work.cover_url ? (
-                                    <img
-                                      src={work.cover_url}
-                                      alt={work.title}
-                                      className="h-24 w-16 object-cover"
-                                      loading="lazy"
-                                    />
-                                  ) : (
-                                    <div className="h-24 w-16 bg-gray-200" />
-                                  )}
-                                  <div className="flex-1 space-y-2">
-                                    <h3 className="text-lg font-semibold text-gray-900">
-                                      {work.title}
-                                    </h3>
-                                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
-                                      {work.genre}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                      {work.synopsis}
-                                    </p>
-                                    {work.link && (
-                                      <a
-                                        href={work.link}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-xs uppercase tracking-[0.2em] text-gray-900 hover:underline"
-                                      >
-                                        {t('authorDetail.works.cta')}
-                                      </a>
+                            (work, index) => {
+                              const workCoverUrl = resolveWorkCoverUrl(work)
+                              return (
+                                <article
+                                  key={`${work.title}-${index}`}
+                                  className=""
+                                >
+                                  <div className="flex gap-5">
+                                    {workCoverUrl ? (
+                                      <img
+                                        src={workCoverUrl}
+                                        alt={work.title}
+                                        className="h-52 w-36 shrink-0 object-cover"
+                                        loading="lazy"
+                                      />
+                                    ) : (
+                                      <div className="h-52 w-36 shrink-0 bg-gray-200" />
                                     )}
+                                    <div className="flex-1 space-y-2">
+                                      <h3 className="text-lg capitalize font-semibold text-gray-900">
+                                        {work.title}
+                                      </h3>
+                                      <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                                        {work.genre}
+                                      </p>
+                                      <p className="text-base leading-relaxed text-gray-600">
+                                        {work.synopsis}
+                                      </p>
+                                      {work.link && (
+                                        <a
+                                          href={work.link}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="text-xs uppercase tracking-[0.2em] text-gray-900 hover:underline"
+                                        >
+                                          {t('authorDetail.works.cta')}
+                                        </a>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              </article>
-                            ),
+                                </article>
+                              )
+                            },
                           )}
                         </div>
                       </div>
                     )}
 
-                  {Array.isArray(author.author_gallery) &&
-                    author.author_gallery.length > 0 && (
+                  {galleryItems.length > 0 && (
                       <div className="border border-gray-200 bg-white p-8 rounded-none">
                         <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
                           {t('authorDetail.gallery.label')}
@@ -582,30 +614,24 @@ function AuthorPublicPage() {
                           {t('authorDetail.gallery.title')}
                         </h2>
                         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                          {(author.author_gallery as GalleryImage[]).map(
-                            (image, index) => {
-                              const imageUrl = resolveGalleryUrl(image)
-                              if (!imageUrl) return null
-                              return (
-                                <figure
-                                  key={`${imageUrl}-${index}`}
-                                  className="group overflow-hidden bg-[#f4efe9]"
-                                >
-                                  <img
-                                    src={imageUrl}
-                                    alt={image.caption || author.name}
-                                    className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                    loading="lazy"
-                                  />
-                                  {image.caption && (
-                                    <figcaption className="px-3 py-2 text-xs text-gray-600">
-                                      {image.caption}
-                                    </figcaption>
-                                  )}
-                                </figure>
-                              )
-                            },
-                          )}
+                          {galleryItems.map(({ image, url }, index) => (
+                            <figure
+                              key={`${url}-${index}`}
+                              className="group overflow-hidden bg-[#f4efe9]"
+                            >
+                              <img
+                                src={url}
+                                alt={image.caption || author.name}
+                                className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                loading="lazy"
+                              />
+                              {image.caption && (
+                                <figcaption className="px-3 py-2 text-xs text-gray-600">
+                                  {image.caption}
+                                </figcaption>
+                              )}
+                            </figure>
+                          ))}
                         </div>
                       </div>
                     )}
