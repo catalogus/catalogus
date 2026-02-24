@@ -11,14 +11,26 @@ import {
   type SearchPost,
 } from '../../components/search/SearchResultCards'
 import {
+  buildSearchKeywords,
   buildSearchOrFilter,
-  buildTokenSearchOrFilter,
   normalizeSearchTerm,
 } from '../../lib/searchHelpers'
 import { publicSupabase } from '../../lib/supabasePublic'
 import { buildSeo } from '../../lib/seo'
 
 const getAuthorData = (author: any): SearchAuthor => author as SearchAuthor
+
+const toSearchAuthorFromProfile = (profile: any): SearchAuthor => ({
+  id: profile.id,
+  wp_slug: null,
+  name: profile.name || 'Autor',
+  author_type: null,
+  photo_url: profile.photo_url ?? null,
+  photo_path: profile.photo_path ?? null,
+  social_links: profile.social_links ?? null,
+  residence_city: null,
+  province: null,
+})
 
 type SearchResults = {
   books: SearchBook[]
@@ -33,6 +45,11 @@ const fetchSearchResults = async (
   if (!query) {
     return { books: [], authors: [], posts: [] }
   }
+
+  const normalizedQuery = normalizeSearchTerm(query)
+  const searchTerms = Array.from(new Set([normalizedQuery, ...buildSearchKeywords(query)]))
+    .map((term) => term.trim())
+    .filter((term) => term.length > 0)
 
   const booksQuery = publicSupabase
     .from('books')
@@ -54,10 +71,11 @@ const fetchSearchResults = async (
     .order('created_at', { ascending: false })
     .limit(6)
 
-  let authorsQuery = publicSupabase
-    .from('authors')
-    .select(
-      `
+  const authorQueries = searchTerms.map((term) =>
+    publicSupabase
+      .from('authors')
+      .select(
+        `
           id,
           name,
           wp_slug,
@@ -70,14 +88,21 @@ const fetchSearchResults = async (
           claim_status,
           profile_id
         `,
-    )
-    .order('name', { ascending: true })
-    .limit(6)
+      )
+      .ilike('name', `%${term}%`)
+      .order('name', { ascending: true })
+      .limit(6),
+  )
 
-  const authorNameFilter = buildTokenSearchOrFilter('name', query)
-  if (authorNameFilter) {
-    authorsQuery = authorsQuery.or(authorNameFilter)
-  }
+  const standaloneProfileQueries = searchTerms.map((term) =>
+    publicSupabase
+      .from('public_profiles')
+      .select('id, name, photo_url, photo_path, social_links')
+      .eq('role', 'author')
+      .ilike('name', `%${term}%`)
+      .order('name', { ascending: true })
+      .limit(6),
+  )
 
   const postsQuery = publicSupabase
     .from('posts')
@@ -99,19 +124,47 @@ const fetchSearchResults = async (
     .order('created_at', { ascending: false })
     .limit(6)
 
-  const [booksResult, authorsResult, postsResult] = await Promise.all([
+  const [booksResult, postsResult, authorQueryResults, standaloneProfileResults] = await Promise.all([
     booksQuery,
-    authorsQuery,
     postsQuery,
+    Promise.all(authorQueries),
+    Promise.all(standaloneProfileQueries),
   ])
 
   if (booksResult.error) throw booksResult.error
-  if (authorsResult.error) throw authorsResult.error
   if (postsResult.error) throw postsResult.error
+
+  const authorError = authorQueryResults.find((result) => result.error)?.error
+  if (authorError) throw authorError
+
+  const standaloneError = standaloneProfileResults.find((result) => result.error)?.error
+  if (standaloneError) throw standaloneError
+
+  const authorsFromTable = Array.from(
+    new Map(
+      authorQueryResults
+        .flatMap((result) => result.data ?? [])
+        .map((author) => [author.id, getAuthorData(author)]),
+    ).values(),
+  )
+
+  const authorsFromProfiles = Array.from(
+    new Map(
+      standaloneProfileResults
+        .flatMap((result) => result.data ?? [])
+        .map((profile) => [profile.id, toSearchAuthorFromProfile(profile)]),
+    ).values(),
+  )
+
+  const mergedAuthors = Array.from(
+    new Map([...authorsFromTable, ...authorsFromProfiles].map((author) => [author.id, author])).values(),
+  )
+    .sort((first, second) => first.name.localeCompare(second.name))
+    .slice(0, 6)
 
   return {
     books: (booksResult.data ?? []) as SearchBook[],
-    authors: (authorsResult.data ?? []).map(getAuthorData),
+    authors: mergedAuthors,
     posts: (postsResult.data ?? []) as SearchPost[],
   }
 }
