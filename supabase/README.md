@@ -1,4 +1,40 @@
-# Catalogus Supabase setup
+# Catalogus Supabase consumer notes
+
+`catalogus` is no longer the source of truth for Supabase backend infrastructure.
+
+The canonical backend owner is `catalogus_admin`.
+
+Do not add new canonical files under:
+
+- `catalogus/supabase/migrations`
+- `catalogus/supabase/functions`
+
+Active backend ownership now lives in:
+
+- `catalogus_admin/supabase/migrations/`
+- `catalogus_admin/supabase/functions/`
+
+The archived backend sources previously owned by this repo were moved to:
+
+- `catalogus/supabase/migrations_moved_to_catalogus_admin/`
+- `catalogus/supabase/functions_moved_to_catalogus_admin/`
+
+These archived folders remain only for transition and audit purposes.
+
+## What `catalogus` should do
+
+- consume the shared Supabase project
+- call RPCs and Edge Functions
+- use client and server Supabase access in app code
+- keep app-specific non-Supabase server code here when needed
+
+## What `catalogus` should not do
+
+- create new authoritative migrations here
+- create new authoritative Edge Functions here
+- deploy Supabase backend changes from this repo
+
+## Legacy setup notes
 
 ## Prereqs
 - Supabase project created (email/password auth enabled).
