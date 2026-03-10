@@ -177,6 +177,7 @@ export default function FeaturedBooksSection({
                           title={book.title}
                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                           priority={false}
+                          sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-[0.3em] text-gray-400">

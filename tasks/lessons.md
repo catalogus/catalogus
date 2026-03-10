@@ -17,3 +17,4 @@
 - When a modal shows only a dark backdrop, verify dialog overlay/content stacking (`z-index`) and avoid relying on animation utility states that can leave content effectively invisible.
 - If a shared modal primitive still renders only backdrop after z-index fixes, isolate the affected modal with a simple fixed overlay/panel implementation to prove behavior and unblock users fast.
 - For cross-domain auth work, confirm exact production hostnames upfront (e.g., `admin.catalogus.co.mz` vs `cms.catalogus.co.mz`) before wiring redirect URLs and bridge logic.
+- In this workspace, use `pnpm` for dependency install/build/test commands unless the user explicitly asks for another package manager.

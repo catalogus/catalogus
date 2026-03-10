@@ -92,6 +92,7 @@ export default function FeaturedAuthorsSection({
                         name={author.name}
                         className="h-full w-full object-cover"
                         priority={false}
+                        sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-5xl font-semibold text-gray-300">

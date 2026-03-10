@@ -7,6 +7,10 @@ import { buildSeo } from '../../lib/seo'
 import type { Publication } from '../../types/publication'
 
 export const Route = createFileRoute('/publicacoes/')({
+  staleTime: 10 * 60_000,
+  preload: true,
+  preloadStaleTime: 15 * 60_000,
+  gcTime: 30 * 60_000,
   loader: async () => {
     try {
       const { data, error } = await publicSupabase

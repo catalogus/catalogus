@@ -116,10 +116,16 @@ export function FlipbookViewer({
           }
         }
 
-        setDimensions({
+        const nextDimensions = {
           width: Math.max(1, Math.round(pageWidth)),
           height: Math.max(1, Math.round(pageHeight)),
-        })
+        }
+
+        setDimensions((current) =>
+          current.width === nextDimensions.width && current.height === nextDimensions.height
+            ? current
+            : nextDimensions,
+        )
       })
     }
 

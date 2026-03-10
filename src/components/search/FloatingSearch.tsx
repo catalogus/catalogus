@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -12,6 +12,21 @@ export function FloatingSearch() {
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const handleClose = useCallback(() => {
+    setOpen(false)
+  }, [])
+
+  const handleOpen = useCallback(() => {
+    setOpen(true)
+  }, [])
+
+  const isEditableTarget = useCallback((target: EventTarget | null) => {
+    if (!(target instanceof HTMLElement)) return false
+    if (target.isContentEditable) return true
+    const tagName = target.tagName.toLowerCase()
+    return tagName === 'input' || tagName === 'textarea' || tagName === 'select'
+  }, [])
+
   useEffect(() => {
     if (!open) return
     const id = requestAnimationFrame(() => inputRef.current?.focus())
@@ -21,26 +36,15 @@ export function FloatingSearch() {
   }, [open])
 
   useEffect(() => {
-    if (!open) return
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false)
+      if (open) {
+        if (event.key === 'Escape') {
+          handleClose()
+        }
+        return
       }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [open])
 
-  useEffect(() => {
-    const isEditableTarget = (target: EventTarget | null) => {
-      if (!(target instanceof HTMLElement)) return false
-      if (target.isContentEditable) return true
-      const tagName = target.tagName.toLowerCase()
-      return tagName === 'input' || tagName === 'textarea' || tagName === 'select'
-    }
-
-    const handleShortcut = (event: KeyboardEvent) => {
-      if (open || isEditableTarget(event.target)) return
+      if (isEditableTarget(event.target)) return
       const key = event.key.toLowerCase()
       const isSlash =
         (key === '/' || event.code === 'Slash') &&
@@ -53,20 +57,20 @@ export function FloatingSearch() {
       if (!isSlash && !isCmdK) return
       event.preventDefault()
       event.stopPropagation()
-      setOpen(true)
+      handleOpen()
     }
 
-    window.addEventListener('keydown', handleShortcut, true)
-    return () => window.removeEventListener('keydown', handleShortcut, true)
-  }, [open])
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [open, handleClose, handleOpen, isEditableTarget])
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const trimmed = normalizeSearchTerm(value)
     if (!trimmed) return
     navigate({ to: '/pesquisa', search: { q: trimmed } })
-    setOpen(false)
-  }
+    handleClose()
+  }, [value, navigate, handleClose])
 
   const isEnglish = i18n.language === 'en'
   const nextLanguage = isEnglish ? 'pt' : 'en'
@@ -79,7 +83,7 @@ export function FloatingSearch() {
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={handleOpen}
           className="flex h-12 w-12 items-center justify-center rounded-none bg-[color:var(--brand)] text-white shadow-lg transition-transform hover:-translate-y-0.5"
           aria-label={t('search.open')}
         >
