@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useMemo } from 'react'
 import { publicSupabase } from '../lib/supabasePublic'
 
 interface OptimizedImageProps {
@@ -8,6 +8,7 @@ interface OptimizedImageProps {
   width?: number
   height?: number
   priority?: boolean
+  sizes?: string
   bucket?: 'covers' | 'author-photos' | 'post-images' | 'hero-backgrounds'
 }
 
@@ -27,22 +28,15 @@ export function OptimizedImage({
   width,
   height,
   priority = false,
+  sizes,
   bucket = 'covers',
 }: OptimizedImageProps) {
-  const [imageSrc, setImageSrc] = useState<string | null>(null)
+  const imageSrc = useMemo(() => {
+    if (!src) return null
+    if (src.startsWith('http')) return src
 
-  useEffect(() => {
-    if (!src) return
-
-    // If it's already a full URL, use it directly
-    if (src.startsWith('http')) {
-      setImageSrc(src)
-      return
-    }
-
-    // Otherwise, get public URL from Supabase Storage
     const { data } = publicSupabase.storage.from(bucket).getPublicUrl(src)
-    setImageSrc(data.publicUrl)
+    return data.publicUrl
   }, [src, bucket])
 
   if (!imageSrc) {
@@ -63,6 +57,7 @@ export function OptimizedImage({
       className={className}
       width={width}
       height={height}
+      sizes={sizes}
       loading={priority ? 'eager' : 'lazy'}
       decoding={priority ? 'sync' : 'async'}
       fetchPriority={priority ? 'high' : 'auto'}
@@ -79,11 +74,13 @@ export function BookCover({
   title,
   className = '',
   priority = false,
+  sizes,
 }: {
   src: string | null | undefined
   title: string
   className?: string
   priority?: boolean
+  sizes?: string
 }) {
   return (
     <OptimizedImage
@@ -92,6 +89,7 @@ export function BookCover({
       bucket="covers"
       className={className}
       priority={priority}
+      sizes={sizes}
     />
   )
 }
@@ -105,11 +103,13 @@ export function AuthorPhoto({
   name,
   className = '',
   priority = false,
+  sizes,
 }: {
   src: string | null | undefined
   name: string
   className?: string
   priority?: boolean
+  sizes?: string
 }) {
   return (
     <OptimizedImage
@@ -118,6 +118,7 @@ export function AuthorPhoto({
       bucket="author-photos"
       className={className}
       priority={priority}
+      sizes={sizes}
     />
   )
 }
@@ -131,11 +132,13 @@ export function PostFeaturedImage({
   title,
   className = '',
   priority = false,
+  sizes,
 }: {
   src: string | null | undefined
   title: string
   className?: string
   priority?: boolean
+  sizes?: string
 }) {
   return (
     <OptimizedImage
@@ -144,6 +147,7 @@ export function PostFeaturedImage({
       bucket="post-images"
       className={className}
       priority={priority}
+      sizes={sizes}
     />
   )
 }
@@ -162,6 +166,7 @@ export function HeroBackground({
   alt: string
   className?: string
   priority?: boolean
+  sizes?: string
 }) {
   return (
     <OptimizedImage
@@ -170,6 +175,7 @@ export function HeroBackground({
       bucket="hero-backgrounds"
       className={className}
       priority={priority}
+      sizes={sizes}
     />
   )
 }

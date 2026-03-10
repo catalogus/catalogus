@@ -156,6 +156,7 @@ export default function NewsSection({
                       title={post.title}
                       className="absolute inset-0 h-full w-full object-cover object-center"
                       priority={false}
+                      sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
                     />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-neutral-700 to-neutral-900" />

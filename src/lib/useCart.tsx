@@ -4,6 +4,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   type ReactNode,
 } from 'react'
 import { publicSupabase } from './supabasePublic'
@@ -216,19 +217,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(CART_STORAGE_KEY)
   }, [])
 
-  const total = calculateCartTotal(items)
-  const count = items.reduce((sum, item) => sum + item.quantity, 0)
+  const total = useMemo(() => calculateCartTotal(items), [items])
+  const count = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items])
 
-  const value: CartContextValue = {
-    items,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-    total,
-    count,
-    isLoading,
-  }
+  const value = useMemo<CartContextValue>(
+    () => ({
+      items,
+      addToCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+      total,
+      count,
+      isLoading,
+    }),
+    [items, addToCart, removeFromCart, updateQuantity, clearCart, total, count, isLoading],
+  )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }

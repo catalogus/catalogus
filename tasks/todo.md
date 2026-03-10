@@ -1,3 +1,17 @@
+# Code Size Guardrail
+
+## Plan
+- [x] Add a line-count guard for code files with a 350-line limit.
+- [x] Exclude generated router output and translation dictionaries from the limit.
+- [x] Refactor oversized public routes/components into smaller feature modules.
+- [x] Verify the new limit across the app.
+
+## Review
+- [x] `pnpm run check:lines` passes with all checked code files at or below 350 lines.
+- [x] `pnpm build` succeeds after the refactor.
+- [x] `pnpm test` now uses `--passWithNoTests` because the repo currently has no Vitest files.
+- [x] Added Vitest coverage for pure news, author-detail, and M-Pesa utility modules.
+
 # Promoção Tag on Books
 
 ## Spec (Draft)
@@ -143,22 +157,23 @@ Notes: Likely idle expiry of Supabase access token without a proactive refresh; 
 
 ## Plan
 - [ ] Confirm access matrix (explicit list of modules available to Content Admins).
-- [ ] Add DB migration:
+- [x] Add DB migration:
   - `admin_level` enum + column on `profiles`.
   - Backfill `admin` rows to `content_admin`.
   - Guardrail trigger/constraint to cap `super_admin` at 2.
   - Helper functions: `is_super_admin()` and updated `is_admin()` (or `is_content_admin()`).
-- [ ] Update RLS + storage policies:
+- [x] Update RLS + storage policies:
   - Orders/order_items restricted to `is_super_admin()`.
   - Content modules remain `is_admin()`.
-- [ ] Update admin dashboard:
+- [x] Update admin dashboard:
   - For Content Admins, skip commerce RPC and hide commerce sections.
   - Provide content-only metrics query (books + newsletter + inventory).
-- [ ] Update admin UI:
-  - Users page: add Admin Type selector when role = admin and show super-admin slot count.
-  - Route guards: add `SuperAdminGuard` for `/admin/orders`.
-  - Sidebar: hide Orders for Content Admin.
-  - TopBar badges: display `super_admin` vs `content_admin`.
+- [x] Update admin UI:
+  - [x] Users page: add admin type selector and show super-admin slot count.
+  - [x] Route guards: add `SuperAdminGuard` for `/admin/orders` and `/admin/users`.
+  - [x] Sidebar: hide Orders and Users for Content Admin.
+  - [x] User table badges: display `super_admin` vs `content_admin`.
+  - [x] Add invite-based staff user creation flow (edge function + admin form).
 - [ ] Verify end-to-end:
   - Super Admin can access everything.
   - Content Admin can access everything except Orders/Transactions.
@@ -652,3 +667,198 @@ Review Notes: `src/routes/__root.tsx` now includes a `rel="icon"` link for `/fav
 
 ## Review
 - [ ] Listing/featured/detail covers render without cropping.
+
+# Cross-Project Performance Intervention (Vercel React Best Practices)
+
+## Spec
+- Audit and improve both `catalogus` and `catalogus_admin` using the Vercel React best-practices priorities.
+- Focus first on the highest-impact categories: async waterfalls, bundle size, server/client data boundaries, and rerender stability.
+- Keep the work phased so each batch can be implemented, verified, and rolled back independently if needed.
+- Treat `catalogus` as the public performance/SSR target and `catalogus_admin` as the security/client-orchestration target.
+
+## Plan
+
+### Phase 0 - Baseline and guardrails
+- [x] Record current baselines for both apps: build output, largest chunks, key slow routes, and any obvious hydration/client-fetch delays.
+- [x] Define verification for each phase: build, targeted tests, and manual route checks for both apps.
+- [x] Decide issue tracking granularity: one branch per phase or one branch per project area.
+
+### Phase 1 - Critical security and server-boundary fixes
+- [x] `catalogus_admin`: move Umami API access behind a server boundary so `VITE_UMAMI_API_TOKEN` is no longer exposed to the client.
+- [x] `catalogus_admin`: add caching/rate limits to the Umami proxy path and define failure behavior for analytics screens.
+- [x] `catalogus`: replace the singleton SSR `QueryClient` with a per-request instance and confirm no cross-request cache leakage.
+
+### Phase 2 - Eliminate the biggest waterfalls
+- [x] `catalogus_admin`: remove route-level double lazy loading where TanStack Router is already splitting routes.
+- [x] `catalogus_admin`: identify dashboard screens that should preload data via route loaders instead of post-render fetches.
+- [x] `catalogus`: flatten serial author/news data loading into parallel fetches where dependencies allow.
+- [x] `catalogus`: review other loaders/server functions for early-start/late-await opportunities.
+
+### Phase 3 - Reduce shipped JavaScript
+- [x] `catalogus`: lazy-load or fully isolate devtools from the root bundle.
+- [x] `catalogus_admin`: dynamically import interaction-only heavy modules such as image compression and other upload helpers.
+- [x] Audit both apps for barrel imports, unnecessary root imports, and routes/components that should be split more aggressively.
+- [x] Re-check bundle output after chunking changes and note wins/regressions.
+
+### Phase 4 - Improve server/client data strategy
+- [x] `catalogus`: classify routes into cacheable/prerenderable vs. truly dynamic and implement the chosen strategy.
+- [x] `catalogus`: prioritize public content routes (`/`, news, authors, publications) for cache/revalidation work.
+- [x] `catalogus_admin`: move long client-side orchestration flows (especially publication/PDF processing and relational filtering) to server-side functions/RPC where practical.
+- [x] `catalogus_admin`: replace client-side multi-step data joins/count logic with server-aggregated responses for critical dashboards.
+
+### Phase 5 - Rerender and rendering hygiene
+- [x] Memoize unstable provider/context values in both apps, starting with auth/theme/cart/root providers.
+- [x] Narrow provider scope where possible so app-wide rerenders do not fan out through the whole tree.
+- [x] Audit expensive components for avoidable recalculation, effect-driven derived state, and unstable object dependencies.
+- [x] Review image/LCP-critical surfaces in `catalogus` for dimensions, loading priority, and consistent optimized rendering.
+
+### Phase 6 - Verification and closeout
+- [ ] Run builds/tests for both apps and document any environment-specific blockers.
+- [ ] Manually verify key public flows in `catalogus`: home, authors, news, publications, checkout-adjacent routes.
+- [ ] Manually verify key admin flows in `catalogus_admin`: dashboard, analytics, publication upload/edit, auth idle recovery.
+- [ ] Write a short review note with completed wins, remaining risks, and the next recommended phase.
+
+## Review
+- [ ] Critical security issues closed or isolated behind server boundaries.
+- [ ] Largest known waterfalls reduced in both apps.
+- [ ] Bundle size and route-load behavior improved measurably.
+- [ ] Data-fetching boundaries are clearer and less client-heavy.
+- [ ] Provider/rerender hotspots reduced.
+- [ ] Verification notes captured with before/after evidence.
+
+### Phase 0 Notes
+- `catalogus` baseline build passed. Largest client chunks: `main-LPNl6hMN.js` 512.38 kB, route `_slug-BmOmitzO.js` 194.82 kB, `supabase-CfPnqtvV.js` 168.10 kB, `FlipbookViewer-DoId56L4.js` 59.54 kB, `radix-B9W3luMG.js` 45.17 kB. Build warning: unresolved `/TT Norms/TT Norms Pro Regular Italic.otf` and >500 kB chunk warning.
+- `catalogus` SSR/server baseline build passed. Largest server chunks: `router-DWDdtjE5.mjs` 139.88 kB and `server.mjs` 135.21 kB.
+- `catalogus_admin` baseline build passed. Largest client chunks: `vendor-pdfjs-BbWLtDaW.js` 500.83 kB, `index-B2q2BN5k.js` 435.76 kB, `vendor-editor-LAm6lehq.js` 392.63 kB, `vendor-supabase-DlZiTvmv.js` 173.66 kB, `article-editor-WuTE7Xto.js` 112.14 kB, `imageOptimization-5LMxsmXE.js` 54.62 kB, `sidebar-By9fSXRE.js` 52.84 kB. Build warning: >500 kB chunk warning. `pdf.worker.min-Cr_QfRGn.mjs` is 1128.59 kB as a static asset.
+- Test baseline passed for both apps. `catalogus`: 4 files / 14 tests passed, with a Vitest hanging-process shutdown warning after completion. `catalogus_admin`: 4 files / 8 tests passed.
+- Key known slow/risky areas to measure against later:
+  - `catalogus`: root client bundle size, public content route caching, serial author/news loaders, root devtools import, SSR query-client lifetime.
+  - `catalogus_admin`: browser-exposed Umami token, double lazy route waterfalls, client-only dashboard fetching, publication/PDF workflow orchestration, heavy editor/PDF/image chunks.
+- Verification standard for each next phase:
+  - Run `pnpm build` in both `catalogus` and `catalogus_admin`.
+  - Run `pnpm test` in `catalogus` and `pnpm test:run` in `catalogus_admin` when touched areas justify it.
+  - Manually verify impacted routes/flows after each phase instead of deferring all checks to the end.
+  - Re-check chunk output after any Phase 2-4 bundle/data-boundary changes.
+- Tracking strategy: use one focused branch per phase, and split further by project area only if a phase becomes too broad. Current workspace note: `catalogus` already has unrelated local changes; `catalogus_admin` is currently clean.
+
+### Phase 1 Notes
+- `catalogus_admin` no longer reads `VITE_UMAMI_API_TOKEN` in the browser. Client analytics now call same-origin proxy endpoints in `catalogus_admin/api/umami/[endpoint].js` and `catalogus_admin/api/umami/config.js`.
+- `catalogus_admin` analytics UI now checks server-side Umami configuration before firing metrics requests and shows a server-env setup message when not configured.
+- `catalogus_admin` proxy now has cache headers for `stats`, `pageviews`, `metrics`, and `active`, explicit upstream/proxy errors, and a lightweight per-IP in-memory rate limit for burst protection.
+- `catalogus` now creates the React Query client per router instance via `catalogus/src/lib/queryClient.ts`, wires it through router context in `catalogus/src/router.tsx`, and consumes that request-scoped instance in `catalogus/src/routes/__root.tsx`.
+- Phase 1 verification:
+  - `catalogus`: `pnpm build` passed; `pnpm test` passed (14 tests). Vitest still reports a hanging-process shutdown warning after completion.
+  - `catalogus_admin`: `pnpm build` passed; `pnpm test:run` passed (8 tests).
+  - Remaining manual verification: deploy-time check that Vercel routes `/api/umami/*` correctly in `catalogus_admin`, and confirm analytics renders when `UMAMI_API_TOKEN` is present in server env.
+
+### Phase 2 Notes
+- `catalogus_admin` no longer adds a second `React.lazy` boundary inside route files. Route modules now import their page content directly and let TanStack Router own route-level splitting, removing the extra code waterfall on navigation.
+- Verified with search: there are no remaining `lazy(async () => import(...))` route wrappers under `catalogus_admin/src/routes`.
+- `catalogus` author/news data fetching now removes a few easy serial waits:
+  - `fetchStandaloneAuthors` now loads public profiles and linked author ids in parallel.
+  - `loadAuthorsPageData` now starts standalone profile loading in parallel with featured author lookup.
+  - `fetchRelatedPosts` now resolves category/tag post-id lookups in parallel.
+- Phase 2 verification:
+  - `catalogus`: `pnpm build` passed; `pnpm test` passed (14 tests). Vitest still reports the same hanging-process shutdown warning after success.
+  - `catalogus_admin`: `pnpm build` passed; `pnpm test:run` passed (8 tests).
+- Remaining Phase 2 work:
+  - `catalogus_admin`: convert the most expensive dashboard screens from post-render fetching to route-loader prefetching.
+  - `catalogus`: continue reviewing loaders/server functions for additional early-start/late-await wins beyond authors/news.
+
+### Phase 2 Follow-up Notes
+- `catalogus_admin` preload candidates identified:
+  - `/analytics`: now preloads Umami config in the route loader so the screen can render with initial config state instead of waiting for a post-render config fetch.
+  - `/`: dashboard metrics should be the next full route-loader candidate, but this likely needs query-client/router-context wiring or a cleaner auth-aware preload strategy.
+  - `/atividade`, sidebar badges, and `/perfil/reivindicar` still fetch after render and are good secondary loader/prefetch candidates.
+- Additional `catalogus` waterfall cleanup completed:
+  - `loadAuthorResult` now resolves author-by-id and public-profile fallback in parallel for UUID lookups.
+  - `loadBookDetailPageData` now resolves slug/id book lookups in parallel when the route param is a UUID.
+- Follow-up verification:
+  - `catalogus`: `pnpm build` passed; `pnpm test` passed (14 tests). The same Vitest hanging-process shutdown warning remains after completion.
+  - `catalogus_admin`: `pnpm build` passed; `pnpm test:run` passed (8 tests).
+
+### Phase 3 Notes
+- `catalogus` devtools are no longer imported in the root module. `catalogus/src/routes/__root.tsx` now lazy-loads the TanStack devtools only in dev mode behind a `Suspense` boundary.
+- `catalogus_admin` image compression is now interaction-only. `catalogus_admin/src/lib/imageOptimization.ts` dynamically imports `browser-image-compression` only when an upload flow actually calls the optimizer.
+- Bundle recheck after the Phase 3 changes:
+  - `catalogus`: client build still has a large `main` chunk, but it dropped slightly from the previous 512.71 kB to `main-CLiABY5D.js` 512.34 kB and the client transform count dropped from 2246 to 2195 modules, which confirms the root devtools code moved out of the normal production path.
+  - `catalogus_admin`: the old `imageOptimization` chunk dropped from 54.62 kB to `imageOptimization-CKF7LPdV.js` 1.60 kB, and `browser-image-compression` now ships as its own on-demand chunk at 53.17 kB instead of inflating initial route bundles.
+  - Remaining big chunks are still the main priorities for later work: `catalogus` main client chunk (~512 kB), `catalogus_admin` main app chunk (~437 kB), `vendor-editor` (~392 kB), `vendor-supabase` (~173 kB), and `vendor-pdfjs` (~500 kB) plus the static PDF worker asset.
+- Phase 3 verification:
+  - `catalogus`: `pnpm build` passed; `pnpm test` passed (14 tests). The same Vitest hanging-process shutdown warning remains after success.
+  - `catalogus_admin`: `pnpm build` passed; `pnpm test:run` passed (8 tests).
+
+### Phase 3 Follow-up Notes
+- `catalogus_admin` editor audit findings:
+  - `article-editor` was still statically pulling in the rich text editor. It now lazy-loads `@/components/ui/richtext-editor` behind a `Suspense` fallback inside `catalogus_admin/src/components/dashboard/article-editor.tsx`.
+  - This created a separate `richtext-editor` chunk (~2.05 kB wrapper) and reduced the route-local `article-editor` chunk from ~111.98 kB to ~110.59 kB. The heavier `vendor-editor` bundle remains large because TipTap/ProseMirror are still shared editor dependencies, but the route shell is now a bit lighter and more deferrable.
+  - `vendor-pdfjs` is already behind `catalogus_admin/src/lib/pdfHelpers.ts` dynamic loading. The remaining issue is mostly the intrinsic size of `pdfjs-dist` and its worker asset, not an eager import bug.
+- `catalogus` startup audit findings:
+  - The root shell still pays for `Header`, auth/cart providers, i18n, and Radix UI primitives; those are the likely main-chunk anchors.
+  - Public route code already defers the flipbook/PDF viewer on publication detail pages, so the worst remaining startup target is the root/header/app-shell path rather than route-local PDF code.
+  - There was no obvious barrel-import hotspot in the `catalogus` app shell beyond normal shared UI composition.
+- Additional verification after the follow-up split:
+  - `catalogus_admin`: `pnpm build` passed; `pnpm test:run` passed (8 tests).
+  - `catalogus`: `pnpm build` passed; `pnpm test` passed (14 tests). The same Vitest hanging-process warning remains.
+
+### Phase 4 Notes
+- `catalogus_admin` content-admin dashboard metrics no longer have to be assembled from four separate client queries when `includeCommerce` is false.
+- Added a Supabase RPC migration in `catalogus_admin/supabase/migrations/20260310090000_add_content_dashboard_metrics_rpc.sql` that returns the lightweight content dashboard summary as one server-side aggregated JSON payload.
+- Updated `catalogus_admin/src/hooks/supabase/dashboard.ts` to call `get_admin_content_dashboard_metrics` first and fall back to the old client-side multi-query path only when the RPC is missing, which keeps rollout safe before the migration is applied everywhere.
+- Updated `catalogus_admin/src/lib/database.types.ts` so the new RPC is typed in the client.
+- `catalogus` Phase 4 route classification:
+  - `/` home, `/autores`, and `/publicacoes` are content-heavy but relatively cache-friendly, so they now use route loader caching with longer `staleTime`, `gcTime`, and preload settings.
+  - `/noticias` is cacheable too, but because it varies by filters/search it now defines `loaderDeps` explicitly and uses a shorter cache window.
+  - Highly user-specific or transactional flows remain outside this strategy for now.
+- `catalogus` route-cache implementation landed in:
+  - `catalogus/src/routes/index.tsx`
+  - `catalogus/src/routes/autores/index.tsx`
+  - `catalogus/src/routes/publicacoes/index.tsx`
+  - `catalogus/src/routes/noticias/index.tsx`
+- This does not add HTTP CDN cache headers yet; it improves TanStack Router loader reuse/revalidation behavior so public-content navigations and preloads stop refetching too aggressively within the client/router lifecycle.
+- `catalogus_admin` publication flow now has its first server-side orchestration move: publication deletion no longer has to be fully coordinated in the browser when server env is available.
+- Added `catalogus_admin/api/publications/[id].js`, which:
+  - validates the caller via Supabase bearer token,
+  - checks admin/author role server-side,
+  - removes publication page/thumbnail/original PDF assets from storage,
+  - deletes the publication record with service-role permissions.
+- Updated `catalogus_admin/src/components/dashboard/mapas-literarios-content.tsx` so deletion prefers the server API and falls back to the legacy client-side cleanup path only when the API is unavailable or not configured. This reduces one of the multi-step storage/database cleanup flows running in the browser and gives us a safer migration path.
+- The heaviest part of publication ingestion is still client-side PDF rendering/page extraction; that remains the next server-boundary candidate if we want to keep pushing this phase.
+- Phase 4 verification:
+  - `catalogus_admin`: `pnpm build` passed.
+  - `catalogus_admin`: `pnpm test:run` passed (8 tests). One earlier run showed a transient failure in `src/lib/auth.test.tsx`, but targeted/full reruns passed cleanly.
+  - `catalogus`: `pnpm build` passed.
+  - `catalogus`: `pnpm test` passed (14 tests). The same Vitest hanging-process shutdown warning remains after success.
+
+### Phase 5 Notes
+- Provider/context stability pass landed in both apps:
+  - `catalogus/src/contexts/AuthProvider.tsx`: memoized the auth context value and stabilized `signOut` with `useCallback`.
+  - `catalogus/src/lib/useCart.tsx`: memoized derived cart totals/counts and the cart context value.
+  - `catalogus_admin/src/lib/auth.tsx`: memoized provider value and stabilized auth actions (`signIn`, `signOut`, `requestPasswordReset`, `updatePassword`, `refreshProfile`).
+  - `catalogus_admin/src/components/theme-provider.tsx`: memoized the theme context value and stabilized the setter.
+- These changes reduce whole-subtree rerenders from provider value identity churn, especially in root-level shells where auth/theme/cart context objects were recreated every render.
+- Additional Phase 5 rerender cleanup landed in high-traffic UI surfaces:
+  - `catalogus/src/components/Header.tsx`: memoized auth-derived URLs and the CMS-profile handler, and consolidated repeated header-height DOM writes through a stable callback.
+  - `catalogus_admin/src/components/dashboard/content.tsx`: memoized KPI list construction and wrapped `TrendChart` in `memo`, with its point calculations moved behind `useMemo`.
+- These are small but useful wins: the public-site header stops recreating several derived values/functions every render, and the admin dashboard avoids recomputing KPI/line-chart data when unrelated local state changes.
+- Image/LCP follow-up landed in `catalogus`:
+  - `catalogus/src/components/OptimizedImage.tsx` no longer waits for an effect/state round-trip to resolve Supabase public URLs. Image URLs are now derived synchronously with `useMemo`, which removes an avoidable loading-skeleton frame for many already-known images.
+  - Added `sizes` support to `OptimizedImage`, `BookCover`, `AuthorPhoto`, `PostFeaturedImage`, and `HeroBackground` so responsive layouts can give the browser better image selection hints.
+  - Wired responsive `sizes` hints into:
+    - `catalogus/src/components/home/FeaturedBooksSection.tsx`
+    - `catalogus/src/components/home/FeaturedAuthorsSection.tsx`
+    - `catalogus/src/components/home/NewsSection.tsx`
+- `catalogus_admin` provider-scope audit result: the biggest remaining scope issue is repeated route-level `SidebarProvider` usage across dashboard routes. That is a good next refactor target, but it is broader than the low-risk rendering pass completed here.
+- `catalogus_admin` sidebar/provider scope refactor landed:
+  - `catalogus_admin/src/routes/__root.tsx` now owns a single persistent `SidebarProvider` + `DashboardSidebar` wrapper for non-auth routes.
+  - Dashboard route files no longer create their own sidebar/provider instances on every navigation.
+  - This reduces provider remount churn and keeps sidebar state stable across dashboard route transitions.
+  - Auth routes still render without the dashboard shell.
+- Refactor note: centralizing the sidebar shell moved more dashboard layout code into the main shared admin chunk. That is a rerender/state-lifetime win, but it trades against bundle splitting slightly, so any future Phase 3/5 work should treat shell-state stability and chunk isolation together.
+- Final low-risk effect cleanup landed in `catalogus` hot components:
+  - `catalogus/src/components/search/FloatingSearch.tsx`: merged duplicate global keydown listeners into one stable effect and stabilized open/close/submit handlers.
+  - `catalogus/src/components/Hero.tsx`: stabilized slide navigation handlers with `useCallback`, so keyboard navigation effect dependencies are accurate and less brittle.
+  - `catalogus/src/components/flipbook/FlipbookViewer.tsx`: dimension recalculation now avoids redundant state updates when computed width/height do not change, reducing resize/observer churn.
+- Phase 5 verification:
+  - `catalogus`: `pnpm build` passed; `pnpm test` passed (14 tests). The same Vitest hanging-process shutdown warning remains.
+  - `catalogus_admin`: `pnpm build` passed; `pnpm test:run` passed (8 tests). One initial post-refactor full test run had the same intermittent `auth.test.tsx` timing issue seen earlier, but a targeted rerun and a full rerun both passed without code changes.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { HeroSlideWithContent, ContentType } from '../types/hero'
@@ -54,6 +54,14 @@ export function Hero({ slides }: HeroProps) {
     return () => window.clearInterval(interval)
   }, [isPaused, slides.length])
 
+  const handlePrevious = useCallback(() => {
+    setActiveIndex((prev) => (prev - 1 + slides.length) % slides.length)
+  }, [slides.length])
+
+  const handleNext = useCallback(() => {
+    setActiveIndex((prev) => (prev + 1) % slides.length)
+  }, [slides.length])
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -66,15 +74,7 @@ export function Hero({ slides }: HeroProps) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
-
-  const handlePrevious = () => {
-    setActiveIndex((prev) => (prev - 1 + slides.length) % slides.length)
-  }
-
-  const handleNext = () => {
-    setActiveIndex((prev) => (prev + 1) % slides.length)
-  }
+  }, [handlePrevious, handleNext])
 
   const getContentTypeLabel = (type: ContentType) => {
     switch (type) {

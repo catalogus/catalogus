@@ -1,14 +1,11 @@
 import { HeadContent, Scripts, createRootRouteWithContext } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
 import { Toaster } from 'sonner'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import { CartProvider } from '../lib/useCart'
-import { queryClient } from '../lib/queryClient'
 import { AuthProvider } from '../contexts/AuthProvider'
 import i18n from '../i18n'
 import {
@@ -24,6 +21,33 @@ import appCss from '../styles.css?url'
 interface RouterContext {
   queryClient: QueryClient
 }
+
+const Devtools = import.meta.env.DEV
+  ? lazy(async () => {
+      const [{ TanStackDevtools }, { TanStackRouterDevtoolsPanel }] = await Promise.all([
+        import('@tanstack/react-devtools'),
+        import('@tanstack/react-router-devtools'),
+      ])
+
+      return {
+        default: function DevtoolsPanel() {
+          return (
+            <TanStackDevtools
+              config={{
+                position: 'bottom-left',
+              }}
+              plugins={[
+                {
+                  name: 'Tanstack Router',
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+              ]}
+            />
+          )
+        },
+      }
+    })
+  : null
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   head: ({ location }) => {
@@ -123,6 +147,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const { queryClient } = Route.useRouteContext()
   const showDevtools = import.meta.env.DEV
   const [lang, setLang] = useState(i18n.language || 'pt')
 
@@ -156,18 +181,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                   <CartProvider>
                     {children}
                     <Toaster position="top-right" richColors />
-                    {showDevtools && (
-                      <TanStackDevtools
-                        config={{
-                          position: 'bottom-left',
-                        }}
-                        plugins={[
-                          {
-                            name: 'Tanstack Router',
-                            render: <TanStackRouterDevtoolsPanel />,
-                          },
-                        ]}
-                      />
+                    {showDevtools && Devtools && (
+                      <Suspense fallback={null}>
+                        <Devtools />
+                      </Suspense>
                     )}
                   </CartProvider>
                 </AuthProvider>

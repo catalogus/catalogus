@@ -263,6 +263,10 @@ const fetchLatestPosts = async (language: 'pt' | 'en') => {
 }
 
 export const Route = createFileRoute('/')({
+  staleTime: 5 * 60_000,
+  preload: true,
+  preloadStaleTime: 10 * 60_000,
+  gcTime: 30 * 60_000,
   loader: async () => {
     const language: 'pt' | 'en' = 'pt'
     const [heroSlides, featuredBooks, featuredAuthors, newsPosts] = await Promise.all([
