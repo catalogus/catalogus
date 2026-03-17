@@ -1,3 +1,16 @@
+# Repo: Extract M-Pesa Gateway
+
+## Plan
+- [x] Audit the existing `services/mpesa-gateway` service and its dependencies on `catalogus`.
+- [x] Move the gateway into a top-level `mpesa-gateway` folder so it can live as its own repo.
+- [x] Update the extracted service so it remains runnable/testable on its own.
+- [x] Remove stale in-repo references from `catalogus` and verify the new layout.
+
+## Review
+- [x] `mpesa-gateway` now lives at the project root as a sibling repo candidate.
+- [x] The extracted service has its own `package.json`, test script, and `.gitignore`.
+- [x] `catalogus` no longer assumes the gateway code lives under `services/mpesa-gateway`.
+
 # Code Size Guardrail
 
 ## Plan
