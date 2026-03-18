@@ -21,7 +21,7 @@ const excludedDirectoryPrefixes = [
   `${path.join('src', 'i18n', 'translations')}${path.sep}`,
 ]
 
-const includedRoots = [path.join(rootDir, 'src'), path.join(rootDir, 'services', 'mpesa-gateway', 'src')]
+const includedRoots = [path.join(rootDir, 'src')]
 
 const toPosixRelative = (absolutePath) => path.relative(rootDir, absolutePath).split(path.sep).join('/')
 
