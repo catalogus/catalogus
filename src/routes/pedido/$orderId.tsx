@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { formatPrice, getOrderStatusColor } from '../../lib/shopHelpers'
 import { supabase } from '../../lib/supabaseClient'
+import { getOrderConfirmation, type OrderConfirmationDetail } from '../../server/mpesa'
 
 type OrderItem = {
   id: number
@@ -17,18 +18,6 @@ type OrderItem = {
     is_digital?: boolean | null
     digital_access?: 'paid' | 'free' | null
   } | null
-}
-
-type OrderDetail = {
-  id: string
-  order_number: string
-  customer_name: string
-  customer_email: string
-  customer_phone: string
-  total: number
-  status: string
-  created_at: string
-  items?: OrderItem[] | null
 }
 
 const resolveCoverUrl = (item: OrderItem) => {
@@ -51,36 +40,10 @@ function OrderConfirmationPage() {
 
   const orderQuery = useQuery({
     queryKey: ['order', orderId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(
-          `
-          id,
-          order_number,
-          customer_name,
-          customer_email,
-          customer_phone,
-          total,
-          status,
-          created_at,
-          items:order_items(
-            id,
-            quantity,
-            price,
-            book:books(id, title, cover_url, cover_path, is_digital, digital_access)
-          )
-        `,
-        )
-        .eq('id', orderId)
-        .maybeSingle()
-
-      if (error) throw error
-      return (data as OrderDetail | null) ?? null
-    },
+    queryFn: () => getOrderConfirmation({ data: { orderId } }),
     staleTime: 60_000,
     refetchInterval: (query) => {
-      const status = (query.state.data as OrderDetail | null)?.status
+      const status = (query.state.data as OrderConfirmationDetail | null)?.status
       if (!status) return false
       if (['paid', 'failed', 'cancelled'].includes(status)) return false
       return 10_000

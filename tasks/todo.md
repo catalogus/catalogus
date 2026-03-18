@@ -1,3 +1,13 @@
+# Guest Order Confirmation Access
+
+## Plan
+- [x] Trace why guest checkout redirects to an order page that cannot read the order.
+- [x] Move confirmation-page order loading to a server-backed query that works for guest orders.
+- [ ] Verify the order confirmation page shows the created order after checkout.
+
+## Review
+- [x] Guest order confirmation no longer depends on client-side RLS access to `orders`.
+
 # Repo: Extract M-Pesa Gateway
 
 ## Plan

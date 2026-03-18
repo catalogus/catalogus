@@ -9,6 +9,30 @@ export type MpesaInitiationResult = {
   orderId?: string
 }
 
+export type OrderConfirmationDetail = {
+  id: string
+  order_number: string
+  customer_name: string
+  customer_email: string
+  customer_phone: string
+  total: number
+  status: string
+  created_at: string
+  items: Array<{
+    id: number
+    quantity: number
+    price: number
+    book: {
+      id: string
+      title: string
+      cover_url: string | null
+      cover_path: string | null
+      is_digital?: boolean | null
+      digital_access?: 'paid' | 'free' | null
+    } | null
+  }> | null
+}
+
 type CreateOrderInput = {
   customer: {
     name: string
@@ -178,4 +202,43 @@ export const createOrderAndInitiateMpesa = createServerFn({ method: 'POST' })
         'Payment request sent. Please approve the request on your phone.',
       orderId,
     } satisfies MpesaInitiationResult
+  })
+
+export const getOrderConfirmation = createServerFn({ method: 'GET' })
+  .inputValidator((data: { orderId: string }) => {
+    if (!data?.orderId?.trim()) {
+      throw new Error('Missing order ID')
+    }
+
+    return { orderId: data.orderId.trim() }
+  })
+  .handler(async ({ data }) => {
+    const { data: order, error } = await serverSupabase
+      .from('orders')
+      .select(
+        `
+          id,
+          order_number,
+          customer_name,
+          customer_email,
+          customer_phone,
+          total,
+          status,
+          created_at,
+          items:order_items(
+            id,
+            quantity,
+            price,
+            book:books(id, title, cover_url, cover_path, is_digital, digital_access)
+          )
+        `,
+      )
+      .eq('id', data.orderId)
+      .maybeSingle()
+
+    if (error) {
+      throw error
+    }
+
+    return (order as OrderConfirmationDetail | null) ?? null
   })
