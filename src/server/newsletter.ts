@@ -5,6 +5,7 @@ import { isValidEmail } from '../lib/shopHelpers'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Catalogus <no-reply@catalogus.co.mz>'
+const RESEND_NOTIFICATION_TO = process.env.RESEND_NOTIFICATION_TO || ''
 const NEWSLETTER_THROTTLE_MS = 2 * 60 * 1000
 
 const getSiteUrl = () => {
@@ -25,14 +26,60 @@ const hashToken = (token: string) =>
 
 const generateToken = () => randomBytes(32).toString('hex')
 
+const sendResendEmail = async ({
+  to,
+  subject,
+  html,
+}: {
+  to: string[]
+  subject: string
+  html: string
+}) => {
+  if (!RESEND_API_KEY) {
+    throw new Error('Missing RESEND_API_KEY')
+  }
+
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: RESEND_FROM_EMAIL,
+      to,
+      subject,
+      html,
+    }),
+  })
+
+  if (!response.ok) {
+    const text = await response.text()
+    throw new Error(`Resend error: ${text}`)
+  }
+}
+
+const sendInternalNotificationEmail = async ({
+  subject,
+  html,
+}: {
+  subject: string
+  html: string
+}) => {
+  if (!RESEND_NOTIFICATION_TO) return
+
+  await sendResendEmail({
+    to: [RESEND_NOTIFICATION_TO],
+    subject,
+    html,
+  })
+}
+
 const sendVerificationEmail = async (
   email: string,
   token: string,
   bookId?: string | null,
 ) => {
-  if (!RESEND_API_KEY) {
-    throw new Error('Missing RESEND_API_KEY')
-  }
   const siteUrl = getSiteUrl()
   const url = new URL('/newsletter/verify', siteUrl)
   url.searchParams.set('token', token)
@@ -50,24 +97,11 @@ const sendVerificationEmail = async (
     </div>
   `
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: RESEND_FROM_EMAIL,
-      to: [email],
-      subject,
-      html,
-    }),
+  await sendResendEmail({
+    to: [email],
+    subject,
+    html,
   })
-
-  if (!response.ok) {
-    const text = await response.text()
-    throw new Error(`Resend error: ${text}`)
-  }
 }
 
 type RequestNewsletterInput = {
@@ -179,6 +213,22 @@ export const verifyNewsletterSubscription = createServerFn({ method: 'POST' })
 
     if (updateError) throw updateError
 
+    try {
+      await sendInternalNotificationEmail({
+        subject: 'Newsletter verified',
+        html: `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <h2>Newsletter verified</h2>
+            <p><strong>Email:</strong> ${subscription.email}</p>
+            <p><strong>Event:</strong> newsletter_verified</p>
+            <p><strong>Time:</strong> ${now.toISOString()}</p>
+          </div>
+        `,
+      })
+    } catch (error) {
+      console.error('Internal notification failed: verification_success', error)
+    }
+
     return {
       success: true,
       email: subscription.email,
@@ -203,7 +253,7 @@ export const getFreeDigitalDownloadUrl = createServerFn({ method: 'POST' })
 
     const { data: subscription, error } = await serverSupabase
       .from('newsletter_subscriptions')
-      .select('id, status')
+      .select('id, email, status')
       .eq('download_token_hash', tokenHash)
       .maybeSingle()
 
@@ -232,6 +282,24 @@ export const getFreeDigitalDownloadUrl = createServerFn({ method: 'POST' })
       .createSignedUrl(book.digital_file_path, 60 * 60 * 3)
 
     if (signedError) throw signedError
+
+    try {
+      await sendInternalNotificationEmail({
+        subject: 'Free download link issued',
+        html: `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <h2>Free download link issued</h2>
+            <p><strong>Email:</strong> ${subscription.email}</p>
+            <p><strong>Book ID:</strong> ${book.id}</p>
+            <p><strong>Subscription ID:</strong> ${subscription.id}</p>
+            <p><strong>Event:</strong> free_download_link_issued</p>
+            <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+          </div>
+        `,
+      })
+    } catch (error) {
+      console.error('Internal notification failed: free_download_link_issued', error)
+    }
 
     return { success: true, url: signed.signedUrl }
   })
