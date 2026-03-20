@@ -1,10 +1,9 @@
 import type { Session } from '@supabase/supabase-js'
-import { Link } from '@tanstack/react-router'
 import { LogOut, Menu, User, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { CartButton } from '../shop/CartButton'
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '../ui/dialog'
-import { isActiveNavItem, navItems, shouldUseRouterLink } from './navConfig'
+import { isActiveNavItem, navItems } from './navConfig'
 
 type HeaderMobileMenuProps = {
   pathname: string
@@ -58,7 +57,7 @@ export function HeaderMobileMenu({
         <div className="flex h-full flex-col gap-6 px-6 pb-10 pt-6">
           <div className="flex items-center justify-between">
             <DialogClose asChild>
-              <Link to="/" className="flex items-center gap-3">
+              <a href="/" className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center border border-white/20 bg-white/10">
                   C
                 </div>
@@ -68,7 +67,7 @@ export function HeaderMobileMenu({
                     {t('header.mobile.tagline')}
                   </p>
                 </div>
-              </Link>
+              </a>
             </DialogClose>
             <DialogClose asChild>
               <button
@@ -91,36 +90,12 @@ export function HeaderMobileMenu({
                 : ''
               const style = { transitionDelay: `${index * 40}ms` }
 
-              if (item.spa) {
-                return (
-                  <DialogClose asChild key={item.labelKey}>
-                    <Link
-                      to="/"
-                      className={`${baseClass}${activeClassName}`}
-                      style={style}
-                      aria-current={active ? 'page' : undefined}
-                    >
-                      {t(item.labelKey)}
-                    </Link>
-                  </DialogClose>
-                )
-              }
+              const href = item.spa ? '/' : item.href
 
-              return shouldUseRouterLink(item.href) ? (
-                <DialogClose asChild key={item.labelKey}>
-                  <Link
-                    to={item.href}
-                    className={`${baseClass}${activeClassName}`}
-                    style={style}
-                    aria-current={active ? 'page' : undefined}
-                  >
-                    {t(item.labelKey)}
-                  </Link>
-                </DialogClose>
-              ) : (
+              return (
                 <DialogClose asChild key={item.labelKey}>
                   <a
-                    href={item.href}
+                    href={href}
                     className={`${baseClass}${activeClassName}`}
                     style={style}
                     aria-current={active ? 'page' : undefined}
