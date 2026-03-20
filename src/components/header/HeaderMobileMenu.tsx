@@ -1,5 +1,5 @@
 import type { Session } from '@supabase/supabase-js'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { LogOut, Menu, User, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { CartButton } from '../shop/CartButton'
@@ -30,6 +30,19 @@ export function HeaderMobileMenu({
   onSignOut,
 }: HeaderMobileMenuProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+
+  const handleMenuNavigate = (href: string, useRouter: boolean) => (event: { preventDefault: () => void }) => {
+    event.preventDefault()
+    setMenuOpen(false)
+
+    if (useRouter) {
+      void navigate({ to: href })
+      return
+    }
+
+    window.location.href = href
+  }
 
   return (
     <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
@@ -57,7 +70,7 @@ export function HeaderMobileMenu({
         <DialogTitle className="sr-only">{t('header.menu.title')}</DialogTitle>
         <div className="flex h-full flex-col gap-6 px-6 pb-10 pt-6">
           <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
+            <Link to="/" className="flex items-center gap-3" onClick={handleMenuNavigate('/', true)}>
               <div className="flex h-10 w-10 items-center justify-center border border-white/20 bg-white/10">
                 C
               </div>
@@ -96,7 +109,7 @@ export function HeaderMobileMenu({
                     to="/"
                     className={`${baseClass}${activeClassName}`}
                     style={style}
-                    onClick={() => setMenuOpen(false)}
+                    onClick={handleMenuNavigate('/', true)}
                     aria-current={active ? 'page' : undefined}
                   >
                     {t(item.labelKey)}
@@ -110,7 +123,7 @@ export function HeaderMobileMenu({
                   to={item.href}
                   className={`${baseClass}${activeClassName}`}
                   style={style}
-                  onClick={() => setMenuOpen(false)}
+                  onClick={handleMenuNavigate(item.href, true)}
                   aria-current={active ? 'page' : undefined}
                 >
                   {t(item.labelKey)}
@@ -121,7 +134,7 @@ export function HeaderMobileMenu({
                   href={item.href}
                   className={`${baseClass}${activeClassName}`}
                   style={style}
-                  onClick={() => setMenuOpen(false)}
+                  onClick={handleMenuNavigate(item.href, false)}
                   aria-current={active ? 'page' : undefined}
                 >
                   {t(item.labelKey)}
