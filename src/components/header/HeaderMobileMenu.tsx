@@ -1,10 +1,9 @@
 import type { Session } from '@supabase/supabase-js'
-import { Link, useNavigate } from '@tanstack/react-router'
 import { LogOut, Menu, User, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { CartButton } from '../shop/CartButton'
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '../ui/dialog'
-import { isActiveNavItem, navItems, shouldUseRouterLink } from './navConfig'
+import { isActiveNavItem, navItems } from './navConfig'
 
 type HeaderMobileMenuProps = {
   pathname: string
@@ -30,19 +29,6 @@ export function HeaderMobileMenu({
   onSignOut,
 }: HeaderMobileMenuProps) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
-
-  const handleMenuNavigate = (href: string, useRouter: boolean) => (event: { preventDefault: () => void }) => {
-    event.preventDefault()
-    setMenuOpen(false)
-
-    if (useRouter) {
-      void navigate({ to: href })
-      return
-    }
-
-    window.location.href = href
-  }
 
   return (
     <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
@@ -65,22 +51,24 @@ export function HeaderMobileMenu({
         id="mobile-menu"
         overlayClassName="bg-black/40"
         showCloseButton={false}
-        className="fixed left-auto right-0 top-0 z-50 h-full w-full max-w-sm translate-x-0 translate-y-0 rounded-none border-0 bg-[color:var(--header-panel)] p-0 text-white shadow-none sm:max-w-sm"
+        className="fixed left-auto right-0 top-0 h-full w-full max-w-sm translate-x-0 translate-y-0 rounded-none border-0 bg-[color:var(--header-panel)] p-0 text-white shadow-none sm:max-w-sm"
       >
         <DialogTitle className="sr-only">{t('header.menu.title')}</DialogTitle>
         <div className="flex h-full flex-col gap-6 px-6 pb-10 pt-6">
           <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3" onClick={handleMenuNavigate('/', true)}>
-              <div className="flex h-10 w-10 items-center justify-center border border-white/20 bg-white/10">
-                C
-              </div>
-              <div className="leading-tight">
-                <p className="text-base font-semibold">Catalogus</p>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--header-panel-muted)]">
-                  {t('header.mobile.tagline')}
-                </p>
-              </div>
-            </Link>
+            <DialogClose asChild>
+              <a href="/" className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center border border-white/20 bg-white/10">
+                  C
+                </div>
+                <div className="leading-tight">
+                  <p className="text-base font-semibold">Catalogus</p>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--header-panel-muted)]">
+                    {t('header.mobile.tagline')}
+                  </p>
+                </div>
+              </a>
+            </DialogClose>
             <DialogClose asChild>
               <button
                 type="button"
@@ -102,43 +90,19 @@ export function HeaderMobileMenu({
                 : ''
               const style = { transitionDelay: `${index * 40}ms` }
 
-              if (item.spa) {
-                return (
-                  <Link
-                    key={item.labelKey}
-                    to="/"
+              const href = item.spa ? '/' : item.href
+
+              return (
+                <DialogClose asChild key={item.labelKey}>
+                  <a
+                    href={href}
                     className={`${baseClass}${activeClassName}`}
                     style={style}
-                    onClick={handleMenuNavigate('/', true)}
                     aria-current={active ? 'page' : undefined}
                   >
                     {t(item.labelKey)}
-                  </Link>
-                )
-              }
-
-              return shouldUseRouterLink(item.href) ? (
-                <Link
-                  key={item.labelKey}
-                  to={item.href}
-                  className={`${baseClass}${activeClassName}`}
-                  style={style}
-                  onClick={handleMenuNavigate(item.href, true)}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  {t(item.labelKey)}
-                </Link>
-              ) : (
-                <a
-                  key={item.labelKey}
-                  href={item.href}
-                  className={`${baseClass}${activeClassName}`}
-                  style={style}
-                  onClick={handleMenuNavigate(item.href, false)}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  {t(item.labelKey)}
-                </a>
+                  </a>
+                </DialogClose>
               )
             })}
           </div>
