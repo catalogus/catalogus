@@ -51,7 +51,7 @@ export function HeaderMobileMenu({
         id="mobile-menu"
         overlayClassName="bg-black/40"
         showCloseButton={false}
-        className="fixed left-auto right-0 top-0 z-50 h-full w-full max-w-sm translate-x-0 translate-y-0 rounded-none border-0 bg-[color:var(--header-panel)] p-0 text-white shadow-none sm:max-w-sm"
+        className="fixed left-auto right-0 top-0 h-full w-full max-w-sm translate-x-0 translate-y-0 rounded-none border-0 bg-[color:var(--header-panel)] p-0 text-white shadow-none sm:max-w-sm"
       >
         <DialogTitle className="sr-only">{t('header.menu.title')}</DialogTitle>
         <div className="flex h-full flex-col gap-6 px-6 pb-10 pt-6">
