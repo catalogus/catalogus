@@ -1,10 +1,15 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import Header from '../../components/Header'
 import { formatPrice, getOrderStatusColor } from '../../lib/shopHelpers'
 import { supabase } from '../../lib/supabaseClient'
-import { getOrderConfirmation, type OrderConfirmationDetail } from '../../server/mpesa'
+import {
+  getOrderConfirmation,
+  reconcileOrderMpesaStatus,
+  type OrderConfirmationDetail,
+} from '../../server/mpesa'
 
 type OrderItem = {
   id: number
@@ -49,6 +54,48 @@ function OrderConfirmationPage() {
       return 10_000
     },
   })
+
+  const { refetch: refetchOrder } = orderQuery
+
+  const reconcileQuery = useMutation({
+    mutationFn: async () => reconcileOrderMpesaStatus({ data: { orderId } }),
+  })
+
+  const { isPending: isReconcilePending, mutateAsync: reconcileOrderStatus } = reconcileQuery
+  const reconcileInFlightRef = useRef(false)
+
+  useEffect(() => {
+    const status = orderQuery.data?.status
+    if (!status || ['paid', 'failed', 'cancelled'].includes(status)) return
+
+    let disposed = false
+
+    const refreshStatus = async () => {
+      if (disposed || reconcileInFlightRef.current) return
+
+      reconcileInFlightRef.current = true
+      try {
+        await reconcileOrderStatus()
+      } catch {
+        // The regular order polling keeps the page updated while reconciliation retries continue.
+      } finally {
+        reconcileInFlightRef.current = false
+        if (!disposed) {
+          await refetchOrder()
+        }
+      }
+    }
+
+    void refreshStatus()
+    const intervalId = window.setInterval(() => {
+      void refreshStatus()
+    }, 15_000)
+
+    return () => {
+      disposed = true
+      window.clearInterval(intervalId)
+    }
+  }, [orderId, orderQuery.data?.status, reconcileOrderStatus, refetchOrder])
 
   const order = orderQuery.data
   const orderNumber = order?.order_number ?? ''
@@ -167,6 +214,11 @@ function OrderConfirmationPage() {
                 {t('orders.detail.paymentTitle')}
               </h3>
               <p className="mt-2">{paymentMessage}</p>
+              {order.status === 'processing' && isReconcilePending && (
+                <p className="mt-2 text-xs uppercase tracking-wider text-gray-500">
+                  {t('orders.detail.paymentRefreshing')}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-3 border-t border-gray-200 pt-4">

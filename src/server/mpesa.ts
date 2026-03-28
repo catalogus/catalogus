@@ -53,6 +53,16 @@ type GatewayResponse = {
   reference?: string
   status?: 'pending' | 'processing' | 'paid' | 'failed'
   message?: string
+  data?: {
+    output_ResponseCode?: string | null
+    output_ResponseTransactionStatus?: string | null
+  } | null
+}
+
+type MpesaReconciliationResult = {
+  success: boolean
+  status: 'pending' | 'processing' | 'paid' | 'failed'
+  message: string
 }
 
 const getGatewayConfig = () => {
@@ -241,4 +251,82 @@ export const getOrderConfirmation = createServerFn({ method: 'GET' })
     }
 
     return (order as OrderConfirmationDetail | null) ?? null
+  })
+
+export const reconcileOrderMpesaStatus = createServerFn({ method: 'POST' })
+  .inputValidator((data: { orderId: string }) => {
+    if (!data?.orderId?.trim()) {
+      throw new Error('Missing order ID')
+    }
+
+    return { orderId: data.orderId.trim() }
+  })
+  .handler(async ({ data }) => {
+    const { baseUrl, secret } = getGatewayConfig()
+
+    const { data: order, error: orderError } = await serverSupabase
+      .from('orders')
+      .select('id, order_number, status, mpesa_transaction_id, mpesa_reference')
+      .eq('id', data.orderId)
+      .maybeSingle()
+
+    if (orderError) {
+      throw orderError
+    }
+
+    if (!order) {
+      return {
+        success: false,
+        status: 'failed',
+        message: 'Order not found',
+      } satisfies MpesaReconciliationResult
+    }
+
+    if (['paid', 'failed', 'cancelled'].includes(order.status)) {
+      return {
+        success: true,
+        status: order.status === 'cancelled' ? 'failed' : (order.status as MpesaReconciliationResult['status']),
+        message: 'Order already has a final payment status.',
+      } satisfies MpesaReconciliationResult
+    }
+
+    const payload = {
+      orderId: order.id,
+      orderNumber: order.order_number,
+      transactionId: order.mpesa_transaction_id,
+      reference: order.mpesa_reference,
+    }
+
+    const { ok, result: gatewayResult } = await callGateway('/mpesa/status', payload, baseUrl, secret)
+
+    if (!ok || !gatewayResult?.success) {
+      return {
+        success: false,
+        status: 'processing',
+        message: gatewayResult?.message ?? 'Failed to refresh payment status.',
+      } satisfies MpesaReconciliationResult
+    }
+
+    const { data: refreshedOrder, error: refreshedOrderError } = await serverSupabase
+      .from('orders')
+      .select('status')
+      .eq('id', data.orderId)
+      .maybeSingle()
+
+    if (refreshedOrderError) {
+      throw refreshedOrderError
+    }
+
+    const refreshedStatus = (refreshedOrder?.status ?? 'processing') as MpesaReconciliationResult['status']
+
+    return {
+      success: true,
+      status: refreshedStatus,
+      message:
+        refreshedStatus === 'paid'
+          ? 'Payment confirmed.'
+          : refreshedStatus === 'failed'
+            ? 'Payment failed or was cancelled.'
+            : 'Payment status is still processing.',
+    } satisfies MpesaReconciliationResult
   })

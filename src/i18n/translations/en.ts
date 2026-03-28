@@ -416,7 +416,8 @@ const en = {
       paymentTitle: 'M-Pesa payment',
       paymentFallback: 'Payment instructions will be available soon.',
       paymentPending:
-        'We sent a payment request to your M-Pesa number. Confirm it on your phone using your PIN. If you already confirmed, tap “Check status”.',
+        'We sent a payment request to your M-Pesa number. Confirm it on your phone using your PIN. After confirmation, this page refreshes the payment status automatically.',
+      paymentRefreshing: 'Refreshing payment status automatically...',
       paymentPaid: 'Payment confirmed. Thank you for your order.',
       paymentFailed:
         'Payment failed or was cancelled. Please try again or contact support.',

@@ -1,5 +1,12 @@
 # Guest Order Confirmation Access
 
+## Documentacao de Handover
+- [ ] Criar pacote de documentacao em PT-PT para handover tecnico e operacional do projecto.
+- [ ] Documentar arquitectura, apps, servicos, ambientes, Supabase, deploy e suporte.
+- [ ] Documentar operacao do backoffice para o cliente.
+- [ ] Documentar onboarding e manutencao para futuros developers.
+- [ ] Rever consistencia editorial e checklist final de entrega.
+
 ## Plan
 - [x] Trace why guest checkout redirects to an order page that cannot read the order.
 - [x] Move confirmation-page order loading to a server-backed query that works for guest orders.
@@ -7,6 +14,30 @@
 
 ## Review
 - [x] Guest order confirmation no longer depends on client-side RLS access to `orders`.
+
+# M-Pesa Order Status Follow-up
+
+## Current Behavior
+- [x] Guest checkout creates the order and redirects correctly to `/pedido/:orderId`.
+- [x] The order page can now load guest orders through a server-backed query.
+- [ ] After the customer confirms payment on the phone, the order page can still remain in `processing`.
+- [ ] The page text says `Se ja confirmou, toque em "Atualizar estado"`, but there is currently no `Atualizar estado` button in the UI.
+
+## Suspected Cause
+- [ ] The order only moves from `processing` to `paid` when the gateway callback updates Supabase or when a status-check endpoint is called.
+- [ ] Refreshing the page only re-reads the current DB state; it does not trigger `/mpesa/status`.
+
+## Next Fix
+- [ ] Check gateway logs for successful/failed `/mpesa/callback` handling after a real PIN confirmation.
+- [ ] Add a real `Atualizar estado` action on the order page that triggers a status reconciliation request.
+- [ ] Update the order detail copy so it only promises actions the UI actually supports.
+
+## M-Pesa Auto-Reconciliation
+- [ ] Add gateway logging for callback/status payloads and Supabase update failures.
+- [ ] Broaden M-Pesa success/failure parsing so successful payments do not remain in `processing`.
+- [ ] Add automatic public order-page status reconciliation while an order is still `processing`.
+- [ ] Update order-page payment copy to describe automatic status refresh.
+- [ ] Verify the updated flow with targeted tests and a sandbox payment.
 
 # Repo: Extract M-Pesa Gateway
 
