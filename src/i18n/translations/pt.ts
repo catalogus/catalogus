@@ -416,7 +416,8 @@ const pt = {
       paymentTitle: 'Pagamento M-Pesa',
       paymentFallback: 'As instrucoes de pagamento estarao disponiveis em breve.',
       paymentPending:
-        'Enviamos um pedido de pagamento para o seu M-Pesa. Confirme no telefone com o seu PIN. Se ja confirmou, toque em “Atualizar estado”.',
+        'Enviamos um pedido de pagamento para o seu M-Pesa. Confirme no telefone com o seu PIN. Depois da confirmacao, actualizamos este estado automaticamente.',
+      paymentRefreshing: 'A actualizar automaticamente o estado do pagamento...',
       paymentPaid: 'Pagamento confirmado. Obrigado pela sua compra.',
       paymentFailed:
         'O pagamento falhou ou foi cancelado. Tente novamente ou contacte o suporte.',
