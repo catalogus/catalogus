@@ -104,12 +104,20 @@ function OrderConfirmationPage() {
     : ''
   const statusColor = order ? getOrderStatusColor(order.status) : ''
 
+  const statusHeading = order
+    ? order.status === 'paid'
+      ? t('orders.detail.confirmed')
+      : order.status === 'failed'
+        ? t('orders.detail.paymentFailedTitle')
+        : t('orders.detail.awaitingPaymentTitle')
+    : ''
+
   const paymentMessage = order
     ? order.status === 'paid'
       ? t('orders.detail.paymentPaid')
       : order.status === 'failed'
         ? t('orders.detail.paymentFailed')
-        : t('orders.detail.paymentPending')
+      : t('orders.detail.paymentPending')
     : t('orders.detail.paymentFallback')
 
   return (
@@ -144,7 +152,7 @@ function OrderConfirmationPage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-xs uppercase tracking-wider text-gray-500">
-                  {t('orders.detail.confirmed')}
+                  {statusHeading}
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold md:text-3xl">
                   {orderNumber}
@@ -213,6 +221,30 @@ function OrderConfirmationPage() {
               <h3 className="text-xs uppercase tracking-wider text-gray-500">
                 {t('orders.detail.paymentTitle')}
               </h3>
+              {order.status !== 'paid' && order.status !== 'failed' && (
+                <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 h-4 w-4 animate-spin rounded-full border-2 border-amber-300 border-t-amber-700" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold">
+                        {t('orders.detail.awaitingPaymentTitle')}
+                      </p>
+                      <p>{t('orders.detail.paymentPending')}</p>
+                      <p className="text-xs uppercase tracking-wider text-amber-700">
+                        {t('orders.detail.paymentRefreshing')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {order.status === 'paid' && (
+                <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
+                  <p className="text-sm font-semibold">
+                    {t('orders.detail.confirmed')}
+                  </p>
+                  <p className="mt-1">{t('orders.detail.receiptInstruction')}</p>
+                </div>
+              )}
               <p className="mt-2">{paymentMessage}</p>
               {order.status === 'processing' && isReconcilePending && (
                 <p className="mt-2 text-xs uppercase tracking-wider text-gray-500">
@@ -222,13 +254,15 @@ function OrderConfirmationPage() {
             </div>
 
             <div className="flex flex-wrap gap-3 border-t border-gray-200 pt-4">
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400"
-              >
-                {t('orders.detail.print')}
-              </button>
+              {order.status === 'paid' && (
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-700 hover:border-gray-400"
+                >
+                  {t('orders.detail.print')}
+                </button>
+              )}
               <Link
                 to="/loja"
                 className="bg-[color:var(--brand)] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white hover:bg-[#a25a2c]"
