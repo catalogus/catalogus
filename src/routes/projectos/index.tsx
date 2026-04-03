@@ -8,7 +8,7 @@ export const Route = createFileRoute('/projectos/')({
   head: () =>
     buildSeo({
       title: 'Projectos',
-      description: 'Conheca os projectos culturais desenvolvidos pela Catalogus.',
+      description: 'Conheça os projectos culturais desenvolvidos pela Catalogus.',
       path: '/projectos',
       type: 'website',
     }),
