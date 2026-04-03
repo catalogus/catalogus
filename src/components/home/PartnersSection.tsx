@@ -21,7 +21,7 @@ export default function PartnersSection() {
           <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
             {t('home.partners.label')}
           </p>
-          <h2 className="max-w-4xl text-3xl font-semibold leading-tight text-gray-900 md:text-5xl">
+          <h2 className="max-w-4xl text-3xl font-semibold leading-tight text-gray-900">
             {t('home.partners.title')}
           </h2>
         </div>

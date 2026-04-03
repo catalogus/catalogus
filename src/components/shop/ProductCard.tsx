@@ -163,12 +163,12 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
   return (
     <div className={`group ${compact ? 'space-y-3' : 'space-y-4'}`}>
       <div className="relative bg-[#e6e0db] rounded-none">
-        <div className="aspect-[3/4] w-full overflow-hidden bg-white/60 rounded-none">
+        <div className="w-full overflow-hidden bg-white/60 rounded-none">
           {book.cover_path || coverUrl ? (
             <BookCover
               src={book.cover_path || coverUrl}
               title={book.title}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
               priority={false}
             />
           ) : (
@@ -217,7 +217,7 @@ export function ProductCard({ book, compact = false }: ProductCardProps) {
         <a
           href={bookLinkFor(book)}
           className={`block font-semibold text-gray-900 transition-colors hover:text-gray-700 ${
-            compact ? 'text-lg' : 'text-xl'
+            compact ? 'text-base' : 'text-lg'
           }`}
         >
           {book.title}
