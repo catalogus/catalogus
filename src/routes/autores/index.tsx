@@ -23,7 +23,7 @@ export const Route = createFileRoute('/autores/')({
   head: () =>
     buildSeo({
       title: 'Autores',
-      description: 'Conheca os autores em destaque na Catalogus.',
+      description: 'Conheça os autores em destaque na Catalogus.',
       path: '/autores',
       type: 'website',
     }),

@@ -8,6 +8,7 @@ import {
   fetchNewsListingPage,
   loadNewsListingPageData,
 } from '../../features/news/newsListingData'
+import { getCategoryDisplayLabel } from '../../lib/newsHelpers'
 import { buildSeo } from '../../lib/seo'
 
 export const Route = createFileRoute('/noticias/')({
@@ -76,9 +77,13 @@ function NewsListingPage() {
   const allPosts = postsQuery.data?.pages.flatMap((page) => page.posts) ?? []
   const featuredCategory = initialFeaturedPost?.categories?.[0]?.category
   const featuredCategoryLabel = featuredCategory
-    ? isEnglish
-      ? featuredCategory.name_en ?? featuredCategory.name
-      : featuredCategory.name
+    ? getCategoryDisplayLabel({
+        name: featuredCategory.name,
+        nameEn: featuredCategory.name_en,
+        slug: featuredCategory.slug,
+        slugEn: featuredCategory.slug_en,
+        isEnglish,
+      })
     : null
   const filters = [
     q ? t('news.listing.filters.search', { query: q }) : null,

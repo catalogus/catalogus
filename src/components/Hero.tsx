@@ -181,7 +181,7 @@ export function Hero({ slides }: HeroProps) {
                     </span>
 
                     {/* Title */}
-                    <h1 className="text-4xl font-bold leading-tight md:text-5xl lg:text-6xl">
+                    <h1 className="text-4xl font-bold leading-tight">
                       {slide.title}
                     </h1>
 

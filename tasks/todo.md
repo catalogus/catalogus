@@ -1,5 +1,16 @@
 # Guest Order Confirmation Access
 
+# Bugfix: Acentos em Categorias de Noticias
+
+## Plan
+- [x] Identificar onde o badge de categoria renderiza o nome cru vindo dos dados.
+- [x] Centralizar um helper para normalizar o rotulo exibido com acentos corretos em PT.
+- [x] Verificar os pontos de renderizacao de noticias que usam o badge de categoria.
+
+## Review
+- [x] `Lancamentos` agora e exibido como `Lançamentos` nos badges de noticias em PT.
+- [x] Rotulos PT de preco/faixa (`Preço`, `Mínimo`, `Máximo`) foram corrigidos nas traducoes.
+
 ## Documentacao de Handover
 - [ ] Criar pacote de documentacao em PT-PT para handover tecnico e operacional do projecto.
 - [ ] Documentar arquitectura, apps, servicos, ambientes, Supabase, deploy e suporte.

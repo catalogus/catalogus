@@ -170,12 +170,12 @@ export default function FeaturedBooksSection({
               return (
                 <div key={book.id} className="group space-y-4">
                   <div className="relative bg-[#e6e0db] rounded-none">
-                    <div className="aspect-[3/4] w-full overflow-hidden bg-white/60 rounded-none">
+                    <div className="w-full overflow-hidden bg-white/60 rounded-none">
                       {coverSrc ? (
                         <BookCover
                           src={coverSrc}
                           title={book.title}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
                           priority={false}
                           sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
                         />

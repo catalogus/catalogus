@@ -1,4 +1,5 @@
 import { fetchPublicProfileById } from '@/lib/publicProfiles'
+import { getCategoryDisplayLabel } from '@/lib/newsHelpers'
 import { publicSupabase } from '@/lib/supabasePublic'
 import type { PostRow } from '@/types/post'
 
@@ -34,7 +35,13 @@ type NewsLoaderData = {
 const localizeCategories = (categories: any[], isEnglish: boolean) =>
   categories.map((category: any) => ({
     ...category,
-    name: isEnglish ? category.name_en ?? category.name : category.name,
+    name: getCategoryDisplayLabel({
+      name: category.name,
+      nameEn: category.name_en,
+      slug: category.slug,
+      slugEn: category.slug_en,
+      isEnglish,
+    }),
     slug: isEnglish ? category.slug_en ?? category.slug : category.slug,
     slug_base: category.slug,
     name_base: category.name,
