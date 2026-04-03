@@ -18,3 +18,4 @@
 - If a shared modal primitive still renders only backdrop after z-index fixes, isolate the affected modal with a simple fixed overlay/panel implementation to prove behavior and unblock users fast.
 - For cross-domain auth work, confirm exact production hostnames upfront (e.g., `admin.catalogus.co.mz` vs `cms.catalogus.co.mz`) before wiring redirect URLs and bridge logic.
 - In this workspace, use `pnpm` for dependency install/build/test commands unless the user explicitly asks for another package manager.
+- When rendering Portuguese category/tag labels from slugs or DB names, do not trust unaccented source strings for UI copy; apply a display-label mapping so accents remain correct.

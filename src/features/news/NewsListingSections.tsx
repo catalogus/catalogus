@@ -1,4 +1,4 @@
-import { buildExcerpt, getCategoryBadgeClass } from '@/lib/newsHelpers'
+import { buildExcerpt, getCategoryBadgeClass, getCategoryDisplayLabel } from '@/lib/newsHelpers'
 import { formatPostDate } from '@/lib/newsHelpers'
 import type { NewsPost } from './newsListingData'
 
@@ -27,7 +27,15 @@ export function NewsListingGrid({ posts, isLoading, isError, hasNextPage, isFetc
       {!isLoading && !isError && posts.length > 0 && <>
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{posts.map((post) => {
           const category = post.categories?.[0]?.category
-          const categoryLabel = category ? (isEnglish ? category.name_en ?? category.name : category.name) : null
+          const categoryLabel = category
+            ? getCategoryDisplayLabel({
+                name: category.name,
+                nameEn: category.name_en,
+                slug: category.slug,
+                slugEn: category.slug_en,
+                isEnglish,
+              })
+            : null
           const categoryClass = category?.slug ? getCategoryBadgeClass(category.slug) : categoryLabel ? getCategoryBadgeClass(categoryLabel) : ''
           const excerpt = post.excerpt?.trim() || buildExcerpt(post.body)
           return <a key={post.id} href={`/noticias/${post.slug}`} className="group relative flex min-h-105 flex-col justify-end overflow-hidden rounded-none border border-white/10 bg-white/5 text-left transition-transform hover:-translate-y-1">{post.featured_image_url ? <img src={post.featured_image_url} alt={post.title} className="absolute inset-0 h-full w-full object-cover" loading="lazy" /> : <div className="absolute inset-0 bg-gradient-to-br from-neutral-700 to-neutral-900" />}<div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />{category && <span className={`${categoryClass} absolute left-4 top-4 rounded-none px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em]`}>{categoryLabel}</span>}<div className="relative z-10 space-y-3 p-6 text-white"><h3 className="text-xl font-semibold leading-snug md:text-2xl">{post.title}</h3>{excerpt && <p className="line-clamp-2 text-sm leading-relaxed text-white/90">{excerpt}</p>}<div className="text-xs uppercase tracking-[0.2em] text-white/80">{formatPostDate(post.published_at ?? post.created_at, locale)}</div></div></a>

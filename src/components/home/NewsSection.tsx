@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowUpRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { PostFeaturedImage } from '../OptimizedImage'
+import { getCategoryBadgeClass, getCategoryDisplayLabel } from '../../lib/newsHelpers'
 import { publicSupabase } from '../../lib/supabasePublic'
 import type { PostRow } from '../../types/post'
 
@@ -15,7 +16,14 @@ type NewsPost = Pick<
   | 'published_at'
   | 'created_at'
 > & {
-  categories?: { category?: { name?: string | null; slug?: string | null } | null }[] | null
+  categories?: {
+    category?: {
+      name?: string | null
+      slug?: string | null
+      name_en?: string | null
+      slug_en?: string | null
+    } | null
+  }[] | null
 }
 
 const formatPostDate = (value: string | null, locale: string) => {
@@ -27,29 +35,6 @@ const formatPostDate = (value: string | null, locale: string) => {
     month: 'long',
     year: 'numeric',
   })
-}
-
-const normalizeCategoryKey = (value: string) =>
-  value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-
-const categoryBadgeClasses: Record<string, string> = {
-  noticias: 'bg-[#c6f36d] text-black',
-  eventos: 'bg-[#ffd166] text-black',
-  cultura: 'bg-[#5de2ff] text-black',
-  literatura: 'bg-[#ff8fab] text-black',
-  opiniao: 'bg-[#bdb2ff] text-black',
-  entrevistas: 'bg-[#a6ff8f] text-black',
-  lancamentos: 'bg-[#ffc6ff] text-black',
-}
-
-const getCategoryBadgeClass = (value: string) => {
-  const key = normalizeCategoryKey(value)
-  return categoryBadgeClasses[key] ?? 'bg-[#c6f36d] text-black'
 }
 
 type NewsSectionProps = {
@@ -134,9 +119,13 @@ export default function NewsSection({
               )
               const category = post.categories?.[0]?.category
               const categoryLabel = category
-                ? isEnglish
-                  ? category.name_en ?? category.name
-                  : category.name
+                ? getCategoryDisplayLabel({
+                    name: category.name,
+                    nameEn: category.name_en,
+                    slug: category.slug,
+                    slugEn: category.slug_en,
+                    isEnglish,
+                  })
                 : null
               const imageSrc = post.featured_image_path || post.featured_image_url
               const categoryClass = category?.slug
@@ -171,7 +160,7 @@ export default function NewsSection({
                   )}
 
                   <div className="relative z-10 space-y-4 p-6">
-                    <h3 className="text-xl font-semibold leading-snug text-white md:text-2xl">
+                    <h3 className="text-lg font-semibold leading-snug text-white">
                       {post.title}
                     </h3>
                     <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-white/80">

@@ -32,6 +32,16 @@ export const normalizeCategoryKey = (value: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 
+const categoryDisplayLabels: Record<string, { pt: string; en: string }> = {
+  noticias: { pt: 'Noticias', en: 'News' },
+  eventos: { pt: 'Eventos', en: 'Events' },
+  cultura: { pt: 'Cultura', en: 'Culture' },
+  literatura: { pt: 'Literatura', en: 'Literature' },
+  opiniao: { pt: 'Opinião', en: 'Opinion' },
+  entrevistas: { pt: 'Entrevistas', en: 'Interviews' },
+  lancamentos: { pt: 'Lançamentos', en: 'Releases' },
+}
+
 const categoryBadgeClasses: Record<string, string> = {
   noticias: 'bg-[#c6f36d] text-black',
   eventos: 'bg-[#ffd166] text-black',
@@ -45,4 +55,25 @@ const categoryBadgeClasses: Record<string, string> = {
 export const getCategoryBadgeClass = (value: string) => {
   const key = normalizeCategoryKey(value)
   return categoryBadgeClasses[key] ?? 'bg-[#c6f36d] text-black'
+}
+
+export const getCategoryDisplayLabel = ({
+  name,
+  nameEn,
+  slug,
+  slugEn,
+  isEnglish,
+}: {
+  name?: string | null
+  nameEn?: string | null
+  slug?: string | null
+  slugEn?: string | null
+  isEnglish?: boolean
+}) => {
+  const fallback = isEnglish ? nameEn ?? name : name
+  const keySource = isEnglish ? slugEn ?? slug ?? nameEn ?? name : slug ?? name
+  if (!keySource) return fallback ?? null
+
+  const display = categoryDisplayLabels[normalizeCategoryKey(keySource)]
+  return isEnglish ? display?.en ?? fallback ?? null : display?.pt ?? fallback ?? null
 }

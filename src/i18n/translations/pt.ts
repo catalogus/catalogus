@@ -249,8 +249,8 @@ const pt = {
       sortOptions: {
         newest: 'Mais recentes',
         oldest: 'Mais antigos',
-        priceAsc: 'Preco: Baixo para Alto',
-        priceDesc: 'Preco: Alto para Baixo',
+        priceAsc: 'Preço: Baixo para Alto',
+        priceDesc: 'Preço: Alto para Baixo',
         title: 'Titulo (A-Z)',
       },
       error: 'Falha ao carregar os livros. Tente novamente.',
@@ -271,9 +271,9 @@ const pt = {
       languageAll: 'Todos',
       languagePt: 'Português',
       languageEn: 'Inglês',
-      price: 'Preco',
-      min: 'Minimo',
-      max: 'Maximo',
+      price: 'Preço',
+      min: 'Mínimo',
+      max: 'Máximo',
     },
     card: {
       noCover: 'Sem capa',
